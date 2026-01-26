@@ -17,13 +17,19 @@ try {
 const TREE_COLORS = ['#228B22', '#2E8B57', '#3CB371', '#006400', '#32CD32'];
 const CAR_COLORS = ['#2c3e50', '#e74c3c', '#3498db', '#27ae60', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#95a5a6', '#34495e'];
 
+// Seeded random for consistent results
+function seededRandom(seed) {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
 // Simple tree component
-function Tree({ position, scale = 1 }) {
+function Tree({ position, scale = 1, colorIndex = 0 }) {
   const trunkHeight = 2 * scale;
   const trunkRadius = 0.3 * scale;
   const foliageRadius = 1.5 * scale;
   const foliageHeight = 3 * scale;
-  const color = TREE_COLORS[Math.floor(Math.random() * TREE_COLORS.length)];
+  const color = TREE_COLORS[colorIndex % TREE_COLORS.length];
   
   return (
     <group position={position}>
@@ -55,10 +61,10 @@ function Tree({ position, scale = 1 }) {
 }
 
 // Rounded/bushy tree variant
-function RoundTree({ position, scale = 1 }) {
+function RoundTree({ position, scale = 1, colorIndex = 0 }) {
   const trunkHeight = 1.5 * scale;
   const trunkRadius = 0.25 * scale;
-  const color = TREE_COLORS[Math.floor(Math.random() * TREE_COLORS.length)];
+  const color = TREE_COLORS[colorIndex % TREE_COLORS.length];
   
   return (
     <group position={position}>
@@ -152,7 +158,7 @@ function ParkingLine({ position, rotation = 0, length = 2.5 }) {
 }
 
 // Car park with multiple cars
-function CarPark({ position, rows = 2, spotsPerRow = 6 }) {
+function CarPark({ position, rows = 2, spotsPerRow = 6, seed = 1000 }) {
   const spotWidth = 2.8;
   const spotDepth = 5;
   const aisleWidth = 4;
@@ -167,6 +173,7 @@ function CarPark({ position, rows = 2, spotsPerRow = 6 }) {
       
       for (let spot = 0; spot < spotsPerRow; spot++) {
         const spotX = spot * spotWidth;
+        const spotSeed = seed + row * 100 + spot;
         
         // Add parking lines
         spots.push({
@@ -175,13 +182,13 @@ function CarPark({ position, rows = 2, spotsPerRow = 6 }) {
           type: 'line'
         });
         
-        // Randomly place cars (70% occupancy)
-        if (Math.random() < 0.7) {
+        // Deterministically place cars (70% occupancy based on seed)
+        if (seededRandom(spotSeed) < 0.7) {
           cars.push({
             id: `car-${row}-${spot}`,
             position: [spotX, 0, rowZ + (facingOut ? -0.5 : 0.5)],
             rotation: facingOut ? 0 : Math.PI,
-            color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)]
+            color: CAR_COLORS[Math.floor(seededRandom(spotSeed + 1) * CAR_COLORS.length)]
           });
         }
       }
@@ -195,7 +202,7 @@ function CarPark({ position, rows = 2, spotsPerRow = 6 }) {
     }
     
     return { spots, cars };
-  }, [rows, spotsPerRow]);
+  }, [rows, spotsPerRow, seed]);
   
   const parkingLotWidth = spotsPerRow * spotWidth;
   const parkingLotDepth = rows * (spotDepth + aisleWidth);
@@ -232,22 +239,26 @@ function CarPark({ position, rows = 2, spotsPerRow = 6 }) {
 }
 
 // Tree row for landscaping
-function TreeRow({ startPosition, count, spacing = 4, treeType = 'mixed' }) {
+function TreeRow({ startPosition, count, spacing = 4, treeType = 'mixed', seed = 0 }) {
   const trees = useMemo(() => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: i,
-      position: [startPosition[0] + i * spacing, startPosition[1], startPosition[2]],
-      type: treeType === 'mixed' ? (Math.random() > 0.5 ? 'cone' : 'round') : treeType,
-      scale: 0.8 + Math.random() * 0.4
-    }));
-  }, [startPosition, count, spacing, treeType]);
+    return Array.from({ length: count }, (_, i) => {
+      const treeSeed = seed + i * 17; // Use deterministic seed
+      return {
+        id: i,
+        position: [startPosition[0] + i * spacing, startPosition[1], startPosition[2]],
+        type: treeType === 'mixed' ? (seededRandom(treeSeed) > 0.5 ? 'cone' : 'round') : treeType,
+        scale: 0.8 + seededRandom(treeSeed + 1) * 0.4,
+        colorIndex: Math.floor(seededRandom(treeSeed + 2) * TREE_COLORS.length)
+      };
+    });
+  }, [startPosition[0], startPosition[1], startPosition[2], count, spacing, treeType, seed]);
   
   return (
     <group>
       {trees.map(tree => (
         tree.type === 'cone' 
-          ? <Tree key={tree.id} position={tree.position} scale={tree.scale} />
-          : <RoundTree key={tree.id} position={tree.position} scale={tree.scale} />
+          ? <Tree key={tree.id} position={tree.position} scale={tree.scale} colorIndex={tree.colorIndex} />
+          : <RoundTree key={tree.id} position={tree.position} scale={tree.scale} colorIndex={tree.colorIndex} />
       ))}
     </group>
   );
@@ -258,26 +269,26 @@ function Landscape() {
   return (
     <group>
       {/* Trees along the front of the building */}
-      <TreeRow startPosition={[-8, 0, -5]} count={4} spacing={5} treeType="round" />
-      <TreeRow startPosition={[45, 0, -5]} count={3} spacing={5} treeType="round" />
+      <TreeRow startPosition={[-8, 0, -5]} count={4} spacing={5} treeType="round" seed={100} />
+      <TreeRow startPosition={[45, 0, -5]} count={3} spacing={5} treeType="round" seed={200} />
       
       {/* Trees along the sides */}
-      <TreeRow startPosition={[-5, 0, 5]} count={6} spacing={8} treeType="cone" />
-      <TreeRow startPosition={[55, 0, 5]} count={5} spacing={8} treeType="mixed" />
+      <TreeRow startPosition={[-5, 0, 5]} count={6} spacing={8} treeType="cone" seed={300} />
+      <TreeRow startPosition={[55, 0, 5]} count={5} spacing={8} treeType="mixed" seed={400} />
       
       {/* Trees at back */}
-      <TreeRow startPosition={[5, 0, 50]} count={8} spacing={6} treeType="mixed" />
+      <TreeRow startPosition={[5, 0, 50]} count={8} spacing={6} treeType="mixed" seed={500} />
       
       {/* Individual accent trees */}
-      <RoundTree position={[-10, 0, 25]} scale={1.2} />
-      <Tree position={[60, 0, 25]} scale={1.3} />
-      <RoundTree position={[-8, 0, 40]} scale={1.0} />
+      <RoundTree position={[-10, 0, 25]} scale={1.2} colorIndex={0} />
+      <Tree position={[60, 0, 25]} scale={1.3} colorIndex={2} />
+      <RoundTree position={[-8, 0, 40]} scale={1.0} colorIndex={3} />
       
       {/* Car park in front of building */}
-      <CarPark position={[5, 0, -20]} rows={2} spotsPerRow={8} />
+      <CarPark position={[5, 0, -20]} rows={2} spotsPerRow={8} seed={1000} />
       
       {/* Secondary smaller parking area */}
-      <CarPark position={[50, 0, -15]} rows={1} spotsPerRow={4} />
+      <CarPark position={[50, 0, -15]} rows={1} spotsPerRow={4} seed={2000} />
       
       {/* Entrance road/driveway */}
       <Box args={[8, 0.05, 15]} position={[25, 0, -12]}>
