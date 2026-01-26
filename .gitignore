@@ -1,0 +1,144 @@
+# =====================================
+# HVAC Digital Twin - .gitignore
+# =====================================
+
+# ----- Dependencies -----
+node_modules/
+.pnp/
+.pnp.js
+
+# ----- Build outputs -----
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# ----- Environment files -----
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+
+# ----- IDE and Editor files -----
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# ----- OS generated files -----
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ----- Logs -----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ----- Testing -----
+coverage/
+.nyc_output/
+*.lcov
+.jest/
+
+# ----- Debug -----
+*.map
+
+# ----- Runtime data -----
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ----- Cache -----
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+*.tscache
+.node_repl_history
+
+# ----- Package manager -----
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnpm-store/
+
+# ----- Temporary files -----
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ----- Local configuration -----
+local.settings.json
+.localrc
+
+# ----- Secrets (never commit!) -----
+*.pem
+*.key
+*.cert
+*.p12
+secrets/
+.secrets/
+
+# ----- API Keys -----
+.api_keys
+api_keys.json
+
+# ----- Blender -----
+*.blend1
+*.blend2
+__pycache__/
+*.pyc
+
+# ----- Documentation build -----
+docs/_build/
+site/
+
+# ----- Twin state snapshots (dynamic) -----
+twin/*.state.snapshot.json
+twin/snapshots/
+
+# ----- Test artifacts -----
+test-results/
+playwright-report/
+screenshots/
+
+# ----- Foundry Local -----
+.foundry/
+foundry-local/
+
+# ----- Optional: Generated assets -----
+# Uncomment if you want to exclude generated GLB files
+# assets/*.glb
+
+# ----- Optional: Large binary files -----
+# Consider using Git LFS for these
+# *.glb
+# *.fbx
+# *.blend

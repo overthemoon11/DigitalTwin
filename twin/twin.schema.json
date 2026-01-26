@@ -1,0 +1,166 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/hvac-digital-twin.schema.json",
+  "title": "HVAC Digital Twin Schema",
+  "description": "Schema for Smart Building HVAC Digital Twin - RealEstateCore-inspired modeling",
+  "type": "object",
+  "required": ["metadata", "assets", "relationships", "telemetry", "controls", "kpis", "alerts"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id", "name", "version", "lastUpdated"],
+      "properties": {
+        "id": { "type": "string", "description": "Unique twin instance identifier" },
+        "name": { "type": "string", "description": "Human-readable building name" },
+        "version": { "type": "string", "description": "Schema version" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "simulationTime": { "type": "string", "format": "date-time" },
+        "timeStep": { "type": "number", "description": "Simulation time step in seconds", "default": 60 }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "description": "All physical and logical assets in the building",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "name"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "type": { "type": "string", "enum": ["building", "floor", "zone", "ahu", "vav", "chiller", "boiler", "pump", "coolingTower", "duct", "pipe", "sensor", "damper", "valve", "fan", "coil", "filter"] },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "parentId": { "type": "string", "description": "Parent asset ID for hierarchy" },
+          "pose": {
+            "type": "object",
+            "properties": {
+              "position": { "type": "object", "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } } },
+              "rotation": { "type": "object", "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } } },
+              "scale": { "type": "object", "properties": { "x": { "type": "number", "default": 1 }, "y": { "type": "number", "default": 1 }, "z": { "type": "number", "default": 1 } } }
+            }
+          },
+          "meshId": { "type": "string", "description": "GLB mesh name for 3D binding" },
+          "properties": { "type": "object", "additionalProperties": true },
+          "thresholds": { "type": "object", "properties": { "lowWarning": { "type": "number" }, "lowAlarm": { "type": "number" }, "highWarning": { "type": "number" }, "highAlarm": { "type": "number" } } },
+          "status": { "type": "string", "enum": ["normal", "warning", "alarm", "offline", "maintenance"], "default": "normal" },
+          "enabled": { "type": "boolean", "default": true }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "sourceId", "targetId", "relType"],
+        "properties": {
+          "id": { "type": "string" },
+          "sourceId": { "type": "string" },
+          "targetId": { "type": "string" },
+          "relType": { "type": "string", "enum": ["serves", "feeds", "locatedIn", "measures", "connectedTo", "controls", "contains", "partOf"] }
+        }
+      }
+    },
+    "telemetry": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "assetId", "pointType", "value", "unit", "timestamp"],
+        "properties": {
+          "id": { "type": "string" },
+          "assetId": { "type": "string" },
+          "pointType": { "type": "string", "enum": ["temperature", "humidity", "co2", "pressure", "flow", "power", "energy", "speed", "position", "occupancy", "supplyAirTemp", "returnAirTemp", "mixedAirTemp", "supplyAirFlow", "staticPressure", "differentialPressure", "valvePosition", "damperPosition", "fanSpeed", "chillerLoad", "boilerLoad", "pumpSpeed", "filterDp", "vibration", "runStatus"] },
+          "value": { "type": "number" },
+          "unit": { "type": "string" },
+          "quality": { "type": "string", "enum": ["good", "uncertain", "bad"], "default": "good" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "history": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "number" }, "timestamp": { "type": "string" } } } }
+        }
+      }
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "assetId", "controlType", "value"],
+        "properties": {
+          "id": { "type": "string" },
+          "assetId": { "type": "string" },
+          "controlType": { "type": "string", "enum": ["coolingSetpoint", "heatingSetpoint", "humiditySetpoint", "supplyAirTempSetpoint", "staticPressureSetpoint", "damperPositionOverride", "valvePositionOverride", "fanSpeedOverride", "occupancySchedule", "operatingMode", "demandResponseLevel", "ventilationMode", "economizer"] },
+          "value": { "oneOf": [{ "type": "number" }, { "type": "string" }, { "type": "boolean" }, { "type": "null" }] },
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "step": { "type": "number" },
+          "unit": { "type": "string" },
+          "mode": { "type": "string", "enum": ["auto", "manual", "override"], "default": "auto" }
+        }
+      }
+    },
+    "kpis": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "value", "unit"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "category": { "type": "string", "enum": ["energy", "comfort", "iaq", "operational", "cost"] },
+          "value": { "type": "number" },
+          "unit": { "type": "string" },
+          "target": { "type": "number" },
+          "trend": { "type": "string", "enum": ["improving", "stable", "degrading"] },
+          "status": { "type": "string", "enum": ["good", "warning", "critical"] },
+          "formula": { "type": "string" },
+          "inputs": { "type": "array", "items": { "type": "string" } },
+          "history": { "type": "array", "items": { "type": "object", "properties": { "value": { "type": "number" }, "timestamp": { "type": "string" } } } }
+        }
+      }
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "assetId", "message", "timestamp"],
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+          "assetId": { "type": "string" },
+          "message": { "type": "string" },
+          "cause": { "type": "string" },
+          "ruleId": { "type": "string" },
+          "recommendedAction": { "type": "string" },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "acknowledged": { "type": "boolean", "default": false },
+          "resolved": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "faultRules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "condition"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "condition": { "type": "string" },
+          "severity": { "type": "string", "enum": ["info", "warning", "critical"] },
+          "category": { "type": "string" },
+          "recommendedAction": { "type": "string" },
+          "enabled": { "type": "boolean", "default": true }
+        }
+      }
+    },
+    "simulatorState": {
+      "type": "object",
+      "properties": {
+        "outdoorTemp": { "type": "number" },
+        "outdoorHumidity": { "type": "number" },
+        "solarLoad": { "type": "number" },
+        "timeOfDay": { "type": "number" },
+        "dayOfWeek": { "type": "integer" },
+        "demandResponseActive": { "type": "boolean" },
+        "demandResponseLevel": { "type": "number" }
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Smart Building HVAC Digital Twin - Interactive 3D visualization with AI-powered operations assistance" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <title>HVAC Digital Twin</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1a1a2e;
+        color: #e8e8e8;
+      }
+      #root { width: 100vw; height: 100vh; overflow: hidden; }
+      /* Initial loading state */
+      .app-loader {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #1a1a2e;
+      }
+      .app-loader svg {
+        width: 64px;
+        height: 64px;
+        animation: pulse 2s ease-in-out infinite;
+      }
+      .app-loader p {
+        margin-top: 1rem;
+        color: #a0a0a0;
+        font-size: 0.9rem;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 0.5; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="app-loader">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3282b8" stroke-width="2">
+          <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+          <path d="M9 22v-4h6v4" />
+          <path d="M8 6h.01M16 6h.01M12 6h.01M8 10h.01M16 10h.01M12 10h.01M8 14h.01M16 14h.01M12 14h.01" />
+        </svg>
+        <p>Loading Digital Twin...</p>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

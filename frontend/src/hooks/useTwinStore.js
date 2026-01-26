@@ -1,0 +1,168 @@
+import { create } from 'zustand';
+
+const API_BASE = '/api';
+
+export const useTwinStore = create((set, get) => ({
+  twinState: null,
+  selectedAsset: null,
+  isConnected: false,
+  ws: null,
+  conversationHistory: [],
+
+  loadTwinState: async () => {
+    try {
+      const response = await fetch(`${API_BASE}/twin`);
+      const data = await response.json();
+      set({ twinState: data, isConnected: true });
+      
+      // Setup WebSocket connection
+      get().connectWebSocket();
+    } catch (err) {
+      console.error('Failed to load twin state:', err);
+      set({ isConnected: false });
+    }
+  },
+
+  connectWebSocket: () => {
+    const wsUrl = `ws://${window.location.hostname}:3001/ws`;
+    const ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      set({ isConnected: true, ws });
+    };
+    
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.type === 'state' || message.type === 'update') {
+        set({ twinState: message.data?.state || message.data });
+      }
+    };
+    
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      set({ isConnected: false, ws: null });
+      // Reconnect after delay
+      setTimeout(() => get().connectWebSocket(), 3000);
+    };
+    
+    ws.onerror = (err) => {
+      console.error('WebSocket error:', err);
+    };
+  },
+
+  selectAsset: (assetId) => {
+    set({ selectedAsset: assetId });
+  },
+
+  updateControl: async (controlId, value) => {
+    try {
+      const response = await fetch(`${API_BASE}/twin/controls/${controlId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value }),
+      });
+      const result = await response.json();
+      
+      // Reload state
+      get().loadTwinState();
+      return result;
+    } catch (err) {
+      console.error('Failed to update control:', err);
+      throw err;
+    }
+  },
+
+  runSimulation: async (timeStep = 60) => {
+    try {
+      const response = await fetch(`${API_BASE}/twin/simulate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeStep }),
+      });
+      const result = await response.json();
+      get().loadTwinState();
+      return result;
+    } catch (err) {
+      console.error('Failed to run simulation:', err);
+      throw err;
+    }
+  },
+
+  resetTwin: async () => {
+    try {
+      const response = await fetch(`${API_BASE}/twin/reset`, {
+        method: 'POST',
+      });
+      const result = await response.json();
+      get().loadTwinState();
+      return result;
+    } catch (err) {
+      console.error('Failed to reset twin:', err);
+      throw err;
+    }
+  },
+
+  applyFault: async (faultType, params) => {
+    try {
+      const response = await fetch(`${API_BASE}/twin/fault`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faultType, params }),
+      });
+      const result = await response.json();
+      get().loadTwinState();
+      return result;
+    } catch (err) {
+      console.error('Failed to apply fault:', err);
+      throw err;
+    }
+  },
+
+  acknowledgeAlert: async (alertId) => {
+    try {
+      const response = await fetch(`${API_BASE}/twin/alerts/${alertId}/acknowledge`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: 'operator' }),
+      });
+      const result = await response.json();
+      get().loadTwinState();
+      return result;
+    } catch (err) {
+      console.error('Failed to acknowledge alert:', err);
+      throw err;
+    }
+  },
+
+  sendCopilotMessage: async (message) => {
+    const { conversationHistory } = get();
+    
+    try {
+      const response = await fetch(`${API_BASE}/copilot/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, conversationHistory }),
+      });
+      const result = await response.json();
+      
+      // Update conversation history
+      set({
+        conversationHistory: [
+          ...conversationHistory,
+          { role: 'user', content: message },
+          { role: 'assistant', content: result.response },
+        ],
+      });
+      
+      return result;
+    } catch (err) {
+      console.error('Copilot error:', err);
+      throw err;
+    }
+  },
+
+  clearConversation: () => {
+    set({ conversationHistory: [] });
+  },
+}));

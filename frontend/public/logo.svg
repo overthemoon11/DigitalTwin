@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <!-- Logo for HVAC Digital Twin -->
+  
+  <!-- Building icon -->
+  <rect x="10" y="5" width="40" height="50" rx="4" fill="none" stroke="#3282b8" stroke-width="2"/>
+  
+  <!-- Floors -->
+  <line x1="10" y1="21" x2="50" y2="21" stroke="#2a3f5f" stroke-width="1.5"/>
+  <line x1="10" y1="38" x2="50" y2="38" stroke="#2a3f5f" stroke-width="1.5"/>
+  
+  <!-- Zone indicators -->
+  <rect x="14" y="9" width="8" height="8" rx="1" fill="#4caf50" opacity="0.8"/>
+  <rect x="26" y="9" width="8" height="8" rx="1" fill="#44cc44" opacity="0.8"/>
+  <rect x="38" y="9" width="8" height="8" rx="1" fill="#4caf50" opacity="0.8"/>
+  
+  <rect x="14" y="25" width="8" height="8" rx="1" fill="#ff9800" opacity="0.8"/>
+  <rect x="26" y="25" width="8" height="8" rx="1" fill="#4caf50" opacity="0.8"/>
+  <rect x="38" y="25" width="8" height="8" rx="1" fill="#4caf50" opacity="0.8"/>
+  
+  <rect x="14" y="42" width="8" height="8" rx="1" fill="#4caf50" opacity="0.8"/>
+  <rect x="26" y="42" width="8" height="8" rx="1" fill="#3282b8" opacity="0.8"/>
+  <rect x="38" y="42" width="8" height="8" rx="1" fill="#4caf50" opacity="0.8"/>
+  
+  <!-- Text: HVAC -->
+  <text x="65" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" fill="#e8e8e8">HVAC</text>
+  
+  <!-- Text: Digital Twin -->
+  <text x="65" y="48" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="400" fill="#3282b8">Digital Twin</text>
+</svg>

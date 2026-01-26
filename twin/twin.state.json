@@ -1,0 +1,3259 @@
+{
+  "metadata": {
+    "id": "twin-hvac-building-001",
+    "name": "Smart Office Building - HVAC Digital Twin",
+    "version": "1.0.0",
+    "lastUpdated": "2026-01-26T10:44:19.346Z",
+    "simulationTime": "2026-01-26T10:44:19.346Z",
+    "timeStep": 60
+  },
+  "assets": [
+    {
+      "id": "building-001",
+      "type": "building",
+      "name": "Smart Office Building",
+      "description": "3-floor office building with central HVAC",
+      "properties": {
+        "address": "123 Innovation Way",
+        "grossArea": 45000,
+        "areaUnit": "sqft",
+        "yearBuilt": 2020,
+        "floors": 3
+      },
+      "meshId": "Building_Shell",
+      "status": "normal",
+      "enabled": true
+    },
+    {
+      "id": "floor-001",
+      "type": "floor",
+      "name": "Floor 1 - Lobby & Mechanical",
+      "parentId": "building-001",
+      "properties": {
+        "level": 1,
+        "area": 15000,
+        "height": 12
+      },
+      "meshId": "Floor_1",
+      "status": "normal"
+    },
+    {
+      "id": "floor-002",
+      "type": "floor",
+      "name": "Floor 2 - Open Office",
+      "parentId": "building-001",
+      "properties": {
+        "level": 2,
+        "area": 15000,
+        "height": 10
+      },
+      "meshId": "Floor_2",
+      "status": "normal"
+    },
+    {
+      "id": "floor-003",
+      "type": "floor",
+      "name": "Floor 3 - Executive",
+      "parentId": "building-001",
+      "properties": {
+        "level": 3,
+        "area": 15000,
+        "height": 10
+      },
+      "meshId": "Floor_3",
+      "status": "normal"
+    },
+    {
+      "id": "zone-lobby-001",
+      "type": "zone",
+      "name": "Main Lobby",
+      "parentId": "floor-001",
+      "properties": {
+        "area": 3000,
+        "volume": 36000,
+        "occupancyCapacity": 50,
+        "currentOccupancy": 12,
+        "zoneType": "lobby",
+        "thermalMass": 5000,
+        "thermalResistance": 0.15
+      },
+      "meshId": "Zone_Lobby",
+      "pose": {
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "thresholds": {
+        "lowWarning": 68,
+        "lowAlarm": 65,
+        "highWarning": 76,
+        "highAlarm": 80
+      },
+      "status": "normal"
+    },
+    {
+      "id": "zone-mech-001",
+      "type": "zone",
+      "name": "Mechanical Room",
+      "parentId": "floor-001",
+      "properties": {
+        "area": 2000,
+        "volume": 24000,
+        "occupancyCapacity": 5,
+        "currentOccupancy": 0,
+        "zoneType": "mechanical",
+        "thermalMass": 3000,
+        "thermalResistance": 0.1
+      },
+      "meshId": "Zone_Mechanical",
+      "pose": {
+        "position": {
+          "x": 30,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "status": "normal"
+    },
+    {
+      "id": "zone-office-001",
+      "type": "zone",
+      "name": "Open Office - Floor 2",
+      "parentId": "floor-002",
+      "properties": {
+        "area": 10000,
+        "volume": 100000,
+        "occupancyCapacity": 120,
+        "currentOccupancy": 65,
+        "zoneType": "openOffice",
+        "thermalMass": 12000,
+        "thermalResistance": 0.12
+      },
+      "meshId": "Zone_Office_F2",
+      "pose": {
+        "position": {
+          "x": 0,
+          "y": 12,
+          "z": 0
+        }
+      },
+      "thresholds": {
+        "lowWarning": 70,
+        "lowAlarm": 68,
+        "highWarning": 75,
+        "highAlarm": 78
+      },
+      "status": "normal"
+    },
+    {
+      "id": "zone-meeting-001",
+      "type": "zone",
+      "name": "Conference Room A",
+      "parentId": "floor-002",
+      "properties": {
+        "area": 400,
+        "volume": 4000,
+        "occupancyCapacity": 12,
+        "currentOccupancy": 12,
+        "zoneType": "meetingRoom",
+        "thermalMass": 800,
+        "thermalResistance": 0.18
+      },
+      "meshId": "Zone_Meeting_A",
+      "pose": {
+        "position": {
+          "x": 40,
+          "y": 12,
+          "z": 0
+        }
+      },
+      "thresholds": {
+        "lowWarning": 70,
+        "lowAlarm": 68,
+        "highWarning": 75,
+        "highAlarm": 78
+      },
+      "status": "alarm"
+    },
+    {
+      "id": "zone-meeting-002",
+      "type": "zone",
+      "name": "Conference Room B",
+      "parentId": "floor-002",
+      "properties": {
+        "area": 400,
+        "volume": 4000,
+        "occupancyCapacity": 12,
+        "currentOccupancy": 8,
+        "zoneType": "meetingRoom",
+        "thermalMass": 800,
+        "thermalResistance": 0.18
+      },
+      "meshId": "Zone_Meeting_B",
+      "pose": {
+        "position": {
+          "x": 40,
+          "y": 12,
+          "z": 15
+        }
+      },
+      "thresholds": {
+        "lowWarning": 70,
+        "lowAlarm": 68,
+        "highWarning": 75,
+        "highAlarm": 78
+      },
+      "status": "alarm"
+    },
+    {
+      "id": "zone-office-002",
+      "type": "zone",
+      "name": "Open Office - Floor 3",
+      "parentId": "floor-003",
+      "properties": {
+        "area": 8000,
+        "volume": 80000,
+        "occupancyCapacity": 80,
+        "currentOccupancy": 42,
+        "zoneType": "openOffice",
+        "thermalMass": 10000,
+        "thermalResistance": 0.12
+      },
+      "meshId": "Zone_Office_F3",
+      "pose": {
+        "position": {
+          "x": 0,
+          "y": 22,
+          "z": 0
+        }
+      },
+      "thresholds": {
+        "lowWarning": 70,
+        "lowAlarm": 68,
+        "highWarning": 75,
+        "highAlarm": 78
+      },
+      "status": "normal"
+    },
+    {
+      "id": "zone-exec-001",
+      "type": "zone",
+      "name": "Executive Suite",
+      "parentId": "floor-003",
+      "properties": {
+        "area": 2000,
+        "volume": 20000,
+        "occupancyCapacity": 15,
+        "currentOccupancy": 5,
+        "zoneType": "executive",
+        "thermalMass": 3000,
+        "thermalResistance": 0.15
+      },
+      "meshId": "Zone_Executive",
+      "pose": {
+        "position": {
+          "x": 35,
+          "y": 22,
+          "z": 0
+        }
+      },
+      "thresholds": {
+        "lowWarning": 70,
+        "lowAlarm": 68,
+        "highWarning": 74,
+        "highAlarm": 76
+      },
+      "status": "normal"
+    },
+    {
+      "id": "ahu-001",
+      "type": "ahu",
+      "name": "AHU-1 (Floors 1-2)",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "designCfm": 25000,
+        "designStaticPressure": 2.5,
+        "fanMotorHp": 30,
+        "coolingCoilCapacity": 600000,
+        "heatingCoilCapacity": 400000,
+        "filterType": "MERV-13",
+        "economizer": true,
+        "heatRecovery": false
+      },
+      "meshId": "AHU_001",
+      "pose": {
+        "position": {
+          "x": 32,
+          "y": 2,
+          "z": 5
+        }
+      },
+      "status": "normal"
+    },
+    {
+      "id": "ahu-002",
+      "type": "ahu",
+      "name": "AHU-2 (Floor 3)",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "designCfm": 15000,
+        "designStaticPressure": 2,
+        "fanMotorHp": 20,
+        "coolingCoilCapacity": 360000,
+        "heatingCoilCapacity": 240000,
+        "filterType": "MERV-13",
+        "economizer": true,
+        "heatRecovery": false
+      },
+      "meshId": "AHU_002",
+      "pose": {
+        "position": {
+          "x": 32,
+          "y": 2,
+          "z": 15
+        }
+      },
+      "status": "normal"
+    },
+    {
+      "id": "vav-001-01",
+      "type": "vav",
+      "name": "VAV-1-01 (Lobby)",
+      "parentId": "zone-lobby-001",
+      "properties": {
+        "minCfm": 500,
+        "maxCfm": 2500,
+        "reheatCapacity": 50000
+      },
+      "meshId": "VAV_001_01",
+      "status": "normal"
+    },
+    {
+      "id": "vav-002-01",
+      "type": "vav",
+      "name": "VAV-2-01 (Office F2)",
+      "parentId": "zone-office-001",
+      "properties": {
+        "minCfm": 2000,
+        "maxCfm": 8000,
+        "reheatCapacity": 100000
+      },
+      "meshId": "VAV_002_01",
+      "status": "normal"
+    },
+    {
+      "id": "vav-002-02",
+      "type": "vav",
+      "name": "VAV-2-02 (Meeting A)",
+      "parentId": "zone-meeting-001",
+      "properties": {
+        "minCfm": 100,
+        "maxCfm": 600,
+        "reheatCapacity": 15000
+      },
+      "meshId": "VAV_002_02",
+      "status": "normal"
+    },
+    {
+      "id": "vav-002-03",
+      "type": "vav",
+      "name": "VAV-2-03 (Meeting B)",
+      "parentId": "zone-meeting-002",
+      "properties": {
+        "minCfm": 100,
+        "maxCfm": 600,
+        "reheatCapacity": 15000
+      },
+      "meshId": "VAV_002_03",
+      "status": "normal"
+    },
+    {
+      "id": "vav-003-01",
+      "type": "vav",
+      "name": "VAV-3-01 (Office F3)",
+      "parentId": "zone-office-002",
+      "properties": {
+        "minCfm": 1500,
+        "maxCfm": 6000,
+        "reheatCapacity": 80000
+      },
+      "meshId": "VAV_003_01",
+      "status": "normal"
+    },
+    {
+      "id": "vav-003-02",
+      "type": "vav",
+      "name": "VAV-3-02 (Executive)",
+      "parentId": "zone-exec-001",
+      "properties": {
+        "minCfm": 400,
+        "maxCfm": 2000,
+        "reheatCapacity": 40000
+      },
+      "meshId": "VAV_003_02",
+      "status": "normal"
+    },
+    {
+      "id": "chiller-001",
+      "type": "chiller",
+      "name": "Chiller-1 (200 Ton)",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "capacityTons": 200,
+        "designCop": 5.5,
+        "minLoad": 0.2,
+        "maxLoad": 1,
+        "chwSupplyTempDesign": 44,
+        "chwReturnTempDesign": 54
+      },
+      "meshId": "Chiller_001",
+      "pose": {
+        "position": {
+          "x": 35,
+          "y": 0,
+          "z": 10
+        }
+      },
+      "status": "normal"
+    },
+    {
+      "id": "boiler-001",
+      "type": "boiler",
+      "name": "Boiler-1 (2M BTU)",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "capacityBtu": 2000000,
+        "designEfficiency": 0.92,
+        "minLoad": 0.1,
+        "hwSupplyTempDesign": 180,
+        "hwReturnTempDesign": 160
+      },
+      "meshId": "Boiler_001",
+      "pose": {
+        "position": {
+          "x": 38,
+          "y": 0,
+          "z": 10
+        }
+      },
+      "status": "normal"
+    },
+    {
+      "id": "pump-chw-001",
+      "type": "pump",
+      "name": "CHW Pump-1",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "designGpm": 400,
+        "motorHp": 15,
+        "pumpType": "chilledWater"
+      },
+      "meshId": "Pump_CHW_001",
+      "status": "normal"
+    },
+    {
+      "id": "pump-chw-002",
+      "type": "pump",
+      "name": "CHW Pump-2 (Standby)",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "designGpm": 400,
+        "motorHp": 15,
+        "pumpType": "chilledWater"
+      },
+      "meshId": "Pump_CHW_002",
+      "status": "normal",
+      "enabled": false
+    },
+    {
+      "id": "pump-hw-001",
+      "type": "pump",
+      "name": "HW Pump-1",
+      "parentId": "zone-mech-001",
+      "properties": {
+        "designGpm": 200,
+        "motorHp": 7.5,
+        "pumpType": "hotWater"
+      },
+      "meshId": "Pump_HW_001",
+      "status": "normal"
+    },
+    {
+      "id": "filter-ahu-001",
+      "type": "filter",
+      "name": "AHU-1 Filter Bank",
+      "parentId": "ahu-001",
+      "properties": {
+        "filterType": "MERV-13",
+        "loading": 0.8,
+        "maxLoading": 1,
+        "installDate": "2025-09-01"
+      },
+      "meshId": "Filter_AHU_001",
+      "thresholds": {
+        "highWarning": 0.7,
+        "highAlarm": 0.85
+      },
+      "status": "warning"
+    },
+    {
+      "id": "filter-ahu-002",
+      "type": "filter",
+      "name": "AHU-2 Filter Bank",
+      "parentId": "ahu-002",
+      "properties": {
+        "filterType": "MERV-13",
+        "loading": 0.25,
+        "maxLoading": 1,
+        "installDate": "2025-10-15"
+      },
+      "meshId": "Filter_AHU_002",
+      "thresholds": {
+        "highWarning": 0.7,
+        "highAlarm": 0.85
+      },
+      "status": "normal"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-001",
+      "sourceId": "ahu-001",
+      "targetId": "zone-lobby-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-002",
+      "sourceId": "ahu-001",
+      "targetId": "zone-office-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-003",
+      "sourceId": "ahu-001",
+      "targetId": "zone-meeting-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-004",
+      "sourceId": "ahu-001",
+      "targetId": "zone-meeting-002",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-005",
+      "sourceId": "ahu-002",
+      "targetId": "zone-office-002",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-006",
+      "sourceId": "ahu-002",
+      "targetId": "zone-exec-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-007",
+      "sourceId": "chiller-001",
+      "targetId": "ahu-001",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-008",
+      "sourceId": "chiller-001",
+      "targetId": "ahu-002",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-009",
+      "sourceId": "boiler-001",
+      "targetId": "ahu-001",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-010",
+      "sourceId": "boiler-001",
+      "targetId": "ahu-002",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-011",
+      "sourceId": "pump-chw-001",
+      "targetId": "chiller-001",
+      "relType": "connectedTo"
+    },
+    {
+      "id": "rel-012",
+      "sourceId": "pump-hw-001",
+      "targetId": "boiler-001",
+      "relType": "connectedTo"
+    },
+    {
+      "id": "rel-013",
+      "sourceId": "vav-001-01",
+      "targetId": "zone-lobby-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-014",
+      "sourceId": "vav-002-01",
+      "targetId": "zone-office-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-015",
+      "sourceId": "vav-002-02",
+      "targetId": "zone-meeting-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-016",
+      "sourceId": "vav-002-03",
+      "targetId": "zone-meeting-002",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-017",
+      "sourceId": "vav-003-01",
+      "targetId": "zone-office-002",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-018",
+      "sourceId": "vav-003-02",
+      "targetId": "zone-exec-001",
+      "relType": "serves"
+    },
+    {
+      "id": "rel-019",
+      "sourceId": "ahu-001",
+      "targetId": "vav-001-01",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-020",
+      "sourceId": "ahu-001",
+      "targetId": "vav-002-01",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-021",
+      "sourceId": "ahu-001",
+      "targetId": "vav-002-02",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-022",
+      "sourceId": "ahu-001",
+      "targetId": "vav-002-03",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-023",
+      "sourceId": "ahu-002",
+      "targetId": "vav-003-01",
+      "relType": "feeds"
+    },
+    {
+      "id": "rel-024",
+      "sourceId": "ahu-002",
+      "targetId": "vav-003-02",
+      "relType": "feeds"
+    }
+  ],
+  "telemetry": [
+    {
+      "id": "tel-zone-lobby-temp",
+      "assetId": "zone-lobby-001",
+      "pointType": "temperature",
+      "value": 72.5,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-lobby-humidity",
+      "assetId": "zone-lobby-001",
+      "pointType": "humidity",
+      "value": 45,
+      "unit": "%RH",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-lobby-co2",
+      "assetId": "zone-lobby-001",
+      "pointType": "co2",
+      "value": 400,
+      "unit": "ppm",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 520,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 568,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 568,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 568,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 568,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-lobby-occupancy",
+      "assetId": "zone-lobby-001",
+      "pointType": "occupancy",
+      "value": 12,
+      "unit": "people",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-office1-temp",
+      "assetId": "zone-office-001",
+      "pointType": "temperature",
+      "value": 73.2,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-office1-humidity",
+      "assetId": "zone-office-001",
+      "pointType": "humidity",
+      "value": 42,
+      "unit": "%RH",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-office1-co2",
+      "assetId": "zone-office-001",
+      "pointType": "co2",
+      "value": 400,
+      "unit": "ppm",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 680,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 728,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 728,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 728,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 728,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-office1-occupancy",
+      "assetId": "zone-office-001",
+      "pointType": "occupancy",
+      "value": 65,
+      "unit": "people",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-meeting1-temp",
+      "assetId": "zone-meeting-001",
+      "pointType": "temperature",
+      "value": 71.8,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 71,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 71,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 71.1,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 71.2,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 71.3,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 71.4,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 71.6,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 71.7,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-meeting1-humidity",
+      "assetId": "zone-meeting-001",
+      "pointType": "humidity",
+      "value": 44,
+      "unit": "%RH",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-meeting1-co2",
+      "assetId": "zone-meeting-001",
+      "pointType": "co2",
+      "value": 400,
+      "unit": "ppm",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 420,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 1912,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 1912,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 1912,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 1912,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-meeting1-occupancy",
+      "assetId": "zone-meeting-001",
+      "pointType": "occupancy",
+      "value": 12,
+      "unit": "people",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-meeting2-temp",
+      "assetId": "zone-meeting-002",
+      "pointType": "temperature",
+      "value": 73.6,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 74.5,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 74.4,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 74.3,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 74.2,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 74.1,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 74,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 73.9,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 73.8,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 73.7,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-meeting2-humidity",
+      "assetId": "zone-meeting-002",
+      "pointType": "humidity",
+      "value": 48,
+      "unit": "%RH",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-meeting2-co2",
+      "assetId": "zone-meeting-002",
+      "pointType": "co2",
+      "value": 400,
+      "unit": "ppm",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 850,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 1408,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 1408,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 1408,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 1408,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-meeting2-occupancy",
+      "assetId": "zone-meeting-002",
+      "pointType": "occupancy",
+      "value": 8,
+      "unit": "people",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-office2-temp",
+      "assetId": "zone-office-002",
+      "pointType": "temperature",
+      "value": 72.8,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-office2-humidity",
+      "assetId": "zone-office-002",
+      "pointType": "humidity",
+      "value": 43,
+      "unit": "%RH",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-office2-co2",
+      "assetId": "zone-office-002",
+      "pointType": "co2",
+      "value": 400,
+      "unit": "ppm",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 620,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 665,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 665,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 665,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 665,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-office2-occupancy",
+      "assetId": "zone-office-002",
+      "pointType": "occupancy",
+      "value": 42,
+      "unit": "people",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-exec-temp",
+      "assetId": "zone-exec-001",
+      "pointType": "temperature",
+      "value": 71.5,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-exec-humidity",
+      "assetId": "zone-exec-001",
+      "pointType": "humidity",
+      "value": 44,
+      "unit": "%RH",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-zone-exec-co2",
+      "assetId": "zone-exec-001",
+      "pointType": "co2",
+      "value": 400,
+      "unit": "ppm",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 480,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 526,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 526,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 526,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 526,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-zone-exec-occupancy",
+      "assetId": "zone-exec-001",
+      "pointType": "occupancy",
+      "value": 5,
+      "unit": "people",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu1-sat",
+      "assetId": "ahu-001",
+      "pointType": "supplyAirTemp",
+      "value": 55,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu1-rat",
+      "assetId": "ahu-001",
+      "pointType": "returnAirTemp",
+      "value": 74,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu1-mat",
+      "assetId": "ahu-001",
+      "pointType": "mixedAirTemp",
+      "value": 62,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu1-saf",
+      "assetId": "ahu-001",
+      "pointType": "supplyAirFlow",
+      "value": 8015,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 22000,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu1-sp",
+      "assetId": "ahu-001",
+      "pointType": "staticPressure",
+      "value": 0.9,
+      "unit": "inWC",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 2.1,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu1-fanspeed",
+      "assetId": "ahu-001",
+      "pointType": "fanSpeed",
+      "value": 40,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 85,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu1-power",
+      "assetId": "ahu-001",
+      "pointType": "power",
+      "value": 1.8,
+      "unit": "kW",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 18.5,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu1-filterdp",
+      "assetId": "filter-ahu-001",
+      "pointType": "differentialPressure",
+      "value": 0.8,
+      "unit": "inWC",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu2-sat",
+      "assetId": "ahu-002",
+      "pointType": "supplyAirTemp",
+      "value": 55,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu2-rat",
+      "assetId": "ahu-002",
+      "pointType": "returnAirTemp",
+      "value": 73,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-ahu2-saf",
+      "assetId": "ahu-002",
+      "pointType": "supplyAirFlow",
+      "value": 5180,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 12000,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu2-sp",
+      "assetId": "ahu-002",
+      "pointType": "staticPressure",
+      "value": 0.8,
+      "unit": "inWC",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu2-fanspeed",
+      "assetId": "ahu-002",
+      "pointType": "fanSpeed",
+      "value": 37,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 78,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-ahu2-power",
+      "assetId": "ahu-002",
+      "pointType": "power",
+      "value": 0.8,
+      "unit": "kW",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 11.2,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-vav-001-01-damper",
+      "assetId": "vav-001-01",
+      "pointType": "damperPosition",
+      "value": 65,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-001-01-flow",
+      "assetId": "vav-001-01",
+      "pointType": "flow",
+      "value": 1625,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-002-01-damper",
+      "assetId": "vav-002-01",
+      "pointType": "damperPosition",
+      "value": 72,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-002-01-flow",
+      "assetId": "vav-002-01",
+      "pointType": "flow",
+      "value": 5760,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-002-02-damper",
+      "assetId": "vav-002-02",
+      "pointType": "damperPosition",
+      "value": 25,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-002-02-flow",
+      "assetId": "vav-002-02",
+      "pointType": "flow",
+      "value": 150,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-002-03-damper",
+      "assetId": "vav-002-03",
+      "pointType": "damperPosition",
+      "value": 80,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-002-03-flow",
+      "assetId": "vav-002-03",
+      "pointType": "flow",
+      "value": 480,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-003-01-damper",
+      "assetId": "vav-003-01",
+      "pointType": "damperPosition",
+      "value": 68,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-003-01-flow",
+      "assetId": "vav-003-01",
+      "pointType": "flow",
+      "value": 4080,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-003-02-damper",
+      "assetId": "vav-003-02",
+      "pointType": "damperPosition",
+      "value": 55,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-vav-003-02-flow",
+      "assetId": "vav-003-02",
+      "pointType": "flow",
+      "value": 1100,
+      "unit": "CFM",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-chiller-load",
+      "assetId": "chiller-001",
+      "pointType": "chillerLoad",
+      "value": 0.2,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 0.62,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-chiller-power",
+      "assetId": "chiller-001",
+      "pointType": "power",
+      "value": 16,
+      "unit": "kW",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 135,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-chiller-chwst",
+      "assetId": "chiller-001",
+      "pointType": "supplyAirTemp",
+      "value": 44.2,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-chiller-chwrt",
+      "assetId": "chiller-001",
+      "pointType": "returnAirTemp",
+      "value": 53.8,
+      "unit": "°F",
+      "quality": "good",
+      "timestamp": "2026-01-26T09:00:00Z",
+      "history": []
+    },
+    {
+      "id": "tel-boiler-load",
+      "assetId": "boiler-001",
+      "pointType": "boilerLoad",
+      "value": 0.15,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-boiler-power",
+      "assetId": "boiler-001",
+      "pointType": "power",
+      "value": 8.5,
+      "unit": "kW",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-pump-chw-speed",
+      "assetId": "pump-chw-001",
+      "pointType": "pumpSpeed",
+      "value": 51,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 72,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-pump-chw-power",
+      "assetId": "pump-chw-001",
+      "pointType": "power",
+      "value": 1.5,
+      "unit": "kW",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 6.8,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-pump-hw-speed",
+      "assetId": "pump-hw-001",
+      "pointType": "pumpSpeed",
+      "value": 36,
+      "unit": "%",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 45,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    },
+    {
+      "id": "tel-pump-hw-power",
+      "assetId": "pump-hw-001",
+      "pointType": "power",
+      "value": 0.3,
+      "unit": "kW",
+      "quality": "good",
+      "timestamp": "2026-01-26T10:44:19.346Z",
+      "history": [
+        {
+          "value": 1.2,
+          "timestamp": "2026-01-26T09:00:00Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "id": "ctrl-zone-lobby-cooling-sp",
+      "assetId": "zone-lobby-001",
+      "controlType": "coolingSetpoint",
+      "value": 74,
+      "min": 68,
+      "max": 80,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-lobby-heating-sp",
+      "assetId": "zone-lobby-001",
+      "controlType": "heatingSetpoint",
+      "value": 70,
+      "min": 60,
+      "max": 75,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-office1-cooling-sp",
+      "assetId": "zone-office-001",
+      "controlType": "coolingSetpoint",
+      "value": 74,
+      "min": 68,
+      "max": 80,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-office1-heating-sp",
+      "assetId": "zone-office-001",
+      "controlType": "heatingSetpoint",
+      "value": 70,
+      "min": 60,
+      "max": 75,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-meeting1-cooling-sp",
+      "assetId": "zone-meeting-001",
+      "controlType": "coolingSetpoint",
+      "value": 72,
+      "min": 68,
+      "max": 78,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-meeting1-heating-sp",
+      "assetId": "zone-meeting-001",
+      "controlType": "heatingSetpoint",
+      "value": 70,
+      "min": 65,
+      "max": 75,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-meeting2-cooling-sp",
+      "assetId": "zone-meeting-002",
+      "controlType": "coolingSetpoint",
+      "value": 72,
+      "min": 68,
+      "max": 78,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-meeting2-heating-sp",
+      "assetId": "zone-meeting-002",
+      "controlType": "heatingSetpoint",
+      "value": 70,
+      "min": 65,
+      "max": 75,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-office2-cooling-sp",
+      "assetId": "zone-office-002",
+      "controlType": "coolingSetpoint",
+      "value": 74,
+      "min": 68,
+      "max": 80,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-office2-heating-sp",
+      "assetId": "zone-office-002",
+      "controlType": "heatingSetpoint",
+      "value": 70,
+      "min": 60,
+      "max": 75,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-exec-cooling-sp",
+      "assetId": "zone-exec-001",
+      "controlType": "coolingSetpoint",
+      "value": 72,
+      "min": 68,
+      "max": 76,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-zone-exec-heating-sp",
+      "assetId": "zone-exec-001",
+      "controlType": "heatingSetpoint",
+      "value": 70,
+      "min": 65,
+      "max": 74,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-ahu1-sat-sp",
+      "assetId": "ahu-001",
+      "controlType": "supplyAirTempSetpoint",
+      "value": 55,
+      "min": 50,
+      "max": 65,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-ahu1-sp-sp",
+      "assetId": "ahu-001",
+      "controlType": "staticPressureSetpoint",
+      "value": 2,
+      "min": 0.5,
+      "max": 3,
+      "step": 0.1,
+      "unit": "inWC",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-ahu2-sat-sp",
+      "assetId": "ahu-002",
+      "controlType": "supplyAirTempSetpoint",
+      "value": 55,
+      "min": 50,
+      "max": 65,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-ahu2-sp-sp",
+      "assetId": "ahu-002",
+      "controlType": "staticPressureSetpoint",
+      "value": 1.8,
+      "min": 0.5,
+      "max": 2.5,
+      "step": 0.1,
+      "unit": "inWC",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-vav-002-03-damper",
+      "assetId": "vav-002-03",
+      "controlType": "damperPositionOverride",
+      "value": null,
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-chiller-chwst-sp",
+      "assetId": "chiller-001",
+      "controlType": "supplyAirTempSetpoint",
+      "value": 44,
+      "min": 40,
+      "max": 50,
+      "step": 1,
+      "unit": "°F",
+      "mode": "auto"
+    },
+    {
+      "id": "ctrl-dr-level",
+      "assetId": "building-001",
+      "controlType": "demandResponseLevel",
+      "value": 0,
+      "min": 0,
+      "max": 3,
+      "step": 1,
+      "unit": "level",
+      "mode": "auto"
+    }
+  ],
+  "kpis": [
+    {
+      "id": "kpi-total-power",
+      "name": "Total HVAC Power",
+      "category": "energy",
+      "value": 28.9,
+      "unit": "kW",
+      "target": 200,
+      "trend": "stable",
+      "status": "good",
+      "formula": "SUM(ahu-001.power, ahu-002.power, chiller-001.power, boiler-001.power, pump-chw-001.power, pump-hw-001.power)",
+      "inputs": [
+        "tel-ahu1-power",
+        "tel-ahu2-power",
+        "tel-chiller-power",
+        "tel-boiler-power",
+        "tel-pump-chw-power",
+        "tel-pump-hw-power"
+      ],
+      "history": [
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-daily-energy",
+      "name": "Estimated Daily Energy",
+      "category": "energy",
+      "value": 693.6,
+      "unit": "kWh",
+      "target": 4800,
+      "trend": "stable",
+      "status": "good",
+      "formula": "kpi-total-power.value * 24",
+      "inputs": [
+        "kpi-total-power"
+      ],
+      "history": [
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-energy-cost",
+      "name": "Estimated Daily Cost",
+      "category": "cost",
+      "value": 83.23,
+      "unit": "$",
+      "target": 600,
+      "trend": "stable",
+      "status": "good",
+      "formula": "kpi-daily-energy.value * 0.12",
+      "inputs": [
+        "kpi-daily-energy"
+      ],
+      "history": [
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-avg-temp-deviation",
+      "name": "Avg Temperature Deviation",
+      "category": "comfort",
+      "value": 1,
+      "unit": "°F",
+      "target": 1,
+      "trend": "stable",
+      "status": "good",
+      "formula": "AVG(ABS(zone.temp - zone.setpoint)) for all zones",
+      "inputs": [
+        "tel-zone-lobby-temp",
+        "tel-zone-office1-temp",
+        "tel-zone-meeting1-temp",
+        "tel-zone-meeting2-temp",
+        "tel-zone-office2-temp",
+        "tel-zone-exec-temp"
+      ],
+      "history": [
+        {
+          "value": 1.2,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 1.2,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 1.2,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 1.1,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 1.1,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 1.1,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 1,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 1,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 1,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-comfort-compliance",
+      "name": "Comfort Compliance",
+      "category": "comfort",
+      "value": 100,
+      "unit": "%",
+      "target": 90,
+      "trend": "stable",
+      "status": "good",
+      "formula": "% of zones within setpoint +/- 2F",
+      "inputs": [
+        "tel-zone-lobby-temp",
+        "tel-zone-office1-temp",
+        "tel-zone-meeting1-temp",
+        "tel-zone-meeting2-temp",
+        "tel-zone-office2-temp",
+        "tel-zone-exec-temp"
+      ],
+      "history": [
+        {
+          "value": 83,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 83,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 83,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 83,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-avg-co2",
+      "name": "Average CO2 Level",
+      "category": "iaq",
+      "value": 400,
+      "unit": "ppm",
+      "target": 800,
+      "trend": "improving",
+      "status": "critical",
+      "formula": "AVG(zone.co2) for all occupied zones",
+      "inputs": [
+        "tel-zone-lobby-co2",
+        "tel-zone-office1-co2",
+        "tel-zone-meeting1-co2",
+        "tel-zone-meeting2-co2",
+        "tel-zone-office2-co2",
+        "tel-zone-exec-co2"
+      ],
+      "history": [
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 968,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 968,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 968,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 968,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-iaq-compliance",
+      "name": "IAQ Compliance",
+      "category": "iaq",
+      "value": 100,
+      "unit": "%",
+      "target": 90,
+      "trend": "degrading",
+      "status": "good",
+      "formula": "% of zones with CO2 < 800 ppm",
+      "inputs": [
+        "tel-zone-lobby-co2",
+        "tel-zone-office1-co2",
+        "tel-zone-meeting1-co2",
+        "tel-zone-meeting2-co2",
+        "tel-zone-office2-co2",
+        "tel-zone-exec-co2"
+      ],
+      "history": [
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 67,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 67,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 67,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 67,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-ventilation-adequacy",
+      "name": "Ventilation Adequacy",
+      "category": "iaq",
+      "value": 92,
+      "unit": "%",
+      "target": 95,
+      "trend": "stable",
+      "status": "warning",
+      "formula": "% of zones meeting ASHRAE 62.1 minimum OA requirements",
+      "inputs": [
+        "tel-vav-001-01-flow",
+        "tel-vav-002-01-flow",
+        "tel-vav-002-02-flow",
+        "tel-vav-002-03-flow",
+        "tel-vav-003-01-flow",
+        "tel-vav-003-02-flow"
+      ],
+      "history": []
+    },
+    {
+      "id": "kpi-filter-life-ahu1",
+      "name": "AHU-1 Filter Life Remaining",
+      "category": "operational",
+      "value": 20,
+      "unit": "%",
+      "target": 50,
+      "trend": "stable",
+      "status": "critical",
+      "formula": "100 - (filter.loading * 100)",
+      "inputs": [
+        "filter-ahu-001.properties.loading"
+      ],
+      "history": [
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    },
+    {
+      "id": "kpi-chiller-efficiency",
+      "name": "Chiller Efficiency (COP)",
+      "category": "operational",
+      "value": 8.8,
+      "unit": "COP",
+      "target": 5,
+      "trend": "stable",
+      "status": "good",
+      "formula": "cooling_load / power_input",
+      "inputs": [
+        "tel-chiller-load",
+        "tel-chiller-power"
+      ],
+      "history": [
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:39:05.709Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:39:10.635Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:02.870Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:07.162Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:08.577Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:11.349Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:13.187Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:17.169Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-01-26T10:44:19.346Z"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-001",
+      "severity": "warning",
+      "assetId": "zone-meeting-002",
+      "message": "CO2 level elevated (850 ppm) in Conference Room B",
+      "cause": "High occupancy (8 people) with ventilation not fully compensating",
+      "ruleId": "rule-co2-high",
+      "recommendedAction": "Increase VAV damper position or reduce occupancy",
+      "timestamp": "2026-01-26T08:55:00Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:39:05.709Z"
+    },
+    {
+      "id": "alert-1769423945709-q52n76b36",
+      "severity": "warning",
+      "assetId": "filter-ahu-001",
+      "message": "AHU-1 Filter Bank approaching end of life (80%)",
+      "cause": "Filter loading above maintenance threshold",
+      "ruleId": "rule-filter-loading",
+      "recommendedAction": "Schedule filter replacement within 2 weeks",
+      "timestamp": "2026-01-26T10:39:05.709Z",
+      "acknowledged": true,
+      "resolved": false,
+      "acknowledgedAt": "2026-01-26T10:39:14.488Z",
+      "acknowledgedBy": "operator"
+    },
+    {
+      "id": "alert-1769423950635-51opuzjpr",
+      "severity": "critical",
+      "assetId": "zone-meeting-001",
+      "message": "Critical CO2 level (1912 ppm) in Conference Room A",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:39:10.635Z",
+      "acknowledged": true,
+      "resolved": true,
+      "acknowledgedAt": "2026-01-26T10:39:16.448Z",
+      "acknowledgedBy": "operator",
+      "resolvedAt": "2026-01-26T10:44:02.870Z"
+    },
+    {
+      "id": "alert-1769423950635-4qaya9iw8",
+      "severity": "critical",
+      "assetId": "zone-meeting-002",
+      "message": "Critical CO2 level (1408 ppm) in Conference Room B",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:39:10.635Z",
+      "acknowledged": true,
+      "resolved": true,
+      "acknowledgedAt": "2026-01-26T10:39:17.588Z",
+      "acknowledgedBy": "operator",
+      "resolvedAt": "2026-01-26T10:44:02.870Z"
+    },
+    {
+      "id": "alert-1769424247162-acomf6x7p",
+      "severity": "critical",
+      "assetId": "zone-meeting-001",
+      "message": "Critical CO2 level (1912 ppm) in Conference Room A",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:44:07.162Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:44:08.577Z"
+    },
+    {
+      "id": "alert-1769424247162-yxux5sffi",
+      "severity": "critical",
+      "assetId": "zone-meeting-002",
+      "message": "Critical CO2 level (1408 ppm) in Conference Room B",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:44:07.162Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:44:08.577Z"
+    },
+    {
+      "id": "alert-1769424251349-hu0nf1nht",
+      "severity": "critical",
+      "assetId": "zone-meeting-001",
+      "message": "Critical CO2 level (1912 ppm) in Conference Room A",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:44:11.349Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:44:13.187Z"
+    },
+    {
+      "id": "alert-1769424251349-788t5d9jt",
+      "severity": "critical",
+      "assetId": "zone-meeting-002",
+      "message": "Critical CO2 level (1408 ppm) in Conference Room B",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:44:11.349Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:44:13.187Z"
+    },
+    {
+      "id": "alert-1769424257170-nmwpz6fgt",
+      "severity": "critical",
+      "assetId": "zone-meeting-001",
+      "message": "Critical CO2 level (1912 ppm) in Conference Room A",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:44:17.169Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:44:19.346Z"
+    },
+    {
+      "id": "alert-1769424257170-xs8houmxp",
+      "severity": "critical",
+      "assetId": "zone-meeting-002",
+      "message": "Critical CO2 level (1408 ppm) in Conference Room B",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-01-26T10:44:17.169Z",
+      "acknowledged": false,
+      "resolved": true,
+      "resolvedAt": "2026-01-26T10:44:19.346Z"
+    }
+  ],
+  "faultRules": [
+    {
+      "id": "rule-co2-high",
+      "name": "High CO2 Level",
+      "description": "Zone CO2 exceeds 800 ppm threshold",
+      "condition": "zone.co2 > 800",
+      "severity": "warning",
+      "category": "iaq",
+      "recommendedAction": "Increase outside air damper or VAV minimum flow",
+      "enabled": true
+    },
+    {
+      "id": "rule-co2-critical",
+      "name": "Critical CO2 Level",
+      "description": "Zone CO2 exceeds 1200 ppm threshold",
+      "condition": "zone.co2 > 1200",
+      "severity": "critical",
+      "category": "iaq",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "enabled": true
+    },
+    {
+      "id": "rule-temp-deviation",
+      "name": "Temperature Deviation",
+      "description": "Zone temp deviates more than 3F from setpoint for 15+ minutes",
+      "condition": "ABS(zone.temp - zone.setpoint) > 3 AND duration > 15min",
+      "severity": "warning",
+      "category": "comfort",
+      "recommendedAction": "Check VAV operation and zone load",
+      "enabled": true
+    },
+    {
+      "id": "rule-filter-loading",
+      "name": "Filter Loading High",
+      "description": "Filter loading exceeds 70% capacity",
+      "condition": "filter.loading > 0.7",
+      "severity": "warning",
+      "category": "operational",
+      "recommendedAction": "Schedule filter replacement within 2 weeks",
+      "enabled": true
+    },
+    {
+      "id": "rule-filter-critical",
+      "name": "Filter Loading Critical",
+      "description": "Filter loading exceeds 85% capacity",
+      "condition": "filter.loading > 0.85",
+      "severity": "critical",
+      "category": "operational",
+      "recommendedAction": "Replace filter immediately",
+      "enabled": true
+    },
+    {
+      "id": "rule-stuck-damper",
+      "name": "Stuck VAV Damper",
+      "description": "VAV damper position unchanged despite load changes",
+      "condition": "damper.position unchanged for 30min AND zone.temp deviation > 2F",
+      "severity": "warning",
+      "category": "operational",
+      "recommendedAction": "Inspect VAV actuator and damper linkage",
+      "enabled": true
+    },
+    {
+      "id": "rule-sensor-drift",
+      "name": "Sensor Drift Detected",
+      "description": "Sensor reading differs significantly from adjacent/reference sensors",
+      "condition": "ABS(sensor.value - reference.value) > threshold",
+      "severity": "warning",
+      "category": "operational",
+      "recommendedAction": "Calibrate or replace sensor",
+      "enabled": true
+    },
+    {
+      "id": "rule-fan-high-power",
+      "name": "Fan Power Anomaly",
+      "description": "Fan power higher than expected for current airflow",
+      "condition": "fan.power > expected_power * 1.15",
+      "severity": "warning",
+      "category": "operational",
+      "recommendedAction": "Check for filter loading, duct obstructions, or fan degradation",
+      "enabled": true
+    }
+  ],
+  "simulatorState": {
+    "outdoorTemp": 85,
+    "outdoorHumidity": 65,
+    "solarLoad": 0.7,
+    "timeOfDay": 9,
+    "dayOfWeek": 1,
+    "demandResponseActive": false,
+    "demandResponseLevel": 0
+  }
+}
