@@ -468,13 +468,17 @@ function Landscape() {
       <Tree position={[32, 0, -36]} scale={1.1} colorIndex={3} />
       <RoundTree position={[65, 0, -36]} scale={1.0} colorIndex={1} />
       
-      {/* Side landscape strips - positioned OUTSIDE building footprint */}
-      {/* Left side - x must be < -10, along building edge */}
-      <TreeRow startPosition={[-15, 0, -8]} count={3} spacing={15} treeType="cone" seed={200} />
-      <TreeRow startPosition={[-15, 0, 32]} count={2} spacing={12} treeType="round" seed={201} />
-      {/* Right side - x must be > 50, along building edge */}
-      <TreeRow startPosition={[55, 0, -8]} count={3} spacing={15} treeType="mixed" seed={250} />
-      <TreeRow startPosition={[55, 0, 32]} count={2} spacing={12} treeType="cone" seed={251} />
+      {/* Side landscape strips - positioned OUTSIDE building footprint (z < -10) */}
+      {/* Left side trees - along left edge only (x < -10) */}
+      <TreeRow startPosition={[-18, 0, -5]} count={1} spacing={1} treeType="cone" seed={200} />
+      <TreeRow startPosition={[-18, 0, 10]} count={1} spacing={1} treeType="round" seed={202} />
+      <TreeRow startPosition={[-18, 0, 25]} count={1} spacing={1} treeType="cone" seed={203} />
+      <TreeRow startPosition={[-15, 0, 35]} count={2} spacing={12} treeType="round" seed={201} />
+      {/* Right side trees - along right edge only (x > 50) */}
+      <TreeRow startPosition={[58, 0, -5]} count={1} spacing={1} treeType="mixed" seed={250} />
+      <TreeRow startPosition={[58, 0, 10]} count={1} spacing={1} treeType="cone" seed={252} />
+      <TreeRow startPosition={[58, 0, 25]} count={1} spacing={1} treeType="round" seed={253} />
+      <TreeRow startPosition={[55, 0, 35]} count={2} spacing={12} treeType="cone" seed={251} />
       
       {/* Back of building landscape */}
       <TreeRow startPosition={[-15, 0, 38]} count={9} spacing={9} treeType="mixed" seed={300} />
@@ -831,7 +835,7 @@ function GLBModel({ assets, telemetry, alerts, selectedAsset, onSelectAsset }) {
   };
   
   return (
-    <group ref={modelRef} onClick={handleClick} rotation={[0, Math.PI, 0]}>
+    <group ref={modelRef} onClick={handleClick}>
       <primitive object={clonedScene} />
       
       {/* Add floating labels and indicators for zones */}
