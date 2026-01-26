@@ -106,17 +106,17 @@ That loop turns the app into more than a visualization — it becomes an operati
 
 ## Screenshots
 
-![App overview](docs/images/app=overview.png)
+![App overview](docs/images/app-overview.png)
 
-![KPIs panel](docs/images/kpi-panel.png)
+![KPI panel](docs/images/kpi-panel.png)
 
 ![Copilot panel](docs/images/copilot-panel.png)
 
-![Mechnical Room](docs/images/mechanical-room.png)
+![Mechanical room](docs/images/mechanical-room.png)
 
-![OpenOffice](docs/images/open%20office.png)
+![Open office](docs/images/open-office.png)
 
-![MainLobby](docs/images/mainlobby.png)
+![Main lobby](docs/images/mainlobby.png)
 
 ## Next steps
 
