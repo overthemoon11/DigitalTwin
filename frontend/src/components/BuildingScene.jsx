@@ -426,20 +426,20 @@ function Landscape() {
       {/* BUILDING PLAZA & ENTRANCE                                        */}
       {/* ================================================================ */}
       
-      {/* Front plaza / entrance courtyard - decorative paving */}
-      <Box args={[50, 0.08, 10]} position={[20, 0.04, -16]}>
+      {/* Front plaza / entrance courtyard - decorative paving, outside building front (z < -10) */}
+      <Box args={[50, 0.08, 10]} position={[20, 0.04, -18]}>
         <meshStandardMaterial color="#9e9e9e" roughness={0.6} />
       </Box>
-      {/* Plaza accent border - outside building front (z < -10) */}
-      <Box args={[52, 0.1, 0.5]} position={[20, 0.05, -12]}>
+      {/* Plaza accent border - well outside building front */}
+      <Box args={[52, 0.1, 0.5]} position={[20, 0.05, -14]}>
         <meshStandardMaterial color="#666666" roughness={0.7} />
       </Box>
-      <Box args={[52, 0.1, 0.5]} position={[20, 0.05, -20.5]}>
+      <Box args={[52, 0.1, 0.5]} position={[20, 0.05, -22]}>
         <meshStandardMaterial color="#666666" roughness={0.7} />
       </Box>
       
       {/* Entrance canopy shadow simulation - outside building front */}
-      <Box args={[12, 0.05, 6]} position={[20, 0.06, -14]}>
+      <Box args={[12, 0.05, 4]} position={[20, 0.06, -14]}>
         <meshStandardMaterial color="#a0a0a0" roughness={0.5} />
       </Box>
       
@@ -447,87 +447,71 @@ function Landscape() {
       {/* LANDSCAPING - Trees and greenery                                 */}
       {/* ================================================================ */}
       
-      {/* Decorative planters at entrance */}
-      <Box args={[3, 0.6, 3]} position={[8, 0.3, -16]}>
-        <meshStandardMaterial color="#5d4037" roughness={0.9} />
-      </Box>
-      <RoundTree position={[8, 0.6, -16]} scale={0.7} colorIndex={0} />
-      
-      <Box args={[3, 0.6, 3]} position={[32, 0.3, -16]}>
-        <meshStandardMaterial color="#5d4037" roughness={0.9} />
-      </Box>
-      <RoundTree position={[32, 0.6, -16]} scale={0.7} colorIndex={1} />
+      {/* Decorative planters at entrance removed to keep lobby frontage clear */}
       
       {/* Tree line along main road (front perimeter) */}
       <TreeRow startPosition={[-35, 0, -65]} count={8} spacing={10} treeType="round" seed={100} />
       <TreeRow startPosition={[45, 0, -65]} count={4} spacing={10} treeType="round" seed={150} />
       
-      {/* Trees at parking lot corners */}
+      {/* Trees at parking lot corners - completely outside building x bounds (-10 to 50) */}
       <RoundTree position={[-28, 0, -36]} scale={1.1} colorIndex={2} />
-      <RoundTree position={[12, 0, -36]} scale={1.0} colorIndex={0} />
-      <Tree position={[32, 0, -36]} scale={1.1} colorIndex={3} />
-      <RoundTree position={[65, 0, -36]} scale={1.0} colorIndex={1} />
+      <RoundTree position={[-20, 0, -36]} scale={1.0} colorIndex={0} />
+      <Tree position={[60, 0, -36]} scale={1.1} colorIndex={3} />
+      <RoundTree position={[72, 0, -36]} scale={1.0} colorIndex={1} />
       
-      {/* Side landscape strips - positioned OUTSIDE building footprint (z < -10) */}
-      {/* Left side trees - along left edge only (x < -10) */}
-      <TreeRow startPosition={[-18, 0, -5]} count={1} spacing={1} treeType="cone" seed={200} />
-      <TreeRow startPosition={[-18, 0, 10]} count={1} spacing={1} treeType="round" seed={202} />
-      <TreeRow startPosition={[-18, 0, 25]} count={1} spacing={1} treeType="cone" seed={203} />
-      <TreeRow startPosition={[-15, 0, 35]} count={2} spacing={12} treeType="round" seed={201} />
-      {/* Right side trees - along right edge only (x > 50) */}
-      <TreeRow startPosition={[58, 0, -5]} count={1} spacing={1} treeType="mixed" seed={250} />
-      <TreeRow startPosition={[58, 0, 10]} count={1} spacing={1} treeType="cone" seed={252} />
-      <TreeRow startPosition={[58, 0, 25]} count={1} spacing={1} treeType="round" seed={253} />
-      <TreeRow startPosition={[55, 0, 35]} count={2} spacing={12} treeType="cone" seed={251} />
+      {/* Side landscape strips - OUTSIDE building footprint (x<-10 or x>50, z<-10 or z>30) */}
+      {/* Left side trees - well behind building (z > 40) */}
+      <TreeRow startPosition={[-20, 0, 50]} count={2} spacing={12} treeType="round" seed={201} />
+      {/* Right side trees - well behind building (z > 40) */}
+      <TreeRow startPosition={[60, 0, 50]} count={2} spacing={12} treeType="cone" seed={251} />
       
-      {/* Back of building landscape */}
-      <TreeRow startPosition={[-15, 0, 38]} count={9} spacing={9} treeType="mixed" seed={300} />
+      {/* Back of building landscape - far behind at z=55 */}
+      <TreeRow startPosition={[-25, 0, 55]} count={4} spacing={12} treeType="mixed" seed={300} />
+      <TreeRow startPosition={[55, 0, 55]} count={3} spacing={12} treeType="mixed" seed={310} />
       
-      {/* Corner feature trees */}
-      <Tree position={[-22, 0, 35]} scale={1.4} colorIndex={2} />
-      <Tree position={[62, 0, 35]} scale={1.3} colorIndex={0} />
-      <RoundTree position={[-22, 0, -30]} scale={1.2} colorIndex={3} />
-      <Tree position={[62, 0, -30]} scale={1.2} colorIndex={1} />
+      {/* Corner feature trees - positioned well outside building bounds */}
+      <Tree position={[-25, 0, 50]} scale={1.4} colorIndex={2} />
+      <Tree position={[70, 0, 50]} scale={1.3} colorIndex={0} />
+      <RoundTree position={[-25, 0, -35]} scale={1.2} colorIndex={3} />
+      <Tree position={[70, 0, -35]} scale={1.2} colorIndex={1} />
       
       {/* ================================================================ */}
       {/* AMENITIES - Benches, lamps, etc.                                 */}
       {/* ================================================================ */}
       
-      {/* Street lamps along driveway */}
-      <StreetLamp position={[10, 0, -30]} />
-      <StreetLamp position={[30, 0, -30]} />
-      <StreetLamp position={[10, 0, -55]} />
-      <StreetLamp position={[30, 0, -55]} />
+      {/* Street lamps along driveway - outside building x range */}
+      <StreetLamp position={[-5, 0, -30]} />
+      <StreetLamp position={[45, 0, -30]} />
+      <StreetLamp position={[-5, 0, -55]} />
+      <StreetLamp position={[45, 0, -55]} />
       
-      {/* Parking lot lamps */}
+      {/* Parking lot lamps - outside building footprint */}
       <StreetLamp position={[-20, 0, -48]} />
-      <StreetLamp position={[5, 0, -48]} />
-      <StreetLamp position={[55, 0, -48]} />
+      <StreetLamp position={[-12, 0, -48]} />
+      <StreetLamp position={[60, 0, -48]} />
       
-      {/* Benches at entrance plaza */}
-      <Bench position={[2, 0, -16]} rotation={Math.PI/2} />
-      <Bench position={[38, 0, -16]} rotation={-Math.PI/2} />
+      {/* Entrance benches removed to keep plaza clear */}
       
       {/* ================================================================ */}
       {/* GRASS ACCENT STRIPS - Between parking and building               */}
       {/* ================================================================ */}
       
-      {/* Left grass strip */}
-      <Box args={[35, 0.15, 8]} position={[-8, 0.08, -32]}>
+      {/* Left grass strip - outside building x range (x < -10) */}
+      <Box args={[25, 0.15, 8]} position={[-22, 0.08, -32]}>
         <meshStandardMaterial color="#3d7a34" roughness={0.95} />
       </Box>
-      {/* Right grass strip */}
-      <Box args={[30, 0.15, 8]} position={[48, 0.08, -32]}>
+      {/* Right grass strip - outside building x range (x > 50) */}
+      <Box args={[25, 0.15, 8]} position={[62, 0.08, -32]}>
         <meshStandardMaterial color="#3d7a34" roughness={0.95} />
       </Box>
       
-      {/* Small shrubs/hedges along grass strips */}
-      {[-22, -15, -8, -1].map((x, i) => (
+      {/* Small shrubs/hedges along grass strips - all outside building x range */}
+      {[-28, -22, -16, -12].map((x, i) => (
         <Sphere key={`hedge-l-${i}`} args={[1, 8, 8]} position={[x, 0.6, -32]}>
           <meshStandardMaterial color="#2d5a27" roughness={0.9} />
         </Sphere>
       ))}
-      {[35, 42, 49, 56].map((x, i) => (
+      {[52, 58, 64, 70].map((x, i) => (
         <Sphere key={`hedge-r-${i}`} args={[1, 8, 8]} position={[x, 0.6, -32]}>
           <meshStandardMaterial color="#2d5a27" roughness={0.9} />
         </Sphere>
@@ -835,7 +819,7 @@ function GLBModel({ assets, telemetry, alerts, selectedAsset, onSelectAsset }) {
   };
   
   return (
-    <group ref={modelRef} onClick={handleClick}>
+    <group ref={modelRef} onClick={handleClick} position={[0, 0, 0]}>
       <primitive object={clonedScene} />
       
       {/* Add floating labels and indicators for zones */}
@@ -922,15 +906,18 @@ function BuildingScene({ assets, telemetry, alerts, selectedAsset, onSelectAsset
         {/* Landscape - grass, roads, trees, and car parks */}
         <Landscape />
         
-        <Suspense fallback={<GLBLoadingFallback />}>
-          <GLBModel
-            assets={assets}
-            telemetry={telemetry}
-            alerts={alerts}
-            selectedAsset={selectedAsset}
-            onSelectAsset={onSelectAsset}
-          />
-        </Suspense>
+        {/* Position GLB model - building centered at x=20, z=10 */}
+        <group position={[20, 0, 10]}>
+          <Suspense fallback={<GLBLoadingFallback />}>
+            <GLBModel
+              assets={assets}
+              telemetry={telemetry}
+              alerts={alerts}
+              selectedAsset={selectedAsset}
+              onSelectAsset={onSelectAsset}
+            />
+          </Suspense>
+        </group>
         
         {/* Subtle grid for scale reference */}
         <gridHelper args={[200, 50, '#3a5a3a', '#2a4a2a']} position={[20, 0.005, -30]} />
