@@ -59,13 +59,14 @@ function App() {
         {/* Center - 3D Viewer */}
         <main className="viewer">
           <Canvas shadows>
-            <PerspectiveCamera makeDefault position={[50, 40, 50]} fov={50} />
+            <PerspectiveCamera makeDefault position={[60, 50, -40]} fov={50} />
             <OrbitControls
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
               minDistance={20}
-              maxDistance={150}
+              maxDistance={200}
+              target={[25, 0, 15]}
             />
             <ambientLight intensity={0.4} />
             <directionalLight position={[50, 50, 25]} intensity={0.8} castShadow />
