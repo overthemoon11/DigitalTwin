@@ -628,7 +628,7 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'phi-3-mini',
+          model: 'phi-3.5-mini',
           messages,
           temperature: 0.7,
           max_tokens: 1024

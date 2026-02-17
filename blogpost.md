@@ -83,7 +83,7 @@ This app uses Foundry Local as a local inference endpoint for copilot responses.
 **Configuration:**
 
 - Endpoint: http://localhost:5272 (FOUNDRY_LOCAL_URL)
-- Model: phi-3-mini (selected for low latency and cost)
+- Model: phi-3.5-mini (selected for low latency and cost)
 - Request settings: temperature 0.7, max_tokens 1024
 
 **Why this model selection:**
