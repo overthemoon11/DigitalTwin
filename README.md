@@ -72,7 +72,7 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 ### Prerequisites
 - Node.js 18+ ([download](https://nodejs.org))
 - Foundry Local (optional, for AI copilot features)
-- Assert that CurrentUser can excute C:\Program Files\nodejs\npm.ps1 without digial signature
+- On Windows (PowerShell), ensure the current user can execute `C:\Program Files\nodejs\npm.ps1` without a digital signature (see tip below).
 > [!TIP]
 > If you get a error like the following:
 > 
