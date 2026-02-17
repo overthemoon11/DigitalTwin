@@ -46,7 +46,7 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Web Frontend (React)                     │
+│                     Web Frontend (React)                    │
 │  ┌──────────┐  ┌──────────────┐  ┌────────────────────────┐ │
 │  │ 3D View  │  │ Asset Tree   │  │ Controls/KPIs/Chat     │ │
 │  │ Three.js │  │              │  │ Copilot Panel          │ │
@@ -54,7 +54,7 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 └─────────────────────────────────────────────────────────────┘
                             │ REST + WebSocket
 ┌─────────────────────────────────────────────────────────────┐
-│                   Backend (Node.js/Express)                  │
+│                   Backend (Node.js/Express)                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
 │  │ Twin Manager │  │    HVAC      │  │  Foundry Local   │   │
 │  │   JSON I/O   │  │  Simulator   │  │   Connector      │   │
@@ -72,6 +72,18 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 ### Prerequisites
 - Node.js 18+ ([download](https://nodejs.org))
 - Foundry Local (optional, for AI copilot features)
+- Assert that CurrentUser can excute C:\Program Files\nodejs\npm.ps1 without digial signature
+> [!TIP]
+> If you get a error like the following:
+> 
+> npm : File C:\Program Files\nodejs\npm.ps1 cannot be loaded. The file C:\Program Files\nodejs\npm.ps1 is not digitally
+> signed. You cannot run this script on the current system. For more information about running scripts and setting
+> execution policy, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+>
+> The please set
+> ```powershell
+> Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+> ```
 
 ### Option A: Manual Startup (Recommended)
 
