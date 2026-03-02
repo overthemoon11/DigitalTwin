@@ -114,4 +114,4 @@ A: Uses simplified RC thermal models and ASHRAE guidelines for CO₂. Suitable f
 A: The architecture supports it - replace the simulator with a BACnet/Modbus connector to poll real sensors.
 
 **Q: What LLM does it use?**
-A: Foundry Local with Phi-3-mini by default, but supports any OpenAI-compatible endpoint.
+A: Foundry Local with Phi-3.5-mini by default, but supports any OpenAI-compatible endpoint.

@@ -130,7 +130,7 @@ To enable AI copilot responses:
 
 ```powershell
 # Install Foundry Local from https://aka.ms/foundry-local
-foundry model run phi-3-mini
+foundry model run phi-3.5-mini
 ```
 
 Foundry Local runs on `http://localhost:5272`. Start the backend and frontend as above.
