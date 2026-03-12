@@ -8,6 +8,7 @@ export const useTwinStore = create((set, get) => ({
   isConnected: false,
   ws: null,
   conversationHistory: [],
+  modelStatus: null, // { status, message, downloadProgress, modelAlias, ready }
 
   loadTwinState: async () => {
     try {
@@ -17,9 +18,22 @@ export const useTwinStore = create((set, get) => ({
       
       // Setup WebSocket connection
       get().connectWebSocket();
+
+      // Fetch initial model status
+      get().fetchModelStatus();
     } catch (err) {
       console.error('Failed to load twin state:', err);
       set({ isConnected: false });
+    }
+  },
+
+  fetchModelStatus: async () => {
+    try {
+      const response = await fetch(`${API_BASE}/model/status`);
+      const data = await response.json();
+      set({ modelStatus: data });
+    } catch (err) {
+      // Model status endpoint may not be available yet
     }
   },
 
@@ -36,6 +50,9 @@ export const useTwinStore = create((set, get) => ({
       const message = JSON.parse(event.data);
       if (message.type === 'state' || message.type === 'update') {
         set({ twinState: message.data?.state || message.data });
+      }
+      if (message.type === 'model_status') {
+        set({ modelStatus: message.data });
       }
     };
     

@@ -1,6 +1,6 @@
 # 3D Assets
 
-This folder contains GLB/glTF files for the building visualization.
+This folder contains GLB/glTF files for the building visualisation.
 
 ## Current Status
 
@@ -11,7 +11,7 @@ The demo is **fully functional** with both procedural geometry and custom GLB as
 - **Favicon & Logo**: Brand assets in `frontend/public/` (favicon.svg, logo.svg)
 - **CSS Styling**: Comprehensive styling in `frontend/src/App.css`
 
-### 3D Visualization
+### 3D Visualisation
 
 #### GLB Model (Complete)
 The building GLB model has been generated using Blender and includes:
@@ -65,12 +65,12 @@ All mesh names in the GLB match the `meshId` field in `twin.state.json`:
 | HW Pump | Pump_HW_001 | Hot water pump |
 | VAV boxes | VAV_001_01, etc. | Variable air volume terminals |
 
-## Customizing the Model
+## Customising the Model
 
 To modify the 3D model:
 
 1. Open `generate_building.py` in a text editor
-2. Modify dimensions, colors, or positions
+2. Modify dimensions, colours, or positions
 3. Re-run the script in Blender
 4. Copy the new `building.glb` to `frontend/public/assets/`
 
@@ -80,4 +80,4 @@ Or use Blender interactively:
 3. Make manual adjustments
 4. Export as GLB to this folder
 
-See `docs/blender-mcp-pipeline.md` for detailed modeling instructions.
+See `docs/blender-mcp-pipeline.md` for detailed modelling instructions.

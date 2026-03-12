@@ -17,7 +17,7 @@ This script walks through a demonstration of the Smart Building HVAC Digital Twi
 
 ### 1. Introduction (30 seconds)
 
-**Say:** "This is a digital twin of a 3-floor office building's HVAC system. The 3D view shows zones colored by temperature - green is comfortable, blue is cool, red is warm."
+**Say:** "This is a digital twin of a 3-floor office building's HVAC system. The 3D view shows zones coloured by temperature - green is comfortable, blue is cool, red is warm."
 
 **Show:**
 - Point to the 3D view and explain the floor layout
@@ -64,11 +64,11 @@ This script walks through a demonstration of the Smart Building HVAC Digital Twi
 3. Show the grounded response citing actual zone data
 4. Alternatively, use a quick prompt like "Recommend actions to save energy"
 
-**Say:** "The copilot analyzes the actual twin state and provides specific, actionable recommendations grounded in the data."
+**Say:** "The copilot analyses the actual twin state and provides specific, actionable recommendations grounded in the data."
 
 ---
 
-### 5. Energy Optimization (30 seconds)
+### 5. Energy Optimisation (30 seconds)
 
 **Say:** "Let's see the energy-comfort tradeoff by adjusting setpoints."
 
@@ -102,7 +102,7 @@ This script walks through a demonstration of the Smart Building HVAC Digital Twi
 - **Single Source of Truth**: All data flows from/to JSON state files
 - **Deterministic Simulation**: Physics-based models, not magic numbers
 - **Grounded AI**: Copilot only cites actual twin data
-- **Real-time Visualization**: 3D view responds to state changes
+- **Real-time Visualisation**: 3D view responds to state changes
 - **Offline Capable**: Works without cloud dependencies (with Foundry Local)
 
 ## Potential Questions

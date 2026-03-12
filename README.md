@@ -1,7 +1,7 @@
 # Smart Building HVAC Digital Twin
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://reactjs.org/)
 [![Three.js](https://img.shields.io/badge/Three.js-r150-black.svg)](https://threejs.org/)
 
@@ -9,7 +9,7 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 - **JSON-based twin state** as the single source of truth
 - **Deterministic HVAC simulator** with physics-based models
 - **AI-powered Operations Copilot** for natural language building control
-- **Interactive 3D visualization** with React + Three.js
+- **Interactive 3D visualisation** with React + Three.js
 - **Comprehensive fault injection** for testing and diagnostics
 - **Real-time controls and KPIs**
 
@@ -17,10 +17,10 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 ## Features
 
 ### 🏢 Building Simulation
-- Multi-zone thermal modeling
+- Multi-zone thermal modelling
 - VAV and AHU simulation
 - Chiller, boiler, and pump dynamics
-- CO2 and air quality modeling
+- CO2 and air quality modelling
 
 ### 🤖 AI Copilot
 - Natural language queries about building status
@@ -44,34 +44,37 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Web Frontend (React)                    │
-│  ┌──────────┐  ┌──────────────┐  ┌────────────────────────┐ │
-│  │ 3D View  │  │ Asset Tree   │  │ Controls/KPIs/Chat     │ │
-│  │ Three.js │  │              │  │ Copilot Panel          │ │
-│  └──────────┘  └──────────────┘  └────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                            │ REST + WebSocket
-┌─────────────────────────────────────────────────────────────┐
-│                   Backend (Node.js/Express)                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
-│  │ Twin Manager │  │    HVAC      │  │  Foundry Local   │   │
-│  │   JSON I/O   │  │  Simulator   │  │   Connector      │   │
-│  └──────────────┘  └──────────────┘  └──────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-           │                                    │
-┌──────────────────────┐          ┌─────────────────────────┐
-│  twin/*.json         │          │ Foundry Local           │
-│  (State files)       │          │ localhost:5272          │
-└──────────────────────┘          └─────────────────────────┘
+```mermaid
+graph TD
+    subgraph Frontend["Web Frontend (React)"]
+        3D["3D View<br/>Three.js"]
+        AT["Asset Tree"]
+        CP["Controls / KPIs / Chat<br/>Copilot Panel"]
+        MSB["Model Status Banner"]
+    end
+
+    subgraph Backend["Backend (Node.js / Express)"]
+        TM["Twin Manager<br/>JSON I/O"]
+        SIM["HVAC<br/>Simulator"]
+        FLS["Foundry Local<br/>SDK Service"]
+    end
+
+    subgraph Data["twin/*.json<br/>(State files)"]
+    end
+
+    subgraph FL["Foundry Local<br/>(on-device inference)"]
+    end
+
+    Frontend -- "REST + WebSocket" --> Backend
+    TM --> Data
+    FLS --> FL
 ```
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 18+ ([download](https://nodejs.org))
-- Foundry Local (optional, for AI copilot features)
+- Node.js 20+ ([download](https://nodejs.org))
+- Foundry Local (optional, for AI copilot features): [install instructions](https://foundrylocal.ai)
 - On Windows (PowerShell), ensure the current user can execute `C:\Program Files\nodejs\npm.ps1` without a digital signature (see tip below).
 > [!TIP]
 > If you get an error like the following:
@@ -138,20 +141,30 @@ The scripts will:
 
 ### Option C: With Foundry Local (AI Features)
 
-To enable AI copilot responses:
+The backend uses the `foundry-local-sdk` npm package to manage AI models on-device. No separate CLI setup is required.
 
+1. Install the SDK (already included in backend dependencies):
+   ```powershell
+   cd backend
+   # Windows
+   npm install --foreground-scripts --winml foundry-local-sdk
+   # macOS / Linux
+   npm install --foreground-scripts foundry-local-sdk
+   ```
+2. Start the backend as above. The SDK will automatically download and load the `phi-3.5-mini` model on first run.
+3. A **model status banner** in the UI shows download progress, loading state, and readiness.
+
+To use a different model, set the `FOUNDRY_MODEL` environment variable before starting:
 ```powershell
-# Install Foundry Local from https://aka.ms/foundry-local
-foundry model run phi-3.5-mini
+$env:FOUNDRY_MODEL = 'qwen2.5-0.5b'
+node src/index.js
 ```
-
-Foundry Local runs on `http://localhost:5272`. Start the backend and frontend as above.
 
 ## Features
 
-### 3D Building Visualization
+### 3D Building Visualisation
 - Interactive 3D view of zones, AHUs, chiller, and boiler
-- Color-coded zones by temperature and CO₂ levels
+- Colour-coded zones by temperature and CO₂ levels
 - Click to select assets and view details
 - Real-time updates as simulation runs
 
@@ -175,7 +188,7 @@ Foundry Local runs on `http://localhost:5272`. Start the backend and frontend as
 ### AI Copilot (Foundry Local)
 - Ask questions about building performance
 - Get grounded explanations citing actual data
-- Receive optimization recommendations
+- Receive optimisation recommendations
 - Falls back to rule-based responses if SLM unavailable
 
 ## API Reference
@@ -207,6 +220,14 @@ GET  /api/twin/explain/:id  - Get explanation for KPI or alert
 ```
 POST /api/copilot/chat      - Send message to AI copilot
 ```
+
+### Model Status
+
+```
+GET  /api/model/status      - Get AI model download/loading status
+```
+
+Model status updates are also pushed via WebSocket (`type: 'model_status'`).
 
 ## Reset Twin State
 
@@ -292,6 +313,7 @@ digitaltwin/
 │   └── package.json
 ├── backend/                # Node.js API server
 │   ├── src/
+│   │   ├── services/       # Foundry Local SDK + copilot service
 │   │   ├── simulator/      # HVAC physics simulator
 │   │   ├── routes/         # API routes
 │   │   └── index.js        # Express server
@@ -348,6 +370,6 @@ P = P_rated × (speed / 100)³ × filter_factor
 COP = COP_design × f(part_load) × f(condenser_temp)
 ```
 
-## License
+## Licence
 
 MIT

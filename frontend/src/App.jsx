@@ -8,6 +8,7 @@ import ControlPanel from './components/ControlPanel';
 import KPIPanel from './components/KPIPanel';
 import AlertPanel from './components/AlertPanel';
 import CopilotChat from './components/CopilotChat';
+import ModelStatusBanner from './components/ModelStatusBanner';
 import './App.css';
 
 function App() {
@@ -41,6 +42,9 @@ function App() {
           </span>
         </div>
       </header>
+
+      {/* Model download / loading status banner */}
+      <ModelStatusBanner />
 
       <div className="main-content">
         {/* Left Panel - Asset Tree */}

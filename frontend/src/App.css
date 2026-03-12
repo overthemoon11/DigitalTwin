@@ -60,6 +60,50 @@
   color: var(--text-muted);
 }
 
+/* Model Status Banner */
+.model-status-banner {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  color: #fff;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+.model-status-banner.downloading {
+  background: #1a365d;
+}
+.model-status-banner.loading {
+  background: #2d3748;
+}
+.model-status-banner.error {
+  background: #742a2a;
+}
+.model-status-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.model-status-icon {
+  font-size: 1rem;
+}
+.model-status-text {
+  flex: 1;
+}
+.model-progress-bar {
+  margin-top: 0.35rem;
+  height: 4px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.model-progress-fill {
+  height: 100%;
+  background: #63b3ed;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
 /* Main Content */
 .main-content {
   display: flex;

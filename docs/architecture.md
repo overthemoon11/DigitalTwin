@@ -4,75 +4,70 @@
 
 The HVAC Digital Twin follows a layered architecture with clear separation of concerns:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         PRESENTATION                             │
-│  React + Three.js Web Application                                │
-│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────────────┐│
-│  │ 3D Scene  │ │Asset Tree │ │ Controls  │ │ Copilot Chat     ││
-│  │ Viewer    │ │ Navigator │ │ KPIs      │ │ (Foundry Local)  ││
-│  └───────────┘ └───────────┘ └───────────┘ └───────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                    REST API + WebSocket
-                              │
-┌─────────────────────────────────────────────────────────────────┐
-│                          API LAYER                               │
-│  Express.js Server (Node.js)                                     │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ Routes: /api/twin, /api/copilot                             ││
-│  │ WebSocket: Real-time state updates                          ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────────┐
-│                        DOMAIN LAYER                              │
-│  ┌──────────────────────┐  ┌──────────────────────────────────┐ │
-│  │   HVAC Simulator     │  │  Foundry Local Connector        │ │
-│  │  - Thermal models    │  │  - System prompt building       │ │
-│  │  - CO₂ mass balance  │  │  - Grounded responses           │ │
-│  │  - Fan power curves  │  │  - Fallback rule-based          │ │
-│  │  - Fault detection   │  │                                  │ │
-│  └──────────────────────┘  └──────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-┌─────────────────────────────────────────────────────────────────┐
-│                        DATA LAYER                                │
-│  JSON Files (twin/*.json)                                        │
-│  ┌────────────────┐ ┌────────────────┐ ┌────────────────────┐   │
-│  │ twin.schema    │ │ twin.baseline  │ │ twin.state         │   │
-│  │ (Structure)    │ │ (Reset state)  │ │ (Live state)       │   │
-│  └────────────────┘ └────────────────┘ └────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph Presentation["PRESENTATION<br/>React + Three.js Web Application"]
+        Scene["3D Scene<br/>Viewer"]
+        Tree["Asset Tree<br/>Navigator"]
+        Ctrl["Controls<br/>KPIs"]
+        Chat["Copilot Chat<br/>(Foundry Local)"]
+    end
+
+    subgraph API["API LAYER<br/>Express.js Server (Node.js)"]
+        Routes["Routes: /api/twin, /api/copilot<br/>WebSocket: Real-time state updates"]
+    end
+
+    subgraph Domain["DOMAIN LAYER"]
+        Sim["HVAC Simulator<br/>- Thermal models<br/>- CO₂ mass balance<br/>- Fan power curves<br/>- Fault detection"]
+        FL["Foundry Local SDK Service<br/>- System prompt building<br/>- Grounded responses<br/>- Fallback rule-based"]
+    end
+
+    subgraph Data["DATA LAYER<br/>JSON Files (twin/*.json)"]
+        Schema["twin.schema<br/>(Structure)"]
+        Baseline["twin.baseline<br/>(Reset state)"]
+        State["twin.state<br/>(Live state)"]
+    end
+
+    Presentation -- "REST API + WebSocket" --> API
+    API --> Domain
+    Domain --> Data
 ```
 
 ## Data Flow
 
 ### 1. State Loading
-```
-Frontend → GET /api/twin → Backend → Read twin.state.json → Response
+```mermaid
+sequenceDiagram
+    Frontend->>Backend: GET /api/twin
+    Backend->>twin.state.json: Read
+    twin.state.json-->>Backend: JSON state
+    Backend-->>Frontend: Response
 ```
 
 ### 2. Control Change
-```
-User adjusts slider
-  → PUT /api/twin/controls/:id
-    → Apply to state
-      → Run simulator.step()
-        → Update telemetry, KPIs, alerts
-          → Save state
-            → WebSocket broadcast
-              → All clients update
+```mermaid
+sequenceDiagram
+    actor User
+    User->>Frontend: Adjust slider
+    Frontend->>Backend: PUT /api/twin/controls/:id
+    Backend->>Backend: Apply to state
+    Backend->>Simulator: simulator.step()
+    Simulator-->>Backend: Updated telemetry, KPIs, alerts
+    Backend->>twin.state.json: Save state
+    Backend->>Frontend: WebSocket broadcast
+    Frontend->>User: All clients update
 ```
 
 ### 3. Copilot Query
-```
-User sends message
-  → POST /api/copilot/chat
-    → Build system prompt with current state
-      → Call Foundry Local API
-        → Response grounded in twin data
-          → Return to frontend
+```mermaid
+sequenceDiagram
+    actor User
+    User->>Frontend: Send message
+    Frontend->>Backend: POST /api/copilot/chat
+    Backend->>Backend: Build system prompt with current state
+    Backend->>Foundry Local: Chat completion
+    Foundry Local-->>Backend: Response grounded in twin data
+    Backend-->>Frontend: Return to frontend
 ```
 
 ## Component Details

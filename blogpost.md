@@ -10,7 +10,7 @@ This post walks through how the DigitalTwin app in this repo is assembled and ho
 
 ## What the app does
 
-At a high level, the app renders a 3D facility, streams telemetry into a live twin graph, and exposes a chat/assistant surface that can summarize current conditions or guide operators to relevant assets. The UI is split into:
+At a high level, the app renders a 3D facility, streams telemetry into a live twin graph, and exposes a chat/assistant surface that can summarise current conditions or guide operators to relevant assets. The UI is split into:
 
 - A 3D viewport with the building scene and assets.
 - An asset tree for exploring the twin graph.
@@ -32,7 +32,7 @@ Key pieces:
 **Rendering details:**
 
 - The building is loaded from a GLB when present; otherwise a procedural fallback draws floors, zone volumes, and HVAC equipment.
-- Zone overlays are derived from live telemetry (temperature/CO₂) to drive color and labels.
+- Zone overlays are derived from live telemetry (temperature/CO₂) to drive colour and labels.
 - Camera/controls are tuned for “campus + building + lots” visibility in one frame.
 
 ### Backend (Node.js)
@@ -51,13 +51,13 @@ The tests/ folder includes API, WebSocket, integration, and validation suites to
 
 ## Digital twins in practice
 
-A digital twin is a structured representation of assets and their relationships, with live telemetry tied to the model. In this app, the twin data includes floors, zones, and HVAC equipment, all connected in a graph. The UI can select an asset and the rest of the app updates contextually (status colors, KPI panels, alerts, and chat context).
+A digital twin is a structured representation of assets and their relationships, with live telemetry tied to the model. In this app, the twin data includes floors, zones, and HVAC equipment, all connected in a graph. The UI can select an asset and the rest of the app updates contextually (status colours, KPI panels, alerts, and chat context).
 
 Why it matters:
 
 - Consistent identifiers across UI, telemetry, and analytics.
 - Clear relationships (zone → floor → building) for navigation and impact analysis.
-- A foundation for automation and analytics beyond visualization.
+- A foundation for automation and analytics beyond visualisation.
 
 ### Telemetry and KPI flow
 
@@ -65,11 +65,11 @@ The simulator produces per-asset telemetry points (e.g., temperature, CO₂, pow
 
 ## Where SLMs fit
 
-Small language models (SLMs) are compact models optimized for lower latency and cost. They excel at structured reasoning over the twin graph and summarizing telemetry, while keeping deployment lightweight.
+Small language models (SLMs) are compact models optimised for lower latency and cost. They excel at structured reasoning over the twin graph and summarising telemetry, while keeping deployment lightweight.
 
 Typical SLM tasks in this app:
 
-- Summarize current system health from live telemetry.
+- Summarise current system health from live telemetry.
 - Explain why a zone is flagged (e.g., temp/CO2 thresholds).
 - Route users to the right asset based on natural language.
 - Generate concise operator steps without needing a large model.
@@ -78,13 +78,27 @@ SLMs are a good fit for deterministic, high-frequency operational tasks where re
 
 ## Foundry Local integration
 
-This app uses Foundry Local as a local inference endpoint for copilot responses. The backend calls the local chat completions API, sends a structured system prompt grounded in the twin state, and falls back to rule-based responses if the model is unavailable.
+This app uses the `foundry-local-sdk` npm package to run an on-device SLM for copilot responses. The SDK handles model discovery, download (with progress notifications), loading, and chat completion natively, with no need for raw HTTP calls or a separate CLI setup.
+
+**How it works:**
+
+```javascript
+import { FoundryLocalManager } from 'foundry-local-sdk';
+
+const manager = FoundryLocalManager.create({ appName: 'hvac-digital-twin' });
+const model = await manager.catalog.getModel('phi-3.5-mini');
+await model.download((progress) => console.log(`${progress}%`));
+await model.load();
+const chatClient = model.createChatClient();
+```
+
+The backend sends a structured system prompt grounded in the twin state and falls back to rule-based responses if the model is unavailable.
 
 **Configuration:**
 
-- Endpoint: http://localhost:5272 (FOUNDRY_LOCAL_URL)
 - Model: phi-3.5-mini (selected for low latency and cost)
-- Request settings: temperature 0.7, max_tokens 1024
+- Request settings: temperature 0.7, maxTokens 1024
+- Environment variable `FOUNDRY_MODEL` overrides the default model alias
 
 **Why this model selection:**
 
@@ -100,9 +114,9 @@ The combination of a digital twin and SLM-powered assistance creates a feedback 
 
 1. Telemetry updates the twin graph.
 2. The UI reflects state changes in the 3D scene and KPIs.
-3. The assistant queries the twin and summarizes impacts or suggested actions.
+3. The assistant queries the twin and summarises impacts or suggested actions.
 
-That loop turns the app into more than a visualization — it becomes an operational interface.
+That loop turns the app into more than a visualisation; it becomes an operational interface.
 
 ## Screenshots
 
@@ -126,6 +140,6 @@ If you want to extend this app:
 
 - Add domain-specific asset types (elevators, lighting, security).
 - Plug in real telemetry sources instead of the simulator.
-- Add agent workflows (incident triage, energy optimization, maintenance scheduling).
+- Add agent workflows (incident triage, energy optimisation, maintenance scheduling).
 
 Developers can start by exploring BuildingScene for 3D context, the twin schema in twin/, and the backend simulator to understand how live data drives the experience.

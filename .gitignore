@@ -120,6 +120,12 @@ __pycache__/
 docs/_build/
 site/
 
+# ----- Playwright MCP -----
+.playwright-mcp/
+
+# ----- Artifacts (screenshots, video frames) -----
+**/artifacts/
+
 # ----- Twin state snapshots (dynamic) -----
 twin/*.state.snapshot.json
 twin/snapshots/

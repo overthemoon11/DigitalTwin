@@ -19,7 +19,7 @@ This project adheres to the [Microsoft Open Source Code of Conduct](https://open
 ### Suggesting Features
 
 - Open an issue with the "feature request" label
-- Describe the use case and expected behavior
+- Describe the use case and expected behaviour
 - Explain why this feature would be useful
 
 ### Pull Requests
@@ -39,10 +39,10 @@ This project adheres to the [Microsoft Open Source Code of Conduct](https://open
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 20+ 
 - npm 9+
+- Foundry Local (optional, for AI copilot features): [install instructions](https://foundrylocal.ai)
 - Blender 4.0+ (optional, for 3D asset generation)
-- Foundry Local (optional, for AI features)
 
 ### Running Locally
 
@@ -74,26 +74,41 @@ npm test
 
 ### JavaScript/JSX
 
-- Use ES6+ features
+- **ES Modules only**: use `import`/`export`, not `require()`/`module.exports`
+- Use ES2022+ features
 - Use meaningful variable and function names
 - Add JSDoc comments for public functions
 - Keep functions small and focused
 - Use async/await for asynchronous code
+
+### Foundry Local SDK
+
+- Use the `foundry-local-sdk` npm package for all AI model interactions
+- Never call Foundry Local HTTP endpoints directly. Use the SDK's `FoundryLocalManager`, `model.download()`, `model.load()`, `model.createChatClient()` APIs
+- On Windows, install with: `npm install --foreground-scripts --winml foundry-local-sdk`
 
 ### File Structure
 
 ```
 backend/
   src/
-    index.js          # Main entry point
-    routes/           # API route handlers
-    services/         # Business logic
-    simulator/        # HVAC simulation engine
+    index.js                          # Express server + WebSocket + routes
+    routes/                           # API route handlers
+    services/
+      copilot-service.js              # Intent detection + grounded responses
+      foundry-local-service.js        # Foundry Local SDK lifecycle
+    simulator/
+      hvac-simulator.js               # Deterministic HVAC physics engine
 frontend/
   src/
-    components/       # React components
-    hooks/            # Custom React hooks
-    utils/            # Helper functions
+    App.jsx                           # Main layout
+    components/
+      ModelStatusBanner.jsx           # AI model download/loading status
+      BuildingScene.jsx               # Three.js 3D scene
+      CopilotChat.jsx                 # AI copilot chat panel
+      ...                             # Other UI components
+    hooks/
+      useTwinStore.js                 # Zustand global state
 ```
 
 ### Commit Messages
@@ -124,7 +139,7 @@ The HVAC simulator uses physics-based models. When adding new fault scenarios:
 1. Add the fault type to `FAULT_CATALOG` in `hvac-simulator.js`
 2. Implement the fault logic in the `applyFault()` method
 3. Ensure the fault creates appropriate alerts
-4. Update the copilot service to recognize the new fault
+4. Update the copilot service to recognise the new fault
 
 ### API
 

@@ -4,6 +4,7 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 2.x.x   | :white_check_mark: |
 | 1.x.x   | :white_check_mark: |
 
 ## Reporting a Vulnerability
@@ -26,7 +27,7 @@ We take security seriously. If you discover a security vulnerability, please fol
 
 ### What to Expect
 
-- **Acknowledgment**: Within 24-48 hours
+- **Acknowledgement**: Within 24-48 hours
 - **Initial Assessment**: Within 5 business days
 - **Resolution Timeline**: Depends on severity
   - Critical: 7 days

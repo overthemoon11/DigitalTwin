@@ -39,7 +39,7 @@ Create a simple 3-floor office building shell:
 - Floor heights: Ground floor 4m, upper floors 3.5m each
 - Simple rectangular shape with flat roof
 - Add floor plates at each level (thin boxes)
-- Use a neutral gray material (#445566)
+- Use a neutral grey material (#445566)
 - Name the object "Building_Shell"
 - Position at origin (0, 0, 0)
 ```
@@ -52,7 +52,7 @@ Create 3 floor plate meshes:
 - Floor_1 at y=0
 - Floor_2 at y=4m
 - Floor_3 at y=7.5m
-- Use slightly different gray tones
+- Use slightly different grey tones
 - Name them "Floor_1", "Floor_2", "Floor_3"
 ```
 
@@ -64,37 +64,37 @@ Create semi-transparent zone boxes to represent HVAC zones:
 1. Zone_Lobby: 
    - Size: 20m x 15m x 4m
    - Position: (10, 2, 7.5) - ground floor front
-   - Color: light blue, 40% opacity
+   - Colour: light blue, 40% opacity
 
 2. Zone_Mechanical:
    - Size: 15m x 10m x 4m
    - Position: (45, 2, 5) - ground floor back corner
-   - Color: dark gray, 30% opacity
+   - Colour: dark grey, 30% opacity
 
 3. Zone_Office_F2:
    - Size: 40m x 25m x 3.5m
    - Position: (20, 5.75, 12.5) - most of floor 2
-   - Color: light green, 40% opacity
+   - Colour: light green, 40% opacity
 
 4. Zone_Meeting_A:
    - Size: 8m x 8m x 3.5m
    - Position: (50, 5.75, 5) - corner of floor 2
-   - Color: light yellow, 40% opacity
+   - Colour: light yellow, 40% opacity
 
 5. Zone_Meeting_B:
    - Size: 8m x 8m x 3.5m
    - Position: (50, 5.75, 25) - other corner of floor 2
-   - Color: light yellow, 40% opacity
+   - Colour: light yellow, 40% opacity
 
 6. Zone_Office_F3:
    - Size: 35m x 20m x 3.5m
    - Position: (17.5, 9.25, 10) - main area of floor 3
-   - Color: light green, 40% opacity
+   - Colour: light green, 40% opacity
 
 7. Zone_Executive:
    - Size: 15m x 12m x 3.5m
    - Position: (45, 9.25, 6) - corner of floor 3
-   - Color: light purple, 40% opacity
+   - Colour: light purple, 40% opacity
 
 Use Principled BSDF with transmission for glass-like appearance.
 ```
@@ -107,34 +107,34 @@ Create HVAC equipment in the mechanical room:
 1. AHU_001:
    - Box shape: 4m x 2m x 2.5m
    - Position: (42, 1.25, 8)
-   - Color: industrial blue (#4488AA)
+   - Colour: industrial blue (#4488AA)
    - Add simple duct shapes extending from top
 
 2. AHU_002:
    - Box shape: 3m x 1.5m x 2m
    - Position: (42, 1, 18)
-   - Color: industrial blue (#4488AA)
+   - Colour: industrial blue (#4488AA)
 
 3. Chiller_001:
    - Box shape: 3m x 2m x 2.5m
    - Position: (48, 1.25, 12)
-   - Color: cyan (#00AACC)
+   - Colour: cyan (#00AACC)
    - Add cylindrical shape on top for condenser
 
 4. Boiler_001:
    - Cylinder shape: radius 1m, height 2.5m
    - Position: (52, 1.25, 12)
-   - Color: orange-red (#CC6644)
+   - Colour: orange-red (#CC6644)
 
 5. Pump_CHW_001:
    - Small cylinder: radius 0.3m, height 0.5m
    - Position: (46, 0.25, 12)
-   - Color: blue (#3366CC)
+   - Colour: blue (#3366CC)
 
 6. Pump_HW_001:
    - Small cylinder: radius 0.3m, height 0.5m
    - Position: (50, 0.25, 14)
-   - Color: red (#CC3333)
+   - Colour: red (#CC3333)
 ```
 
 ### Step 5: Create VAV Boxes
@@ -149,7 +149,7 @@ Create VAV terminal boxes as small cubes near zone ceilings:
 5. VAV_003_01: 0.7m cube at (17.5, 10.5, 10) - in office F3
 6. VAV_003_02: 0.5m cube at (45, 10.5, 6) - in executive
 
-Use metallic gray material (#888899).
+Use metallic grey material (#888899).
 ```
 
 ### Step 6: Add Simple Ductwork (Optional)
@@ -158,7 +158,7 @@ Use metallic gray material (#888899).
 Create simplified ductwork as rectangular extrusions:
 - From AHU_001, run rectangular ducts (0.6m x 0.4m) along ceiling
 - Branch to each VAV location
-- Use dark gray metallic material
+- Use dark grey metallic material
 - Group all ducts under empty named "Ductwork"
 ```
 
@@ -206,7 +206,7 @@ function BuildingModel() {
 ## Placeholder Geometry
 
 Until GLB files are created, the frontend uses procedural geometry based on zone dimensions from `twin.state.json`. The current implementation creates:
-- Colored boxes for zones
+- Coloured boxes for zones
 - Simple boxes for AHUs, chiller, boiler
 - Spheres for status indicators
 

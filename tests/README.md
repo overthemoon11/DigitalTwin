@@ -95,7 +95,7 @@ npm test
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - Backend server running on port 3001 (for integration tests)
 - Frontend server running on port 3000 (for E2E tests)
 

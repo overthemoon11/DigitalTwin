@@ -9,14 +9,16 @@
  * 5. Stuck VAV damper → zone anomaly + alert
  */
 
-const { test, describe, beforeEach } = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
+import { test, describe, beforeEach } from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 
-const { HVACSimulator } = require('../src/simulator/hvac-simulator');
+import { HVACSimulator } from '../src/simulator/hvac-simulator.js';
 
 // Load baseline state for tests
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASELINE_FILE = path.join(__dirname, '../../twin/twin.baseline.json');
 let baselineState;
 
@@ -104,34 +106,37 @@ describe('HVAC Simulator Tests', () => {
   });
 
   test('Scenario 3: Filter loading increases fan power', () => {
-    // Get initial AHU power
-    const initialPower = simulator.state.telemetry
+    // Run simulation steps first to establish a warm baseline
+    for (let i = 0; i < 5; i++) {
+      simulator.step(60);
+    }
+    const baselinePower = simulator.state.telemetry
       .find(t => t.id === 'tel-ahu1-power').value;
-    
+
     // Apply filter loading fault
     simulator.applyFault('filter_loading', {
       filterId: 'filter-ahu-001',
       loading: 0.85  // 85% loaded (critical)
     });
-    
-    // Run simulation
+
+    // Run further steps so the higher filter loading takes effect
     let result;
     for (let i = 0; i < 5; i++) {
       result = simulator.step(60);
     }
-    
+
     const finalPower = result.state.telemetry
       .find(t => t.id === 'tel-ahu1-power').value;
-    
+
     const filterLoading = result.state.assets
       .find(a => a.id === 'filter-ahu-001').properties.loading;
-    
+
     console.log(`  Filter loading: ${filterLoading * 100}%`);
-    console.log(`  Initial AHU power: ${initialPower} kW, Final power: ${finalPower} kW`);
-    
+    console.log(`  Baseline AHU power: ${baselinePower} kW, Final power: ${finalPower} kW`);
+
     // Fan power should increase due to higher pressure drop
-    assert.ok(finalPower >= initialPower, 'Fan power should increase with filter loading');
-    
+    assert.ok(finalPower >= baselinePower, 'Fan power should increase with filter loading');
+
     // Should generate filter alert
     const filterAlerts = result.state.alerts.filter(
       a => a.assetId === 'filter-ahu-001' && !a.resolved

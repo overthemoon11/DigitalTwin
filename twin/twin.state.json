@@ -3,8 +3,8 @@
     "id": "twin-hvac-building-001",
     "name": "Smart Office Building - HVAC Digital Twin",
     "version": "1.0.0",
-    "lastUpdated": "2026-01-26T15:30:00.617Z",
-    "simulationTime": "2026-01-26T15:30:00.617Z",
+    "lastUpdated": "2026-03-12T11:43:27.104Z",
+    "simulationTime": "2026-03-12T11:43:27.104Z",
     "timeStep": 60
   },
   "assets": [
@@ -671,7 +671,7 @@
       "value": 72.5,
       "unit": "°F",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 72.5,
@@ -848,6 +848,14 @@
         {
           "value": 72.5,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 72.5,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -868,7 +876,7 @@
       "value": 568,
       "unit": "ppm",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 520,
@@ -1045,6 +1053,14 @@
         {
           "value": 400,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 568,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -1065,7 +1081,7 @@
       "value": 73.2,
       "unit": "°F",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 73.2,
@@ -1242,6 +1258,14 @@
         {
           "value": 73.2,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 73.2,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -1262,7 +1286,7 @@
       "value": 728,
       "unit": "ppm",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 680,
@@ -1439,6 +1463,14 @@
         {
           "value": 400,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 728,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -1456,10 +1488,10 @@
       "id": "tel-zone-meeting1-temp",
       "assetId": "zone-meeting-001",
       "pointType": "temperature",
-      "value": 71.5,
+      "value": 71.7,
       "unit": "°F",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 71,
@@ -1636,6 +1668,14 @@
         {
           "value": 71.4,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 71.6,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -1656,7 +1696,7 @@
       "value": 1912,
       "unit": "ppm",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 420,
@@ -1833,6 +1873,14 @@
         {
           "value": 400,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 1912,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -1850,10 +1898,10 @@
       "id": "tel-zone-meeting2-temp",
       "assetId": "zone-meeting-002",
       "pointType": "temperature",
-      "value": 70.1,
+      "value": 70,
       "unit": "°F",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 74.5,
@@ -2030,6 +2078,14 @@
         {
           "value": 70.2,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 70.1,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 70,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -2050,7 +2106,7 @@
       "value": 1408,
       "unit": "ppm",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 850,
@@ -2227,6 +2283,14 @@
         {
           "value": 400,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 1408,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -2247,7 +2311,7 @@
       "value": 72.8,
       "unit": "°F",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 72.8,
@@ -2424,6 +2488,14 @@
         {
           "value": 72.8,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 72.8,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -2444,7 +2516,7 @@
       "value": 665,
       "unit": "ppm",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 620,
@@ -2621,6 +2693,14 @@
         {
           "value": 400,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 665,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -2641,7 +2721,7 @@
       "value": 71.5,
       "unit": "°F",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 71.5,
@@ -2818,6 +2898,14 @@
         {
           "value": 71.5,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 71.5,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -2838,7 +2926,7 @@
       "value": 526,
       "unit": "ppm",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 480,
@@ -3015,6 +3103,14 @@
         {
           "value": 400,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 526,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -3065,7 +3161,7 @@
       "value": 8015,
       "unit": "CFM",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 22000,
@@ -3242,6 +3338,14 @@
         {
           "value": 8015,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 8015,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -3252,7 +3356,7 @@
       "value": 0.9,
       "unit": "inWC",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 2.1,
@@ -3429,6 +3533,14 @@
         {
           "value": 0.9,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -3439,7 +3551,7 @@
       "value": 40,
       "unit": "%",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 85,
@@ -3616,6 +3728,14 @@
         {
           "value": 40,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 40,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -3626,7 +3746,7 @@
       "value": 1.8,
       "unit": "kW",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 18.5,
@@ -3803,6 +3923,14 @@
         {
           "value": 1.8,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 1.8,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -3843,7 +3971,7 @@
       "value": 5180,
       "unit": "CFM",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 12000,
@@ -4020,6 +4148,14 @@
         {
           "value": 5180,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 5180,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -4030,7 +4166,7 @@
       "value": 0.8,
       "unit": "inWC",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 1.8,
@@ -4207,6 +4343,14 @@
         {
           "value": 0.8,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -4217,7 +4361,7 @@
       "value": 37,
       "unit": "%",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 78,
@@ -4394,6 +4538,14 @@
         {
           "value": 37,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 37,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -4404,7 +4556,7 @@
       "value": 0.8,
       "unit": "kW",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 11.2,
@@ -4581,6 +4733,14 @@
         {
           "value": 0.8,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.8,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -4711,7 +4871,7 @@
       "value": 0.2,
       "unit": "%",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 0.62,
@@ -4888,6 +5048,14 @@
         {
           "value": 0.2,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.2,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -4898,7 +5066,7 @@
       "value": 16,
       "unit": "kW",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 135,
@@ -5075,6 +5243,14 @@
         {
           "value": 16,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 16,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -5105,7 +5281,7 @@
       "value": 0.15,
       "unit": "%",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 0.15,
@@ -5282,6 +5458,14 @@
         {
           "value": 0.15,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.15,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -5292,7 +5476,7 @@
       "value": 8.5,
       "unit": "kW",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 8.5,
@@ -5469,6 +5653,14 @@
         {
           "value": 8.5,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 8.5,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -5479,7 +5671,7 @@
       "value": 51,
       "unit": "%",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 72,
@@ -5656,6 +5848,14 @@
         {
           "value": 51,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 51,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -5666,7 +5866,7 @@
       "value": 1.5,
       "unit": "kW",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 6.8,
@@ -5843,6 +6043,14 @@
         {
           "value": 1.5,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 1.5,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -5853,7 +6061,7 @@
       "value": 36,
       "unit": "%",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 45,
@@ -6030,6 +6238,14 @@
         {
           "value": 36,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 36,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     },
@@ -6040,7 +6256,7 @@
       "value": 0.3,
       "unit": "kW",
       "quality": "good",
-      "timestamp": "2026-01-26T15:30:00.617Z",
+      "timestamp": "2026-03-12T11:43:27.104Z",
       "history": [
         {
           "value": 1.2,
@@ -6217,6 +6433,14 @@
         {
           "value": 0.3,
           "timestamp": "2026-01-26T15:29:57.344Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.3,
+          "timestamp": "2026-03-12T11:43:23.726Z"
         }
       ]
     }
@@ -6627,6 +6851,14 @@
         {
           "value": 28.9,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 28.9,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -6819,6 +7051,14 @@
         {
           "value": 693.6,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 693.6,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -7011,6 +7251,14 @@
         {
           "value": 83.23,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 83.23,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -7021,7 +7269,7 @@
       "value": 0.9,
       "unit": "°F",
       "target": 1,
-      "trend": "improving",
+      "trend": "stable",
       "status": "good",
       "formula": "AVG(ABS(zone.temp - zone.setpoint)) for all zones",
       "inputs": [
@@ -7208,6 +7456,14 @@
         {
           "value": 0.9,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 0.9,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -7405,6 +7661,14 @@
         {
           "value": 100,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -7602,6 +7866,14 @@
         {
           "value": 968,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 400,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 968,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -7799,6 +8071,14 @@
         {
           "value": 67,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 100,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 67,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -8011,6 +8291,14 @@
         {
           "value": 20,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 20,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     },
@@ -8204,6 +8492,14 @@
         {
           "value": 8.8,
           "timestamp": "2026-01-26T15:30:00.617Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-03-12T11:43:23.726Z"
+        },
+        {
+          "value": 8.8,
+          "timestamp": "2026-03-12T11:43:27.104Z"
         }
       ]
     }
@@ -8558,9 +8854,10 @@
       "recommendedAction": "Immediately increase ventilation or evacuate space",
       "timestamp": "2026-01-26T15:30:00.617Z",
       "acknowledged": true,
-      "resolved": false,
+      "resolved": true,
       "acknowledgedAt": "2026-01-26T15:51:18.624Z",
-      "acknowledgedBy": "operator"
+      "acknowledgedBy": "operator",
+      "resolvedAt": "2026-03-12T11:43:23.726Z"
     },
     {
       "id": "alert-1769441400617-u12gqi4mb",
@@ -8572,9 +8869,34 @@
       "recommendedAction": "Immediately increase ventilation or evacuate space",
       "timestamp": "2026-01-26T15:30:00.617Z",
       "acknowledged": true,
-      "resolved": false,
+      "resolved": true,
       "acknowledgedAt": "2026-01-26T15:51:19.502Z",
-      "acknowledgedBy": "operator"
+      "acknowledgedBy": "operator",
+      "resolvedAt": "2026-03-12T11:43:23.726Z"
+    },
+    {
+      "id": "alert-1773315807104-dsw1ep5fn",
+      "severity": "critical",
+      "assetId": "zone-meeting-001",
+      "message": "Critical CO2 level (1912 ppm) in Conference Room A",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-03-12T11:43:27.104Z",
+      "acknowledged": false,
+      "resolved": false
+    },
+    {
+      "id": "alert-1773315807104-jck9sanjw",
+      "severity": "critical",
+      "assetId": "zone-meeting-002",
+      "message": "Critical CO2 level (1408 ppm) in Conference Room B",
+      "cause": "CO2 concentration exceeds safe limits",
+      "ruleId": "rule-co2-critical",
+      "recommendedAction": "Immediately increase ventilation or evacuate space",
+      "timestamp": "2026-03-12T11:43:27.104Z",
+      "acknowledged": false,
+      "resolved": false
     }
   ],
   "faultRules": [

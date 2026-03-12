@@ -4,22 +4,31 @@
  * Provides REST API and WebSocket for:
  * - Twin state management
  * - Simulation stepping
- * - Foundry Local SLM integration
+ * - Foundry Local SDK integration (model download, load, chat)
  */
 
-const express = require('express');
-const cors = require('cors');
-const { WebSocketServer } = require('ws');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import { WebSocketServer } from 'ws';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const { HVACSimulator, FAULT_CATALOG } = require('./simulator/hvac-simulator');
-const { handleCopilotChat } = require('./services/copilot-service');
+import { HVACSimulator } from './simulator/hvac-simulator.js';
+import { handleCopilotChat } from './services/copilot-service.js';
+import {
+  initialize as initFoundryLocal,
+  getStatus as getModelStatus,
+  onStatusChange,
+  shutdown as shutdownFoundryLocal,
+} from './services/foundry-local-service.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const FOUNDRY_LOCAL_URL = process.env.FOUNDRY_LOCAL_URL || 'http://localhost:5272';
 
 // Paths to twin JSON files
 const TWIN_DIR = path.join(__dirname, '../../twin');
@@ -447,6 +456,11 @@ app.get('/api/copilot/suggestions', (req, res) => {
   res.json(suggestions.slice(0, 5)); // Return top 5 suggestions
 });
 
+// GET /api/model/status - Get Foundry Local model status
+app.get('/api/model/status', (req, res) => {
+  res.json(getModelStatus());
+});
+
 // ============ Server Setup ============
 
 // Create HTTP server and WebSocket server
@@ -506,19 +520,30 @@ wss.on('connection', (ws) => {
 // Start server
 loadTwinState();
 
+// Initialize Foundry Local SDK (non-blocking – model downloads in background)
+initFoundryLocal().catch(err => {
+  console.warn('Foundry Local initialization failed (AI features will be unavailable):', err.message);
+});
+
+// Broadcast model status changes to all WebSocket clients
+onStatusChange((status) => {
+  broadcastState(wss, { type: 'model_status', data: status });
+});
+
 server.listen(PORT, () => {
   console.log(`HVAC Digital Twin Backend running on http://localhost:${PORT}`);
   console.log(`WebSocket available at ws://localhost:${PORT}/ws`);
-  console.log(`Foundry Local endpoint: ${FOUNDRY_LOCAL_URL}`);
+  console.log(`Foundry Local model: ${process.env.FOUNDRY_MODEL || 'phi-3.5-mini'}`);
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('\nShutting down...');
   saveTwinState();
+  await shutdownFoundryLocal();
   server.close(() => {
     process.exit(0);
   });
 });
 
-module.exports = { app, server };
+export { app, server };

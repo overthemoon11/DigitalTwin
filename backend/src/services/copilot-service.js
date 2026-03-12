@@ -6,9 +6,10 @@
  * - Action execution (setpoints, simulation, fault injection)
  * - Grounded responses using twin state data
  * - Trend analysis and recommendations
+ * - Powered by Foundry Local SDK (no raw HTTP calls)
  */
 
-const FOUNDRY_LOCAL_URL = process.env.FOUNDRY_LOCAL_URL || 'http://localhost:5272';
+import { chatCompletion, getStatus } from './foundry-local-service.js';
 
 /**
  * Intent classification for user messages
@@ -614,44 +615,34 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
     response = generateGroundedResponse(intents, twinState);
   }
   
-  // If still no response, try LLM
+  // If still no response, try LLM via Foundry Local SDK
   if (!response) {
-    try {
-      const systemPrompt = buildSystemPrompt(twinState);
-      const messages = [
-        { role: 'system', content: systemPrompt },
-        ...conversationHistory.slice(-6), // Keep last 6 messages for context
-        { role: 'user', content: message }
-      ];
-      
-      const llmResponse = await fetch(`${FOUNDRY_LOCAL_URL}/v1/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'phi-3.5-mini',
-          messages,
+    const modelStatus = getStatus();
+    if (modelStatus.ready) {
+      try {
+        const systemPrompt = buildSystemPrompt(twinState);
+        const messages = [
+          { role: 'system', content: systemPrompt },
+          ...conversationHistory.slice(-6),
+          { role: 'user', content: message }
+        ];
+
+        const llmContent = await chatCompletion(messages, {
           temperature: 0.7,
-          max_tokens: 1024
-        })
-      });
-      
-      if (llmResponse.ok) {
-        const data = await llmResponse.json();
-        response = data.choices?.[0]?.message?.content || 'I apologize, but I could not generate a response.';
-      } else {
-        throw new Error('LLM unavailable');
+          maxTokens: 1024,
+        });
+
+        if (llmContent) {
+          response = llmContent;
+        } else {
+          throw new Error('Empty response from model');
+        }
+      } catch (err) {
+        // Fallback response
+        response = generateFallbackResponse(modelStatus);
       }
-    } catch (err) {
-      // Fallback response
-      response = `I can help you with:\n\n` +
-        `- **"Show me a summary"** - Building status overview\n` +
-        `- **"How is energy usage?"** - Power and cost analysis\n` +
-        `- **"Check air quality"** - CO2 and ventilation status\n` +
-        `- **"Are there any alerts?"** - Active issues\n` +
-        `- **"What should I optimize?"** - Recommendations\n` +
-        `- **"Set lobby temperature to 72"** - Change setpoints\n` +
-        `- **"Run simulation for 30 minutes"** - Advance time\n\n` +
-        `What would you like to know?`;
+    } else {
+      response = generateFallbackResponse(modelStatus);
     }
   }
   
@@ -668,7 +659,32 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
   };
 }
 
-module.exports = {
+/**
+ * Generate a fallback response when the model is not available
+ */
+function generateFallbackResponse(modelStatus) {
+  let statusNote = '';
+  if (modelStatus.status === 'downloading') {
+    statusNote = `> **Model downloading:** ${modelStatus.downloadProgress.toFixed(0)}% complete. AI-powered responses will be available shortly.\n\n`;
+  } else if (modelStatus.status === 'loading') {
+    statusNote = `> **Model loading:** The AI model is being loaded. AI-powered responses will be available shortly.\n\n`;
+  } else if (modelStatus.status === 'error' || modelStatus.status === 'unavailable') {
+    statusNote = `> **AI model offline.** Using built-in responses. Install Foundry Local and run \`foundry model run ${modelStatus.modelAlias}\` to enable AI features.\n\n`;
+  }
+
+  return statusNote +
+    `I can help you with:\n\n` +
+    `- **"Show me a summary"** - Building status overview\n` +
+    `- **"How is energy usage?"** - Power and cost analysis\n` +
+    `- **"Check air quality"** - CO2 and ventilation status\n` +
+    `- **"Are there any alerts?"** - Active issues\n` +
+    `- **"What should I optimize?"** - Recommendations\n` +
+    `- **"Set lobby temperature to 72"** - Change setpoints\n` +
+    `- **"Run simulation for 30 minutes"** - Advance time\n\n` +
+    `What would you like to know?`;
+}
+
+export {
   handleCopilotChat,
   analyzeIntent,
   buildSystemPrompt,

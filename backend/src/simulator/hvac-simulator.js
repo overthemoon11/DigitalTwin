@@ -1281,4 +1281,4 @@ class HVACSimulator {
   }
 }
 
-module.exports = { HVACSimulator, CONSTANTS, VAV_ZONE_MAP, AHU_ZONE_MAP, FAULT_CATALOG };
+export { HVACSimulator, CONSTANTS, VAV_ZONE_MAP, AHU_ZONE_MAP, FAULT_CATALOG };
