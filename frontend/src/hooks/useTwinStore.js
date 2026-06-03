@@ -1,14 +1,71 @@
 import { create } from 'zustand';
+import {
+  startPlantSimulator,
+  updatePlantControl as setPlantControlValue,
+  resetPlantControls,
+  triggerPlantFault,
+  stepPlantSimulation,
+} from '../services/plantSimulator';
 
 const API_BASE = '/api';
 
 export const useTwinStore = create((set, get) => ({
   twinState: null,
+  plantState: null,
   selectedAsset: null,
   isConnected: false,
   ws: null,
   conversationHistory: [],
   modelStatus: null, // { status, message, downloadProgress, modelAlias, ready }
+  _plantStop: null,
+
+  initPlantTelemetry: () => {
+    const existing = get()._plantStop;
+    if (existing) existing();
+    const stop = startPlantSimulator((plantState) => {
+      set({ plantState });
+      const twin = get().twinState;
+      if (twin) {
+        set({
+          twinState: {
+            ...twin,
+            metadata: {
+              ...twin.metadata,
+              simulationTime: plantState.simulationTime,
+            },
+          },
+        });
+      }
+    });
+    set({ _plantStop: stop });
+    return stop;
+  },
+
+  updatePlantControl: (controlId, value) => {
+    setPlantControlValue(controlId, value);
+    set({ plantState: stepPlantSimulation() });
+  },
+
+  resetPlant: () => {
+    resetPlantControls();
+  },
+
+  triggerPlantFault: (faultType) => {
+    triggerPlantFault(faultType);
+  },
+
+  acknowledgePlantAlert: (alertId) => {
+    const ps = get().plantState;
+    if (!ps) return;
+    set({
+      plantState: {
+        ...ps,
+        alerts: ps.alerts.map((a) =>
+          a.id === alertId ? { ...a, acknowledged: true } : a
+        ),
+      },
+    });
+  },
 
   loadTwinState: async () => {
     try {

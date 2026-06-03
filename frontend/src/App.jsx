@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import React, { useEffect, useState } from 'react';
 import { useTwinStore } from './hooks/useTwinStore';
-import BuildingScene from './components/BuildingScene';
-import AssetTree from './components/AssetTree';
+import { usePlantTelemetry } from './hooks/usePlantTelemetry';
+import ChillerPlant2DView from './components/chiller/ChillerPlant2DView';
+import PlantAssetTree from './components/PlantAssetTree';
 import ControlPanel from './components/ControlPanel';
 import KPIPanel from './components/KPIPanel';
 import AlertPanel from './components/AlertPanel';
@@ -12,12 +11,14 @@ import ModelStatusBanner from './components/ModelStatusBanner';
 import './App.css';
 
 function App() {
-  const { twinState, selectedAsset, loadTwinState, selectAsset, isConnected } = useTwinStore();
+  const { twinState, plantState, selectedAsset, loadTwinState, selectAsset, isConnected } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
 
   useEffect(() => {
     loadTwinState();
   }, [loadTwinState]);
+
+  usePlantTelemetry();
 
   if (!twinState) {
     return (
@@ -32,7 +33,7 @@ function App() {
     <div className="app">
       {/* Header */}
       <header className="header">
-        <h1>🏢 HVAC Digital Twin</h1>
+        <h1>❄️ Chiller Plant Digital Twin</h1>
         <div className="header-info">
           <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
             {isConnected ? '● Connected' : '○ Disconnected'}
@@ -49,40 +50,28 @@ function App() {
       <div className="main-content">
         {/* Left Panel - Asset Tree */}
         <aside className="left-panel">
-          <h3>Building Assets</h3>
-          <AssetTree
-            assets={twinState.assets}
-            relationships={twinState.relationships}
+          <h3>Chiller Plant Assets</h3>
+          <PlantAssetTree
+            equipment={plantState?.equipment || {}}
             selectedAsset={selectedAsset}
             onSelectAsset={selectAsset}
-            telemetry={twinState.telemetry}
-            alerts={twinState.alerts}
           />
         </aside>
 
-        {/* Center - 3D Viewer */}
-        <main className="viewer">
-          <Canvas shadows>
-            {/* Camera positioned to show building AND car park in front */}
-            <PerspectiveCamera makeDefault position={[80, 60, -70]} fov={55} />
-            <OrbitControls
-              enablePan={true}
-              enableZoom={true}
-              enableRotate={true}
-              minDistance={30}
-              maxDistance={300}
-              target={[20, 5, -10]}
+        {/* Center - 2D Chiller Plant SCADA */}
+        <main className="viewer chiller-plant-viewer">
+          {plantState ? (
+            <ChillerPlant2DView
+              equipment={plantState.equipment}
+              headers={plantState.headers}
+              selectedId={selectedAsset}
+              onSelect={selectAsset}
             />
-            <ambientLight intensity={0.4} />
-            <directionalLight position={[50, 50, 25]} intensity={0.8} castShadow />
-            <BuildingScene
-              assets={twinState.assets}
-              telemetry={twinState.telemetry}
-              alerts={twinState.alerts}
-              selectedAsset={selectedAsset}
-              onSelectAsset={selectAsset}
-            />
-          </Canvas>
+          ) : (
+            <div className="loading" style={{ height: '100%' }}>
+              <h2>Initializing plant telemetry…</h2>
+            </div>
+          )}
         </main>
 
         {/* Right Panel - Controls, KPIs, Alerts, Copilot */}
@@ -104,7 +93,7 @@ function App() {
               className={activePanel === 'alerts' ? 'active' : ''}
               onClick={() => setActivePanel('alerts')}
             >
-              Alerts ({twinState.alerts.filter(a => !a.resolved).length})
+              Alerts ({(plantState?.alerts || twinState.alerts).filter(a => !a.resolved).length})
             </button>
             <button
               className={activePanel === 'copilot' ? 'active' : ''}
@@ -117,18 +106,21 @@ function App() {
           <div className="panel-content">
             {activePanel === 'controls' && (
               <ControlPanel
-                controls={twinState.controls}
+                controls={plantState?.controls || twinState.controls}
                 selectedAsset={selectedAsset}
                 assets={twinState.assets}
+                plantMode
               />
             )}
             {activePanel === 'kpis' && (
-              <KPIPanel kpis={twinState.kpis} />
+              <KPIPanel kpis={plantState?.kpis || twinState.kpis} />
             )}
             {activePanel === 'alerts' && (
               <AlertPanel
-                alerts={twinState.alerts}
+                alerts={plantState?.alerts || twinState.alerts}
                 assets={twinState.assets}
+                plantEquipment={plantState?.equipment}
+                plantMode
               />
             )}
             {activePanel === 'copilot' && (

@@ -223,7 +223,7 @@ function CopilotChat() {
       <div className="copilot-header">
         <div className="copilot-title">
           <CopilotIcon />
-          <span>HVAC Operations Copilot</span>
+          <span>Chiller Plant AI Copilot</span>
         </div>
         {conversationHistory.length > 0 && (
           <button
@@ -246,7 +246,7 @@ function CopilotChat() {
           <div className="copilot-empty">
             <div className="copilot-intro">
               <SparkleIcon />
-              <p>Ask me about building performance, energy optimization, or operational issues. I can also execute actions like changing setpoints or running simulations.</p>
+              <p>Ask about plant status, alarms, chiller sequencing, COP optimization, or root-cause analysis for high CHWS temperature.</p>
             </div>
             
             {/* Context-aware suggestions */}
@@ -313,7 +313,7 @@ function CopilotChat() {
                 <span></span>
                 <span></span>
               </span>
-              Analyzing building data...
+              Analyzing chiller plant data...
             </div>
           </div>
         )}
@@ -328,7 +328,7 @@ function CopilotChat() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about performance, or type a command..."
+          placeholder="Why is plant COP low? Which chiller to stop?"
           disabled={isLoading}
         />
         <button type="submit" disabled={isLoading || !input.trim()} title="Send message">

@@ -11,8 +11,10 @@ const LightbulbIcon = ({ size = 14 }) => (
   </svg>
 );
 
-function AlertItem({ alert, assets, onAcknowledge }) {
-  const asset = assets.find(a => a.id === alert.assetId);
+function AlertItem({ alert, assets, plantEquipment, onAcknowledge }) {
+  const asset = assets?.find(a => a.id === alert.assetId);
+  const plantAsset = plantEquipment?.[alert.assetId];
+  const assetLabel = plantAsset?.name || asset?.name;
   const time = new Date(alert.timestamp).toLocaleTimeString();
   
   return (
@@ -22,9 +24,9 @@ function AlertItem({ alert, assets, onAcknowledge }) {
         <span className="time">{time}</span>
       </div>
       <div className="message">{alert.message}</div>
-      {asset && (
+      {assetLabel && (
         <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-          Asset: {asset.name}
+          Equipment: {assetLabel}
         </div>
       )}
       {alert.recommendedAction && (
@@ -62,8 +64,13 @@ function AlertItem({ alert, assets, onAcknowledge }) {
   );
 }
 
-function AlertPanel({ alerts, assets }) {
-  const { acknowledgeAlert } = useTwinStore();
+function AlertPanel({ alerts, assets, plantEquipment, plantMode = false }) {
+  const { acknowledgeAlert, acknowledgePlantAlert } = useTwinStore();
+
+  const handleAck = (id) => {
+    if (plantMode) acknowledgePlantAlert(id);
+    else acknowledgeAlert(id);
+  };
   
   const activeAlerts = alerts.filter(a => !a.resolved);
   const resolvedAlerts = alerts.filter(a => a.resolved).slice(0, 5);
@@ -90,7 +97,8 @@ function AlertPanel({ alerts, assets }) {
                 key={alert.id}
                 alert={alert}
                 assets={assets}
-                onAcknowledge={acknowledgeAlert}
+                plantEquipment={plantEquipment}
+                onAcknowledge={handleAck}
               />
             ))}
           </div>

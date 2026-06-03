@@ -10,7 +10,7 @@ function ControlSlider({ control, onUpdate }) {
   
   return (
     <div className="control-item">
-      <label>{control.controlType.replace(/([A-Z])/g, ' $1').trim()}</label>
+      <label>{control.label || control.controlType.replace(/([A-Z])/g, ' $1').trim()}</label>
       <input
         type="range"
         min={control.min}
@@ -28,10 +28,14 @@ function ControlSlider({ control, onUpdate }) {
   );
 }
 
-function ControlPanel({ controls, selectedAsset, assets }) {
-  const { updateControl, runSimulation, resetTwin, applyFault } = useTwinStore();
+function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
+  const { updateControl, updatePlantControl, runSimulation, resetTwin, applyFault, resetPlant, triggerPlantFault } = useTwinStore();
   
   const handleUpdate = async (controlId, value) => {
+    if (plantMode) {
+      updatePlantControl(controlId, value);
+      return;
+    }
     try {
       await updateControl(controlId, value);
     } catch (err) {
@@ -43,10 +47,12 @@ function ControlPanel({ controls, selectedAsset, assets }) {
   let displayControls = controls;
   let assetName = 'All Controls';
   
-  if (selectedAsset) {
+  if (selectedAsset && !plantMode) {
     displayControls = controls.filter(c => c.assetId === selectedAsset);
     const asset = assets.find(a => a.id === selectedAsset);
     assetName = asset?.name || selectedAsset;
+  } else if (plantMode) {
+    assetName = 'Chiller Plant Controls';
   }
   
   // Group controls by type
@@ -146,41 +152,58 @@ function ControlPanel({ controls, selectedAsset, assets }) {
       
       <div className="control-group">
         <h4>Test Scenarios</h4>
-        <button
-          onClick={() => applyFault('high_occupancy', { zoneId: 'zone-meeting-001', occupancy: 12 })}
-          style={{
-            width: '100%',
-            padding: '0.5rem',
-            marginBottom: '0.25rem',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: '4px',
-            color: 'var(--text)',
-            cursor: 'pointer',
-            fontSize: '0.75rem',
-          }}
-        >
-          📈 High Occupancy (Meeting A)
-        </button>
-        <button
-          onClick={() => applyFault('filter_loading', { filterId: 'filter-ahu-001', loading: 0.8 })}
-          style={{
-            width: '100%',
-            padding: '0.5rem',
-            marginBottom: '0.25rem',
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border)',
-            borderRadius: '4px',
-            color: 'var(--text)',
-            cursor: 'pointer',
-            fontSize: '0.75rem',
-          }}
-        >
-          🔲 Filter Loading (AHU-1)
-        </button>
+        {plantMode ? (
+          <>
+            <button
+              onClick={() => triggerPlantFault('chiller_fault')}
+              style={scenarioBtnStyle}
+            >
+              ❄️ Chiller Fault (CH-29-3)
+            </button>
+            <button
+              onClick={() => triggerPlantFault('pump_trip')}
+              style={scenarioBtnStyle}
+            >
+              💧 Pump Trip
+            </button>
+            <button
+              onClick={resetPlant}
+              style={scenarioBtnStyle}
+            >
+              🔄 Reset Plant Controls
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => applyFault('high_occupancy', { zoneId: 'zone-meeting-001', occupancy: 12 })}
+              style={scenarioBtnStyle}
+            >
+              📈 High Occupancy (Meeting A)
+            </button>
+            <button
+              onClick={() => applyFault('filter_loading', { filterId: 'filter-ahu-001', loading: 0.8 })}
+              style={scenarioBtnStyle}
+            >
+              🔲 Filter Loading (AHU-1)
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
 }
+
+const scenarioBtnStyle = {
+  width: '100%',
+  padding: '0.5rem',
+  marginBottom: '0.25rem',
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border)',
+  borderRadius: '4px',
+  color: 'var(--text)',
+  cursor: 'pointer',
+  fontSize: '0.75rem',
+};
 
 export default ControlPanel;
