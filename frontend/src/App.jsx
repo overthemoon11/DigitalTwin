@@ -8,6 +8,7 @@ import KPIPanel from './components/KPIPanel';
 import AlertPanel from './components/AlertPanel';
 import CopilotChat from './components/CopilotChat';
 import ModelStatusBanner from './components/ModelStatusBanner';
+import VirtualSimulatorBanner from './components/VirtualSimulatorBanner';
 import './App.css';
 
 function App() {
@@ -33,19 +34,23 @@ function App() {
     <div className="app">
       {/* Header */}
       <header className="header">
-        <h1>❄️ Chiller Plant Digital Twin</h1>
+        <h1>❄️ Chiller Plant Virtual Simulator</h1>
         <div className="header-info">
+          <span className="plant-mode-badge">Physics · offline</span>
           <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-            {isConnected ? '● Connected' : '○ Disconnected'}
+            {isConnected ? '● Copilot API' : '○ API offline'}
           </span>
           <span className="sim-time">
-            Simulation: {new Date(twinState.metadata.simulationTime).toLocaleTimeString()}
+            {plantState?.simulation
+              ? `Virtual t=${plantState.simulation.simTimeSec}s`
+              : `Wall: ${new Date(twinState.metadata.simulationTime).toLocaleTimeString()}`}
           </span>
         </div>
       </header>
 
       {/* Model download / loading status banner */}
       <ModelStatusBanner />
+      <VirtualSimulatorBanner simulation={plantState?.simulation} />
 
       <div className="main-content">
         {/* Left Panel - Asset Tree */}

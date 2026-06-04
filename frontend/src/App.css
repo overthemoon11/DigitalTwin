@@ -48,6 +48,61 @@
   background: var(--bg-card);
 }
 
+.plant-mode-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  background: #1e3a5f;
+  color: #93c5fd;
+  font-size: 0.8rem;
+}
+
+.virtual-simulator-banner {
+  padding: 0.5rem 1.5rem;
+  background: #0f172a;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.virtual-simulator-banner__main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+}
+
+.virtual-simulator-banner__badge {
+  font-weight: 600;
+  color: #38bdf8;
+}
+
+.virtual-simulator-banner__detail,
+.virtual-simulator-banner__time {
+  color: var(--text-muted);
+}
+
+.virtual-simulator-banner__toggle {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.virtual-simulator-banner__trigger {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+}
+
+.virtual-simulator-banner__cascade {
+  margin: 0.5rem 0 0 1.25rem;
+  padding: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
 .connection-status.connected {
   color: var(--success);
 }

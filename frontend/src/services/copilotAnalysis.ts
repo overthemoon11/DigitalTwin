@@ -100,11 +100,17 @@ export function buildPlantContextForCopilot(state: PlantState | null): string {
   if (!state) return '';
   const { headers, kpis } = state;
   const alarms = alarmSummary(state);
+  const sim = state.simulation;
+  const cascade = sim?.cascadeTrace?.slice(0, 4).join(' → ') ?? '';
   return [
-    'Chiller Plant Live Context:',
+    'Chiller Plant Virtual Simulator Context (physics-calculated, no live sensors):',
+    sim ? `Mode: ${sim.mode}, tick ${sim.tick}, last: ${sim.lastTrigger}` : '',
     `Load ${headers.buildingLoadRt} RT, CHWS ${headers.chws}°C, CHWR ${headers.chwr}°C`,
     `CWS ${headers.cws}°C, CWR ${headers.cwr}°C`,
     `KPIs: ${kpis.slice(0, 4).map((k) => `${k.name}=${k.value}${k.unit}`).join(', ')}`,
+    cascade ? `Cascade: ${cascade}` : '',
     alarms.length ? `Alarms: ${alarms.join('; ')}` : 'No active alarms',
-  ].join('\n');
+  ]
+    .filter(Boolean)
+    .join('\n');
 }

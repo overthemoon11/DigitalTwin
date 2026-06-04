@@ -5,6 +5,7 @@ import {
   resetPlantControls,
   triggerPlantFault as setPlantFault,
   stepPlantSimulation,
+  advancePlantSimulation,
   acknowledgePlantAlert as ackPlantAlert,
 } from '../services/plantSimulator';
 import { analyzePlantQuery, buildPlantContextForCopilot } from '../services/copilotAnalysis';
@@ -61,6 +62,12 @@ export const useTwinStore = create((set, get) => ({
   acknowledgePlantAlert: (alertId) => {
     ackPlantAlert(alertId);
     set({ plantState: stepPlantSimulation() });
+  },
+
+  /** Advance offline plant physics (seconds → 2s ticks). */
+  advancePlantSimulation: (seconds = 60) => {
+    const steps = Math.max(1, Math.floor(seconds / 2));
+    set({ plantState: advancePlantSimulation(steps) });
   },
 
   loadTwinState: async () => {

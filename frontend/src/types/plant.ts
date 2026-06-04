@@ -108,6 +108,20 @@ export interface PlantKpi {
   trend: string;
 }
 
+/** Offline virtual simulator metadata — all telemetry is computed. */
+export interface PlantSimulationMeta {
+  mode: 'virtual-offline';
+  /** No live BACnet/OPC streams; physics-only */
+  dataSource: 'physics-engine';
+  tick: number;
+  dtSeconds: number;
+  simTimeSec: number;
+  /** Last operator input that drove the cascade */
+  lastTrigger: string;
+  /** Ordered domino-effect steps from last calculation */
+  cascadeTrace: string[];
+}
+
 export interface PlantState {
   equipment: Record<string, PlantEquipment>;
   headers: PlantHeaders;
@@ -115,6 +129,7 @@ export interface PlantState {
   controls: PlantControl[];
   alerts: PlantAlert[];
   simulationTime: string;
+  simulation: PlantSimulationMeta;
 }
 
 export const STATUS_COLORS: Record<EquipmentStatus, string> = {

@@ -3,6 +3,7 @@
  */
 export {
   stepPlantSimulation,
+  advancePlantSimulation,
   startPlantSimulator,
   updatePlantControl,
   resetPlantControls,

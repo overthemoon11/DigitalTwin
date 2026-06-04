@@ -29,6 +29,7 @@ import {
   speedToHz,
   clamp,
 } from './plantPhysics';
+import { buildCascadeTrace } from './plantCascade';
 import {
   balanceChillerLoad,
   chillerLoadPercent,
@@ -40,8 +41,7 @@ import {
   stageCoolingTowers,
 } from './stagingController';
 
-/** Fixed building demand — deterministic (no random). */
-const BUILDING_DEMAND_RT = 900;
+const SIM_DT_SEC = 2;
 /** Design ΔT used only for required flow / pump staging (hydronic design). */
 const DESIGN_DELTA_T_FLOW = 3.4;
 
@@ -65,6 +65,16 @@ export interface SimInternals {
 
 function defaultControls(): PlantControl[] {
   return [
+    {
+      id: 'ctrl-building-load',
+      controlType: 'buildingLoad',
+      label: 'Building Cooling Load',
+      value: 900,
+      min: 200,
+      max: 1500,
+      step: 50,
+      unit: 'RT',
+    },
     {
       id: 'ctrl-chws-sp',
       controlType: 'chwsSetpoint',
@@ -139,6 +149,7 @@ function defaultControls(): PlantControl[] {
 }
 
 let controls: PlantControl[] = defaultControls();
+let lastCascadeTrigger = 'Virtual plant at steady state (physics initialised)';
 
 let internals: SimInternals = {
   tick: 0,
@@ -216,7 +227,7 @@ function runControlStep(): PlantState {
   const pumpOverride = getControl('ctrl-pump-spd');
   const chillerEnabled = getControl('ctrl-ch-enable') === 1;
 
-  const buildingDemandRt = BUILDING_DEMAND_RT;
+  const buildingDemandRt = getControl('ctrl-building-load') || 900;
   const runningChCount = stageChillers(buildingDemandRt, chillerEnabled);
   const rtPerChiller = balanceChillerLoad(buildingDemandRt, runningChCount);
   const loadPctBase = chillerLoadPercent(rtPerChiller);
@@ -491,6 +502,25 @@ function runControlStep(): PlantState {
 
   const alerts = mergeAcknowledged(rawAlerts, internals.acknowledgedAlerts);
 
+  const cascadeTrace = buildCascadeTrace({
+    trigger: lastCascadeTrigger,
+    chwsSp,
+    cwsSp,
+    dpSp,
+    buildingDemandRt,
+    runningChillers: runningChCount,
+    runningChwp,
+    runningCwp,
+    loadPct,
+    chKw,
+    cop: plantCopVal,
+    chwsActual: internals.chwsActual,
+    chwr,
+    deltaT,
+    totalPlantKw: totalKw,
+    plantCop: plantCopVal,
+  });
+
   return {
     equipment,
     headers,
@@ -498,6 +528,15 @@ function runControlStep(): PlantState {
     controls: controls.map((c) => ({ ...c })),
     alerts,
     simulationTime: new Date().toISOString(),
+    simulation: {
+      mode: 'virtual-offline',
+      dataSource: 'physics-engine',
+      tick: internals.tick,
+      dtSeconds: SIM_DT_SEC,
+      simTimeSec: internals.tick * SIM_DT_SEC,
+      lastTrigger: lastCascadeTrigger,
+      cascadeTrace,
+    },
   };
 }
 
@@ -512,11 +551,29 @@ export function startPlantSimulator(onTick: (state: PlantState) => void): () => 
 }
 
 export function updatePlantControl(controlId: string, value: number): void {
+  const ctrl = controls.find((c) => c.id === controlId);
+  const prev = ctrl?.value;
   controls = controls.map((c) => (c.id === controlId ? { ...c, value } : c));
+  const label = ctrl?.label || controlId;
+  lastCascadeTrigger = `Operator set ${label}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
+}
+
+/** Advance virtual time (dynamic lag response) without live sensors. */
+export function advancePlantSimulation(steps = 1): PlantState {
+  const n = Math.max(1, Math.floor(steps));
+  if (n > 1) {
+    lastCascadeTrigger = `Fast-forward ${n} physics steps (${n * SIM_DT_SEC}s virtual time)`;
+  }
+  let state = runControlStep();
+  for (let i = 1; i < n; i++) {
+    state = runControlStep();
+  }
+  return state;
 }
 
 export function resetPlantControls(): void {
   controls = defaultControls();
+  lastCascadeTrigger = 'Plant reset to baseline setpoints';
   internals = {
     tick: 0,
     chwsActual: 7,

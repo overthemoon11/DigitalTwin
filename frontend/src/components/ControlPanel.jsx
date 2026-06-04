@@ -29,7 +29,16 @@ function ControlSlider({ control, onUpdate }) {
 }
 
 function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
-  const { updateControl, updatePlantControl, runSimulation, resetTwin, applyFault, resetPlant, triggerPlantFault } = useTwinStore();
+  const {
+    updateControl,
+    updatePlantControl,
+    runSimulation,
+    advancePlantSimulation,
+    resetTwin,
+    applyFault,
+    resetPlant,
+    triggerPlantFault,
+  } = useTwinStore();
   
   const handleUpdate = async (controlId, value) => {
     if (plantMode) {
@@ -56,6 +65,7 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
   }
   
   // Group controls by type
+  const loadControls = displayControls.filter(c => c.controlType === 'buildingLoad');
   const setpointControls = displayControls.filter(c => 
     c.controlType.includes('Setpoint')
   );
@@ -63,6 +73,7 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
     c.controlType.includes('Override')
   );
   const otherControls = displayControls.filter(c => 
+    c.controlType !== 'buildingLoad' &&
     !c.controlType.includes('Setpoint') && !c.controlType.includes('Override')
   );
   
@@ -77,6 +88,19 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
         )}
       </div>
       
+      {loadControls.length > 0 && (
+        <div className="control-group">
+          <h4>Building load</h4>
+          {loadControls.map(control => (
+            <ControlSlider
+              key={control.id}
+              control={control}
+              onUpdate={handleUpdate}
+            />
+          ))}
+        </div>
+      )}
+
       {setpointControls.length > 0 && (
         <div className="control-group">
           <h4>Setpoints</h4>
@@ -118,8 +142,13 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
       
       <div className="control-group" style={{ marginTop: '2rem' }}>
         <h4>Simulation</h4>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+          {plantMode
+            ? 'Advances the physics engine in 2s steps (temperatures lag over virtual time).'
+            : 'Runs the building twin API simulation step.'}
+        </p>
         <button
-          onClick={() => runSimulation(60)}
+          onClick={() => (plantMode ? advancePlantSimulation(60) : runSimulation(60))}
           style={{
             width: '100%',
             padding: '0.75rem',
@@ -134,7 +163,7 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
           ⏩ Run Simulation Step
         </button>
         <button
-          onClick={resetTwin}
+          onClick={plantMode ? resetPlant : resetTwin}
           style={{
             width: '100%',
             padding: '0.75rem',
