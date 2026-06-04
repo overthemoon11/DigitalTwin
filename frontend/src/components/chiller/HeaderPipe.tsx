@@ -1,4 +1,5 @@
-import { PIPE_COLORS } from '../../types/plant';
+import { LOOP, SCADA } from './scadaTheme';
+import { ScadaTag } from './ScadaTag';
 
 interface Props {
   x: number;
@@ -6,19 +7,20 @@ interface Props {
   label: string;
   temp: number;
   loop: 'chws' | 'chwr' | 'cws' | 'cwr';
-  width?: number;
+  tagId?: string;
 }
 
-export function HeaderPipe({ x, y, label, temp, loop, width = 200 }: Props) {
-  const color = PIPE_COLORS[loop];
+/** Header measurement — tag sits above pipe, not on it */
+export function HeaderPipe({ x, y, label, temp, loop, tagId }: Props) {
+  const color = LOOP[loop].stroke;
+  const tag = tagId || label.replace(/\s/g, '_').toUpperCase();
+
   return (
-    <g>
-      <rect x={x} y={y} width={width} height={28} fill="#0f172a" stroke={color} strokeWidth={2} rx={3} />
-      <text x={x + width / 2} y={y + 12} textAnchor="middle" fill={color} fontSize={10} fontWeight="700">
+    <g className="scada-header">
+      <line x1={x} y1={y + 40} x2={x + 180} y2={y + 40} stroke={color} strokeWidth={12} strokeLinecap="round" opacity={0.35} />
+      <ScadaTag x={x + 46} y={y} tag={tag} pv={temp.toFixed(1)} unit="°C" width={88} />
+      <text x={x + 90} y={y + 56} textAnchor="middle" fill={color} fontSize={8} fontWeight="600" opacity={0.85}>
         {label}
-      </text>
-      <text x={x + width / 2} y={y + 24} textAnchor="middle" fill="#e2e8f0" fontSize={10} fontFamily="monospace">
-        {temp.toFixed(1)}°C
       </text>
     </g>
   );
