@@ -93,7 +93,7 @@
 .model-progress-bar {
   margin-top: 0.35rem;
   height: 4px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -281,9 +281,15 @@
   margin-left: 0.5rem;
 }
 
-.asset-item .status.normal { background: var(--success); }
-.asset-item .status.warning { background: var(--warning); }
-.asset-item .status.alarm { background: var(--error); }
+.asset-item .status.normal {
+  background: var(--success);
+}
+.asset-item .status.warning {
+  background: var(--warning);
+}
+.asset-item .status.alarm {
+  background: var(--error);
+}
 
 /* Control Panel */
 .control-group {
@@ -335,9 +341,15 @@
   border-left: 3px solid var(--accent);
 }
 
-.kpi-card.good { border-left-color: var(--success); }
-.kpi-card.warning { border-left-color: var(--warning); }
-.kpi-card.critical { border-left-color: var(--error); }
+.kpi-card.good {
+  border-left-color: var(--success);
+}
+.kpi-card.warning {
+  border-left-color: var(--warning);
+}
+.kpi-card.critical {
+  border-left-color: var(--error);
+}
 
 .kpi-card .name {
   font-size: 0.75rem;

@@ -164,7 +164,7 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
               onClick={() => triggerPlantFault('pump_trip')}
               style={scenarioBtnStyle}
             >
-              💧 Pump Trip
+              💧 Pump Trip (CHWP-29-2)
             </button>
             <button
               onClick={resetPlant}

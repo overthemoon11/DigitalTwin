@@ -1,9 +1,7 @@
 import { useEffect } from 'react';
 import { useTwinStore } from './useTwinStore';
 
-/**
- * Starts 2s plant telemetry simulation and syncs into Zustand store.
- */
+/** Starts 2s BMS control simulation and syncs into Zustand store. */
 export function usePlantTelemetry() {
   const initPlantTelemetry = useTwinStore((s) => s.initPlantTelemetry);
 

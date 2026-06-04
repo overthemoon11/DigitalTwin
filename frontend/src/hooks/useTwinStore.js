@@ -3,9 +3,11 @@ import {
   startPlantSimulator,
   updatePlantControl as setPlantControlValue,
   resetPlantControls,
-  triggerPlantFault,
+  triggerPlantFault as setPlantFault,
   stepPlantSimulation,
+  acknowledgePlantAlert as ackPlantAlert,
 } from '../services/plantSimulator';
+import { analyzePlantQuery, buildPlantContextForCopilot } from '../services/copilotAnalysis';
 
 const API_BASE = '/api';
 
@@ -48,23 +50,17 @@ export const useTwinStore = create((set, get) => ({
 
   resetPlant: () => {
     resetPlantControls();
+    set({ plantState: stepPlantSimulation() });
   },
 
   triggerPlantFault: (faultType) => {
-    triggerPlantFault(faultType);
+    setPlantFault(faultType);
+    set({ plantState: stepPlantSimulation() });
   },
 
   acknowledgePlantAlert: (alertId) => {
-    const ps = get().plantState;
-    if (!ps) return;
-    set({
-      plantState: {
-        ...ps,
-        alerts: ps.alerts.map((a) =>
-          a.id === alertId ? { ...a, acknowledged: true } : a
-        ),
-      },
-    });
+    ackPlantAlert(alertId);
+    set({ plantState: stepPlantSimulation() });
   },
 
   loadTwinState: async () => {
@@ -210,17 +206,19 @@ export const useTwinStore = create((set, get) => ({
   },
 
   sendCopilotMessage: async (message) => {
-    const { conversationHistory } = get();
-    
+    const { conversationHistory, plantState } = get();
+    const plantContext = buildPlantContextForCopilot(plantState);
+    const enrichedMessage = plantContext ? `${plantContext}\n\nOperator question: ${message}` : message;
+
     try {
       const response = await fetch(`${API_BASE}/copilot/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, conversationHistory }),
+        body: JSON.stringify({ message: enrichedMessage, conversationHistory }),
       });
+      if (!response.ok) throw new Error('Copilot API error');
       const result = await response.json();
-      
-      // Update conversation history
+
       set({
         conversationHistory: [
           ...conversationHistory,
@@ -228,11 +226,23 @@ export const useTwinStore = create((set, get) => ({
           { role: 'assistant', content: result.response },
         ],
       });
-      
+
       return result;
     } catch (err) {
-      console.error('Copilot error:', err);
-      throw err;
+      const local = analyzePlantQuery(message, plantState);
+      const responseText =
+        local ||
+        '## Chiller Plant Copilot\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.';
+
+      set({
+        conversationHistory: [
+          ...conversationHistory,
+          { role: 'user', content: message },
+          { role: 'assistant', content: responseText },
+        ],
+      });
+
+      return { response: responseText, source: 'local-analysis' };
     }
   },
 
