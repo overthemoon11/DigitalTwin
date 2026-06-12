@@ -50,11 +50,11 @@ function App() {
 
       {/* Model download / loading status banner */}
       <ModelStatusBanner />
-      <VirtualSimulatorBanner simulation={plantState?.simulation} />
 
       <div className="main-content">
-        {/* Left Panel - Asset Tree */}
+        {/* Left Panel - Simulator status + asset tree */}
         <aside className="left-panel">
+          <VirtualSimulatorBanner simulation={plantState?.simulation} />
           <h3>Chiller Plant Assets</h3>
           <PlantAssetTree
             equipment={plantState?.equipment || {}}

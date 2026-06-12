@@ -57,17 +57,23 @@
 }
 
 .virtual-simulator-banner {
-  padding: 0.5rem 1.5rem;
-  background: #0f172a;
-  border-bottom: 1px solid var(--border);
   font-size: 0.8rem;
 }
 
-.virtual-simulator-banner__main {
+.left-panel .virtual-simulator-banner {
+  padding: 0.75rem 1rem;
+  background: #0f172a;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+.left-panel .virtual-simulator-banner__main {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1.25rem;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
 }
 
 .virtual-simulator-banner__badge {
@@ -81,26 +87,30 @@
 }
 
 .virtual-simulator-banner__toggle {
-  margin-left: auto;
-  padding: 0.2rem 0.6rem;
+  padding: 0.25rem 0.5rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text);
   cursor: pointer;
   font-size: 0.75rem;
+  width: 100%;
+  text-align: center;
 }
 
 .virtual-simulator-banner__trigger {
-  margin: 0.35rem 0 0;
+  margin: 0.5rem 0 0;
   color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .virtual-simulator-banner__cascade {
-  margin: 0.5rem 0 0 1.25rem;
+  margin: 0.5rem 0 0 1rem;
   padding: 0;
   color: var(--text);
-  line-height: 1.5;
+  line-height: 1.45;
+  font-size: 0.75rem;
 }
 
 .connection-status.connected {
@@ -168,7 +178,7 @@
 
 /* Left Panel */
 .left-panel {
-  width: 280px;
+  width: 300px;
   background: var(--bg-panel);
   border-right: 1px solid var(--border);
   display: flex;
