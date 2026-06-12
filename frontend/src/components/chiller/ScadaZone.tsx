@@ -16,7 +16,7 @@ interface TitleProps {
 }
 
 /** Zone background only — draw before pipes */
-export function ScadaZonePanel({ x, y, width, height, fill = 'rgba(15,23,42,0.5)' }: PanelProps) {
+export function ScadaZonePanel({ x, y, width, height, fill = 'rgba(241,245,249,0.85)' }: PanelProps) {
   return (
     <rect x={x} y={y} width={width} height={height} fill={fill} stroke={SCADA.panelBorder} strokeWidth={1} rx={4} />
   );

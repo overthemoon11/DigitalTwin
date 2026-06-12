@@ -19,22 +19,13 @@ export function ScadaPipe({ d, loop, flowSpeed = 0, running = true, width = 10 }
       <path
         d={d}
         fill="none"
-        stroke="#020617"
-        strokeWidth={width + 4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity={0.85}
-      />
-      <path
-        d={d}
-        fill="none"
         stroke={stroke}
         strokeWidth={width}
         strokeLinecap="round"
         strokeLinejoin="round"
         className={animated ? 'scada-pipe-flow' : 'scada-pipe-idle'}
         style={animated ? { ['--flow-dur' as string]: `${dur}s` } : undefined}
-        opacity={running ? 0.95 : 0.45}
+        opacity={running ? 0.9 : 0.4}
       />
     </g>
   );

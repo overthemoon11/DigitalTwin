@@ -1,15 +1,18 @@
 :root {
-  --bg-dark: #1a1a2e;
-  --bg-panel: #16213e;
-  --bg-card: #1f3460;
-  --accent: #0f4c75;
-  --accent-light: #3282b8;
-  --text: #e8e8e8;
-  --text-muted: #a0a0a0;
-  --success: #4caf50;
-  --warning: #ff9800;
-  --error: #f44336;
-  --border: #2a3f5f;
+  --bg-dark: #f1f5f9;
+  --bg-panel: #ffffff;
+  --bg-card: #f8fafc;
+  --bg-hover: #e2e8f0;
+  --accent: #0369a1;
+  --accent-light: #0284c7;
+  --primary: #2563eb;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --success: #16a34a;
+  --warning: #d97706;
+  --error: #dc2626;
+  --danger: #dc2626;
+  --border: #e2e8f0;
 }
 
 .app {
@@ -51,9 +54,10 @@
 .plant-mode-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
-  background: #1e3a5f;
-  color: #93c5fd;
+  background: #e0f2fe;
+  color: #0369a1;
   font-size: 0.8rem;
+  border: 1px solid #bae6fd;
 }
 
 .virtual-simulator-banner {
@@ -62,7 +66,7 @@
 
 .left-panel .virtual-simulator-banner {
   padding: 0.75rem 1rem;
-  background: #0f172a;
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   max-height: 42vh;
@@ -78,7 +82,7 @@
 
 .virtual-simulator-banner__badge {
   font-weight: 600;
-  color: #38bdf8;
+  color: var(--accent-light);
 }
 
 .virtual-simulator-banner__detail,
@@ -131,18 +135,20 @@
   flex-direction: column;
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
-  color: #fff;
+  color: var(--text);
   background: var(--bg-card);
   border-bottom: 1px solid var(--border);
 }
 .model-status-banner.downloading {
-  background: #1a365d;
+  background: #e0f2fe;
+  color: #0369a1;
 }
 .model-status-banner.loading {
-  background: #2d3748;
+  background: #f1f5f9;
 }
 .model-status-banner.error {
-  background: #742a2a;
+  background: #fef2f2;
+  color: #b91c1c;
 }
 .model-status-content {
   display: flex;
@@ -158,13 +164,13 @@
 .model-progress-bar {
   margin-top: 0.35rem;
   height: 4px;
-  background: rgba(255, 255, 255, 0.15);
+  background: #e2e8f0;
   border-radius: 2px;
   overflow: hidden;
 }
 .model-progress-fill {
   height: 100%;
-  background: #63b3ed;
+  background: var(--accent-light);
   border-radius: 2px;
   transition: width 0.4s ease;
 }
@@ -198,7 +204,7 @@
 /* Center viewer — 2D chiller plant SCADA */
 .viewer {
   flex: 1;
-  background: #0a0e14;
+  background: #f8fafc;
   overflow: hidden;
 }
 
@@ -228,16 +234,17 @@
   height: 28px;
   border: 1px solid var(--border);
   border-radius: 4px;
-  background: rgba(15, 23, 42, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   color: var(--text);
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 .scada-viewport-tools button:hover {
-  background: var(--bg-card);
-  border-color: #38bdf8;
+  background: #ffffff;
+  border-color: var(--accent-light);
 }
 
 .scada-viewport-hint {
@@ -249,8 +256,10 @@
   padding: 2px 10px;
   font-size: 0.65rem;
   color: var(--text-muted);
-  background: rgba(6, 10, 16, 0.75);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
   border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   pointer-events: none;
 }
 
@@ -325,15 +334,15 @@
 }
 
 .plant-equip:hover {
-  filter: brightness(1.12);
+  filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.12));
 }
 
 .scada-building-load {
-  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.25));
+  filter: drop-shadow(0 2px 6px rgba(37, 99, 235, 0.15));
 }
 
 .chiller-plant-viewer {
-  background: #060a10;
+  background: #f8fafc;
 }
 
 /* Right Panel */
@@ -368,8 +377,8 @@
 }
 
 .panel-tabs button.active {
-  background: var(--accent);
-  color: white;
+  background: var(--accent-light);
+  color: #ffffff;
 }
 
 .panel-content {
@@ -404,7 +413,8 @@
 }
 
 .asset-item.selected {
-  background: var(--accent);
+  background: var(--accent-light);
+  color: #ffffff;
 }
 
 .asset-item .icon {
@@ -451,6 +461,7 @@
   padding: 0.75rem;
   border-radius: 6px;
   margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
 }
 
 .control-item label {
@@ -481,6 +492,7 @@
   background: var(--bg-card);
   padding: 1rem;
   border-radius: 8px;
+  border: 1px solid var(--border);
   border-left: 3px solid var(--accent);
 }
 
@@ -530,6 +542,7 @@
   background: var(--bg-card);
   padding: 0.75rem;
   border-radius: 6px;
+  border: 1px solid var(--border);
   border-left: 3px solid var(--warning);
 }
 
@@ -591,11 +604,14 @@
   padding: 0.75rem;
   border-radius: 8px;
   background: var(--bg-card);
+  border: 1px solid var(--border);
 }
 
 .chat-message.user {
-  background: var(--accent);
+  background: var(--accent-light);
+  color: #ffffff;
   margin-left: 2rem;
+  border-color: var(--accent-light);
 }
 
 .chat-message.assistant {
@@ -624,11 +640,16 @@
 .chat-input input {
   flex: 1;
   padding: 0.75rem;
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: var(--bg-card);
+  background: #ffffff;
   color: var(--text);
   font-size: 0.85rem;
+}
+
+.chat-input input:focus {
+  outline: none;
+  border-color: var(--accent-light);
 }
 
 .chat-input button {
@@ -675,7 +696,7 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: var(--bg-card);
 }
 
 ::-webkit-scrollbar-thumb {

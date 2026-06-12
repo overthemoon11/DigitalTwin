@@ -25,8 +25,9 @@ export function CoolingTower({ equipment, x, y, selected, onSelect }: Props) {
   return (
     <g className="plant-equip scada-tower" onClick={() => onSelect(equipment.id)} style={{ cursor: 'pointer' }}>
       <rect x={x} y={y} width={W} height={H} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1} rx={3} />
-      <rect x={x + 10} y={y + 38} width={48} height={42} fill="#334155" stroke="#475569" rx={2} />
-      <ellipse cx={cx} cy={y + 32} rx={26} ry={10} fill="#1e293b" stroke={fill} strokeWidth={2} />
+      <rect x={x + 10} y={y + 38} width={48} height={42} fill="#f1f5f9" stroke={SCADA.faceplateBorder} rx={2} />
+      <rect x={x + 14} y={y + 58} width={40} height={18} fill="#e0f2fe" stroke="none" rx={1} opacity={0.9} />
+      <ellipse cx={cx} cy={y + 32} rx={26} ry={10} fill="#ffffff" stroke={fill} strokeWidth={2} />
       <g transform={`translate(${cx}, ${fanCy})`}>
         <g>
           {[0, 72, 144, 216, 288].map((deg) => (

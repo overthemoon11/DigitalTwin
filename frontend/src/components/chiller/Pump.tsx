@@ -36,7 +36,7 @@ export function Pump({ equipment, x, y, selected, onSelect, compact = false }: P
   return (
     <g className="plant-equip scada-pump" onClick={() => onSelect(equipment.id)} style={{ cursor: 'pointer' }}>
       <rect x={x} y={y} width={W} height={H} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1} rx={3} />
-      <circle cx={cx} cy={cy} r={18} fill="#1e293b" stroke={fill} strokeWidth={2.5} />
+      <circle cx={cx} cy={cy} r={18} fill="#f1f5f9" stroke={fill} strokeWidth={2.5} />
       <path d={`M ${cx - 10} ${cy + 6} Q ${cx} ${cy + 14} ${cx + 10} ${cy + 6}`} fill="none" stroke={fill} strokeWidth={2} />
       <g transform={`translate(${cx}, ${cy})`}>
         <g>

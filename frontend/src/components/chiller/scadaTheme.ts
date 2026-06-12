@@ -1,31 +1,31 @@
-/** Honeywell-style SCADA palette for the chiller plant P&ID */
+/** Light SCADA palette for the chiller plant P&ID */
 export const SCADA = {
-  bg: '#060a10',
-  grid: '#0f172a',
-  panel: '#0c1220',
-  panelBorder: '#1e3a5f',
-  faceplate: '#111827',
-  faceplateBorder: '#334155',
-  text: '#e2e8f0',
+  bg: '#f8fafc',
+  grid: '#e2e8f0',
+  panel: '#f1f5f9',
+  panelBorder: '#cbd5e1',
+  faceplate: '#ffffff',
+  faceplateBorder: '#94a3b8',
+  text: '#1e293b',
   textMuted: '#64748b',
-  tag: '#38bdf8',
-  pv: '#f8fafc',
-  sp: '#fbbf24',
-  alarm: '#ef4444',
-  running: '#22c55e',
-  stopped: '#475569',
-  manual: '#eab308',
-  selected: '#38bdf8',
+  tag: '#0369a1',
+  pv: '#0f172a',
+  sp: '#b45309',
+  alarm: '#dc2626',
+  running: '#16a34a',
+  stopped: '#94a3b8',
+  manual: '#ca8a04',
+  selected: '#0284c7',
   font: '"Segoe UI", system-ui, sans-serif',
   mono: '"Consolas", "Cascadia Mono", monospace',
 } as const;
 
 export const LOOP = {
-  makeup: { stroke: '#0ea5e9', fill: 'rgba(14,165,233,0.08)', label: 'MAKE-UP' },
-  cws: { stroke: '#22c55e', fill: 'rgba(34,197,94,0.06)', label: 'CWS' },
-  cwr: { stroke: '#14532d', strokeBright: '#166534', fill: 'rgba(20,83,45,0.08)', label: 'CWR' },
-  chws: { stroke: '#3b82f6', fill: 'rgba(59,130,246,0.06)', label: 'CHWS' },
-  chwr: { stroke: '#1d4ed8', fill: 'rgba(29,78,216,0.08)', label: 'CHWR' },
+  makeup: { stroke: '#0284c7', fill: 'rgba(2,132,199,0.1)', label: 'MAKE-UP' },
+  cws: { stroke: '#16a34a', fill: 'rgba(22,163,74,0.08)', label: 'CWS' },
+  cwr: { stroke: '#15803d', strokeBright: '#166534', fill: 'rgba(21,128,61,0.1)', label: 'CWR' },
+  chws: { stroke: '#2563eb', fill: 'rgba(37,99,235,0.08)', label: 'CHWS' },
+  chwr: { stroke: '#1d4ed8', fill: 'rgba(29,78,216,0.1)', label: 'CHWR' },
 } as const;
 
 export function statusFill(status: string): string {

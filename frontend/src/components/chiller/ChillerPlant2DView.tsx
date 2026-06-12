@@ -125,8 +125,8 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
         <ScadaZonePanel x={8} y={ZONE.MAKEUP.y} width={188} height={ZONE.MAKEUP.h} fill={LOOP.makeup.fill} />
         <ScadaZonePanel x={200} y={ZONE.TOWERS.y} width={848} height={ZONE.TOWERS.h} fill={LOOP.cws.fill} />
         <ScadaZonePanel x={200} y={ZONE.CWP_ROW.y} width={848} height={ZONE.CWP_ROW.h} fill={LOOP.cws.fill} />
-        <ScadaZonePanel x={200} y={ZONE.CHILLERS.y} width={848} height={ZONE.CHILLERS.h} fill="rgba(30,41,59,0.35)" />
-        <ScadaZonePanel x={8} y={ZONE.HYDRONIC.y} width={188} height={ZONE.HYDRONIC.h} fill="rgba(14,165,233,0.05)" />
+        <ScadaZonePanel x={200} y={ZONE.CHILLERS.y} width={848} height={ZONE.CHILLERS.h} fill="rgba(226,232,240,0.55)" />
+        <ScadaZonePanel x={8} y={ZONE.HYDRONIC.y} width={188} height={ZONE.HYDRONIC.h} fill="rgba(2,132,199,0.06)" />
         <ScadaZonePanel x={200} y={ZONE.CHW_LOOP.y} width={848} height={ZONE.CHW_LOOP.h} fill={LOOP.chws.fill} />
 
         {/* —— PIPING —— */}
