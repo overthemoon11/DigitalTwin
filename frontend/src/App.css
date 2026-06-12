@@ -201,6 +201,64 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+  position: relative;
+}
+
+.scada-viewport-tools {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+}
+
+.scada-viewport-tools button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.scada-viewport-tools button:hover {
+  background: var(--bg-card);
+  border-color: #38bdf8;
+}
+
+.scada-viewport-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  z-index: 2;
+  margin: 0;
+  padding: 2px 10px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  background: rgba(6, 10, 16, 0.75);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.scada-viewport-svg {
+  cursor: grab;
+  touch-action: none;
+}
+
+.scada-viewport-svg:active {
+  cursor: grabbing;
+}
+
+.plant-equip {
+  cursor: pointer;
+}
+
+.scada-viewport-bg {
+  cursor: grab;
 }
 
 .chiller-plant-svg {

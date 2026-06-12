@@ -1,6 +1,7 @@
 import type { CoolingTowerEquipment, EquipmentStatus } from '../../types/plant';
+import { EquipLabel } from './EquipLabel';
 import { ScadaSpin } from './ScadaSpin';
-import { SCADA, statusFill } from './scadaTheme';
+import { LOOP, SCADA, statusFill } from './scadaTheme';
 
 interface Props {
   equipment: CoolingTowerEquipment;
@@ -9,6 +10,9 @@ interface Props {
   selected: boolean;
   onSelect: (id: string) => void;
 }
+
+const W = 68;
+const H = 88;
 
 export function CoolingTower({ equipment, x, y, selected, onSelect }: Props) {
   const status = equipment.status as EquipmentStatus;
@@ -20,7 +24,7 @@ export function CoolingTower({ equipment, x, y, selected, onSelect }: Props) {
 
   return (
     <g className="plant-equip scada-tower" onClick={() => onSelect(equipment.id)} style={{ cursor: 'pointer' }}>
-      <rect x={x} y={y} width={68} height={88} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1} rx={3} />
+      <rect x={x} y={y} width={W} height={H} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1} rx={3} />
       <rect x={x + 10} y={y + 38} width={48} height={42} fill="#334155" stroke="#475569" rx={2} />
       <ellipse cx={cx} cy={y + 32} rx={26} ry={10} fill="#1e293b" stroke={fill} strokeWidth={2} />
       <g transform={`translate(${cx}, ${fanCy})`}>
@@ -31,15 +35,20 @@ export function CoolingTower({ equipment, x, y, selected, onSelect }: Props) {
           <ScadaSpin durSec={fanDurSec} />
         </g>
       </g>
-      <text x={cx} y={y + 14} textAnchor="middle" fill={SCADA.tag} fontSize={9} fontWeight="700" fontFamily={SCADA.mono}>
-        {equipment.name}
-      </text>
-      <text x={cx} y={y + 96} textAnchor="middle" fill={SCADA.pv} fontSize={9} fontFamily={SCADA.mono}>
-        FAN {equipment.fanSpeedPercent.toFixed(0)}%
-      </text>
-      <text x={cx} y={y + 108} textAnchor="middle" fill={SCADA.textMuted} fontSize={8} fontFamily={SCADA.mono}>
-        {equipment.frequencyHz.toFixed(0)} Hz · {equipment.leavingTemp.toFixed(1)}°C
-      </text>
+      <circle cx={cx} cy={y + 28} r={3} fill={LOOP.cwr.stroke} />
+      <circle cx={cx} cy={y + 80} r={3} fill={LOOP.cws.stroke} />
+      <EquipLabel
+        iconX={x}
+        iconY={y}
+        iconW={W}
+        iconH={H}
+        plateW={108}
+        lines={[
+          { text: equipment.name, variant: 'tag' },
+          { text: `FAN ${equipment.fanSpeedPercent.toFixed(0)}%`, variant: 'pv' },
+          { text: `${equipment.frequencyHz.toFixed(0)} Hz · ${equipment.leavingTemp.toFixed(1)}°C`, variant: 'muted' },
+        ]}
+      />
     </g>
   );
 }

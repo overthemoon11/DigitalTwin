@@ -1,4 +1,5 @@
 import type { ValveEquipment, EquipmentStatus } from '../../types/plant';
+import { EquipLabel } from './EquipLabel';
 import { SCADA, statusFill } from './scadaTheme';
 
 interface Props {
@@ -9,6 +10,9 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
+const W = 40;
+const H = 32;
+
 export function Valve({ equipment, x, y, selected, onSelect }: Props) {
   const fill = statusFill(equipment.status as EquipmentStatus);
   const cx = x + 20;
@@ -17,7 +21,7 @@ export function Valve({ equipment, x, y, selected, onSelect }: Props) {
 
   return (
     <g className="plant-equip scada-valve" onClick={() => onSelect(equipment.id)} style={{ cursor: 'pointer' }}>
-      <line x1={x} y1={cy} x2={x + 40} y2={cy} stroke="#475569" strokeWidth={4} strokeLinecap="round" />
+      <line x1={x} y1={cy} x2={x + W} y2={cy} stroke="#475569" strokeWidth={4} strokeLinecap="round" />
       <circle cx={cx} cy={cy} r={14} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : fill} strokeWidth={selected ? 2.5 : 2} />
       <line
         x1={cx - 10}
@@ -29,12 +33,17 @@ export function Valve({ equipment, x, y, selected, onSelect }: Props) {
         strokeLinecap="round"
         transform={`rotate(${open * 0.9 - 45}, ${cx}, ${cy})`}
       />
-      <text x={cx} y={y + 44} textAnchor="middle" fill={SCADA.tag} fontSize={8} fontFamily={SCADA.mono}>
-        {equipment.name}
-      </text>
-      <text x={cx} y={y + 56} textAnchor="middle" fill={SCADA.pv} fontSize={9} fontFamily={SCADA.mono}>
-        {equipment.positionPercent.toFixed(0)} %
-      </text>
+      <EquipLabel
+        iconX={x}
+        iconY={y}
+        iconW={W}
+        iconH={H}
+        plateW={100}
+        lines={[
+          { text: equipment.name, variant: 'tag' },
+          { text: `${equipment.positionPercent.toFixed(0)} %`, variant: 'pv' },
+        ]}
+      />
     </g>
   );
 }

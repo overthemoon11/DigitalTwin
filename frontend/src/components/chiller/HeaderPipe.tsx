@@ -1,4 +1,4 @@
-import { LOOP, SCADA } from './scadaTheme';
+import { LOOP } from './scadaTheme';
 import { ScadaTag } from './ScadaTag';
 
 interface Props {
@@ -8,18 +8,32 @@ interface Props {
   temp: number;
   loop: 'chws' | 'chwr' | 'cws' | 'cwr';
   tagId?: string;
+  /** SVG Y of the pipe centerline */
+  pipeY: number;
+  pipeX1?: number;
+  pipeX2?: number;
 }
 
-/** Header measurement — tag sits above pipe, not on it */
-export function HeaderPipe({ x, y, label, temp, loop, tagId }: Props) {
+/** Header tag + pipe run — tag offset from pipe so text is never on the line */
+export function HeaderPipe({
+  x,
+  y,
+  label,
+  temp,
+  loop,
+  tagId,
+  pipeY,
+  pipeX1 = 200,
+  pipeX2 = 940,
+}: Props) {
   const color = LOOP[loop].stroke;
   const tag = tagId || label.replace(/\s/g, '_').toUpperCase();
 
   return (
     <g className="scada-header">
-      <line x1={x} y1={y + 40} x2={x + 180} y2={y + 40} stroke={color} strokeWidth={12} strokeLinecap="round" opacity={0.35} />
-      <ScadaTag x={x + 46} y={y} tag={tag} pv={temp.toFixed(1)} unit="°C" width={88} />
-      <text x={x + 90} y={y + 56} textAnchor="middle" fill={color} fontSize={8} fontWeight="600" opacity={0.85}>
+      <line x1={pipeX1} y1={pipeY} x2={pipeX2} y2={pipeY} stroke={color} strokeWidth={10} strokeLinecap="round" opacity={0.4} />
+      <ScadaTag x={x} y={y} tag={tag} pv={temp.toFixed(1)} unit="°C" width={92} />
+      <text x={x + 46} y={y + 48} textAnchor="middle" fill={color} fontSize={8} fontWeight="600">
         {label}
       </text>
     </g>

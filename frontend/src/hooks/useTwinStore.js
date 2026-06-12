@@ -129,7 +129,9 @@ export const useTwinStore = create((set, get) => ({
   },
 
   selectAsset: (assetId) => {
-    set({ selectedAsset: assetId });
+    set((state) => ({
+      selectedAsset: assetId != null && assetId === state.selectedAsset ? null : assetId,
+    }));
   },
 
   updateControl: async (controlId, value) => {
