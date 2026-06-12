@@ -31,6 +31,12 @@ export function analyzePlantQuery(message: string, state: PlantState | null): st
     if (headers.cws > cwsSp + 1) {
       reasons.push(`- Condenser water temperature is high (${headers.cws}°C vs setpoint ${cwsSp}°C).`);
     }
+    if (headers.ambientTemp > 34) {
+      reasons.push(`- Hot outdoor air (${headers.ambientTemp}°C) increases condenser lift.`);
+    }
+    if (headers.humidityRh > 80) {
+      reasons.push(`- High outdoor humidity (${headers.humidityRh}%RH) reduces cooling tower performance.`);
+    }
     const ct = state.equipment['ct-41-1'];
     if (ct && ct.type === 'cooling_tower' && ct.fanSpeedPercent < 60) {
       reasons.push(`- Cooling tower fan speed is low (${ct.fanSpeedPercent}%).`);
@@ -106,6 +112,7 @@ export function buildPlantContextForCopilot(state: PlantState | null): string {
     'Chiller Plant Virtual Simulator Context (physics-calculated, no live sensors):',
     sim ? `Mode: ${sim.mode}, tick ${sim.tick}, last: ${sim.lastTrigger}` : '',
     `Load ${headers.buildingLoadRt} RT, CHWS ${headers.chws}°C, CHWR ${headers.chwr}°C`,
+    `Outdoor ${headers.ambientTemp}°C / ${headers.humidityRh}%RH`,
     `CWS ${headers.cws}°C, CWR ${headers.cwr}°C`,
     `KPIs: ${kpis.slice(0, 4).map((k) => `${k.name}=${k.value}${k.unit}`).join(', ')}`,
     cascade ? `Cascade: ${cascade}` : '',

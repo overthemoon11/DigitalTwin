@@ -66,14 +66,19 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
   
   // Group controls by type
   const loadControls = displayControls.filter(c => c.controlType === 'buildingLoad');
+  const envControls = displayControls.filter(c =>
+    c.controlType === 'ambientTemperature' || c.controlType === 'humiditySetpoint'
+  );
   const setpointControls = displayControls.filter(c => 
-    c.controlType.includes('Setpoint')
+    c.controlType.includes('Setpoint') && !c.controlType.includes('humidity')
   );
   const overrideControls = displayControls.filter(c => 
     c.controlType.includes('Override')
   );
   const otherControls = displayControls.filter(c => 
     c.controlType !== 'buildingLoad' &&
+    c.controlType !== 'ambientTemperature' &&
+    c.controlType !== 'humiditySetpoint' &&
     !c.controlType.includes('Setpoint') && !c.controlType.includes('Override')
   );
   
@@ -92,6 +97,22 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
         <div className="control-group">
           <h4>Building load</h4>
           {loadControls.map(control => (
+            <ControlSlider
+              key={control.id}
+              control={control}
+              onUpdate={handleUpdate}
+            />
+          ))}
+        </div>
+      )}
+
+      {envControls.length > 0 && (
+        <div className="control-group">
+          <h4>Weather &amp; humidity</h4>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+            Outdoor conditions scale effective cooling load and condenser difficulty.
+          </p>
+          {envControls.map(control => (
             <ControlSlider
               key={control.id}
               control={control}

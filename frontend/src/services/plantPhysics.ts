@@ -20,6 +20,10 @@ export const REF_CHWP_KW = 20;
 export const REF_CWS_SP = 29;
 export const REF_CT_FAN = 70;
 
+/** Reference outdoor conditions for load / condenser modifiers */
+export const REF_AMBIENT_TEMP = 32;
+export const REF_HUMIDITY_RH = 65;
+
 export const FLOW_COEFF = 1.163;
 export const RT_TO_KW = 3.517;
 
@@ -117,4 +121,26 @@ export function plantEfficiencyKwPerRt(totalKw: number, totalRt: number): number
 export function lag(current: number, target: number, tauSec: number, dtSec = 2): number {
   const alpha = 1 - Math.exp(-dtSec / tauSec);
   return current + (target - current) * alpha;
+}
+
+/** Outdoor dry-bulb effect on building cooling demand (1.0 at reference). */
+export function weatherLoadFactor(ambientTempC: number): number {
+  if (ambientTempC >= REF_AMBIENT_TEMP) {
+    return 1 + (ambientTempC - REF_AMBIENT_TEMP) * 0.03;
+  }
+  return clamp(1 + (ambientTempC - REF_AMBIENT_TEMP) * 0.02, 0.85, 1.5);
+}
+
+/** Outdoor humidity effect on latent cooling demand (1.0 at reference). */
+export function humidityLoadFactor(humidityRh: number): number {
+  const delta = humidityRh - REF_HUMIDITY_RH;
+  if (delta >= 0) return 1 + delta * 0.0015;
+  return clamp(1 + delta * 0.001, 0.92, 1.2);
+}
+
+/** Hot/humid ambient raises condenser water temperature target (°C offset). */
+export function weatherCondenserOffset(ambientTempC: number, humidityRh: number): number {
+  const tempOffset = (ambientTempC - REF_AMBIENT_TEMP) * 0.25;
+  const humidOffset = Math.max(0, humidityRh - 70) * 0.04;
+  return tempOffset + humidOffset;
 }

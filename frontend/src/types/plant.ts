@@ -72,6 +72,10 @@ export interface PlantHeaders {
   cws: number;
   cwr: number;
   buildingLoadRt: number;
+  /** Outdoor dry-bulb (operator weather control) */
+  ambientTemp: number;
+  /** Outdoor relative humidity (operator humidity control) */
+  humidityRh: number;
 }
 
 export interface PlantControl {

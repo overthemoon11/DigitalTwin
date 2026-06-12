@@ -21,6 +21,9 @@ export interface CascadeContext {
   chwsSp: number;
   cwsSp: number;
   dpSp: number;
+  baseLoadRt?: number;
+  ambientTemp?: number;
+  humidityRh?: number;
   buildingDemandRt: number;
   runningChillers: number;
   runningChwp: number;
@@ -44,6 +47,11 @@ export function buildCascadeTrace(ctx: CascadeContext): string[] {
     steps.push(`▶ ${ctx.trigger}`);
   }
 
+  if (ctx.baseLoadRt != null && ctx.ambientTemp != null && ctx.humidityRh != null) {
+    steps.push(
+      `Weather: ${ctx.ambientTemp.toFixed(0)}°C / ${ctx.humidityRh.toFixed(0)}%RH → effective load ${ctx.buildingDemandRt.toFixed(0)} RT (base ${ctx.baseLoadRt.toFixed(0)} RT)`
+    );
+  }
   steps.push(
     `Building demand: ${ctx.buildingDemandRt.toFixed(0)} RT → stage ${ctx.runningChillers} chiller(s)`
   );

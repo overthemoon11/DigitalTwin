@@ -14,10 +14,13 @@ import {
   REF_CHWP_FLOW,
   REF_CHWP_KW,
   REF_CHWP_SPEED,
+  REF_AMBIENT_TEMP,
   REF_CT_FAN,
+  REF_HUMIDITY_RH,
   chwsSetpointModifiers,
   condenserCopBonus,
   coolingKwFromFlow,
+  humidityLoadFactor,
   kwToRt,
   lag,
   plantCop,
@@ -28,6 +31,8 @@ import {
   rtToKw,
   speedToHz,
   clamp,
+  weatherCondenserOffset,
+  weatherLoadFactor,
 } from './plantPhysics';
 import { buildCascadeTrace } from './plantCascade';
 import {
@@ -74,6 +79,26 @@ function defaultControls(): PlantControl[] {
       max: 1500,
       step: 50,
       unit: 'RT',
+    },
+    {
+      id: 'ctrl-ambient-temp',
+      controlType: 'ambientTemperature',
+      label: 'Outdoor Temperature',
+      value: REF_AMBIENT_TEMP,
+      min: 22,
+      max: 40,
+      step: 1,
+      unit: '°C',
+    },
+    {
+      id: 'ctrl-humidity',
+      controlType: 'humiditySetpoint',
+      label: 'Outdoor Humidity',
+      value: REF_HUMIDITY_RH,
+      min: 40,
+      max: 95,
+      step: 5,
+      unit: '%RH',
     },
     {
       id: 'ctrl-chws-sp',
@@ -214,6 +239,8 @@ function buildKpis(
     card('kpi-cwr', 'Average CWR', headers.cwr, '°C', 'comfort', 32),
     card('kpi-water', 'Water Consumption', round(waterUse, 1), 'm³/h', 'cost', 15),
     card('kpi-ct-util', 'Cooling Tower Utilization', round(ctUtil, 0), '%', 'operational', 85),
+    card('kpi-ambient', 'Outdoor Temperature', headers.ambientTemp, '°C', 'environment', REF_AMBIENT_TEMP),
+    card('kpi-humidity', 'Outdoor Humidity', headers.humidityRh, '%RH', 'environment', REF_HUMIDITY_RH),
   ];
 }
 
@@ -227,7 +254,14 @@ function runControlStep(): PlantState {
   const pumpOverride = getControl('ctrl-pump-spd');
   const chillerEnabled = getControl('ctrl-ch-enable') === 1;
 
-  const buildingDemandRt = getControl('ctrl-building-load') || 900;
+  const ambientTemp = getControl('ctrl-ambient-temp') || REF_AMBIENT_TEMP;
+  const humidityRh = getControl('ctrl-humidity') || REF_HUMIDITY_RH;
+  const baseLoadRt = getControl('ctrl-building-load') || 900;
+  const buildingDemandRt = clamp(
+    baseLoadRt * weatherLoadFactor(ambientTemp) * humidityLoadFactor(humidityRh),
+    200,
+    1500
+  );
   const runningChCount = stageChillers(buildingDemandRt, chillerEnabled);
   const rtPerChiller = balanceChillerLoad(buildingDemandRt, runningChCount);
   const loadPctBase = chillerLoadPercent(rtPerChiller);
@@ -285,7 +319,10 @@ function runControlStep(): PlantState {
   } else {
     internals.ctFanSpeed = ctFanAdjust(internals.ctFanSpeed, internals.cwsActual, cwsSp);
   }
-  const cwsTarget = cwsSp - (internals.ctFanSpeed - REF_CT_FAN) * 0.04;
+  const cwsTarget =
+    cwsSp -
+    (internals.ctFanSpeed - REF_CT_FAN) * 0.04 +
+    weatherCondenserOffset(ambientTemp, humidityRh);
   internals.cwsActual = lag(internals.cwsActual, cwsTarget, 30);
   internals.cwrActual = lag(internals.cwrActual, internals.cwsActual + 3, 40);
 
@@ -482,6 +519,8 @@ function runControlStep(): PlantState {
     cws: round(internals.cwsActual, 2),
     cwr: round(internals.cwrActual, 2),
     buildingLoadRt: buildingDemandRt,
+    ambientTemp: round(ambientTemp, 1),
+    humidityRh: round(humidityRh, 0),
   };
 
   const pumpCommandedOn: Record<string, boolean> = {};
@@ -507,6 +546,9 @@ function runControlStep(): PlantState {
     chwsSp,
     cwsSp,
     dpSp,
+    baseLoadRt,
+    ambientTemp,
+    humidityRh,
     buildingDemandRt,
     runningChillers: runningChCount,
     runningChwp,

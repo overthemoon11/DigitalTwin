@@ -70,7 +70,7 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
     zoomStep,
   } = usePlantViewport(selectedId);
 
-  const h = headers || { chws: 7, chwr: 12, cws: 29, cwr: 32, buildingLoadRt: 0 };
+  const h = headers || { chws: 7, chwr: 12, cws: 29, cwr: 32, buildingLoadRt: 0, ambientTemp: 32, humidityRh: 65 };
   const tank = equipment['cwmutnk-41-1'] as MakeupTankEquipment | undefined;
   const cwpSpd = avgPumpSpeed(equipment, 'cwp-29', 4);
   const chwpSpd = avgPumpSpeed(equipment, 'chwp-29', 4);
