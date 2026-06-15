@@ -5,8 +5,11 @@
   "description": "Backend API for Smart Building HVAC Digital Twin",
   "main": "src/index.js",
   "scripts": {
+    "prestart": "node src/check-node-version.js",
     "start": "node src/index.js",
+    "predev": "node src/check-node-version.js",
     "dev": "node --watch src/index.js",
+    "pretest": "node src/check-node-version.js",
     "test": "node --test tests/*.test.js"
   },
   "keywords": ["hvac", "digital-twin", "simulation", "foundry-local"],
