@@ -18,6 +18,8 @@ export const REF_CHWP_FLOW = 600;
 export const REF_CHWP_KW = 20;
 
 export const REF_CWS_SP = 29;
+export const REF_CHWR_SP = 12;
+export const REF_CWR_SP = 32;
 export const REF_CT_FAN = 70;
 
 /** Reference outdoor conditions for load / condenser modifiers */

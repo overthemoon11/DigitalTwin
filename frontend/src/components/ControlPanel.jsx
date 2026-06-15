@@ -65,12 +65,18 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
   }
   
   // Group controls by type
+  const WATER_TEMP_TYPES = ['chwsSetpoint', 'chwrSetpoint', 'cwsSetpoint', 'cwrSetpoint'];
   const loadControls = displayControls.filter(c => c.controlType === 'buildingLoad');
   const envControls = displayControls.filter(c =>
     c.controlType === 'ambientTemperature' || c.controlType === 'humiditySetpoint'
   );
+  const waterTempControls = WATER_TEMP_TYPES
+    .map((type) => displayControls.find((c) => c.controlType === type))
+    .filter(Boolean);
   const setpointControls = displayControls.filter(c => 
-    c.controlType.includes('Setpoint') && !c.controlType.includes('humidity')
+    c.controlType.includes('Setpoint') &&
+    !c.controlType.includes('humidity') &&
+    !WATER_TEMP_TYPES.includes(c.controlType)
   );
   const overrideControls = displayControls.filter(c => 
     c.controlType.includes('Override')
@@ -79,6 +85,7 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
     c.controlType !== 'buildingLoad' &&
     c.controlType !== 'ambientTemperature' &&
     c.controlType !== 'humiditySetpoint' &&
+    !WATER_TEMP_TYPES.includes(c.controlType) &&
     !c.controlType.includes('Setpoint') && !c.controlType.includes('Override')
   );
   
@@ -113,6 +120,22 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
             Outdoor conditions scale effective cooling load and condenser difficulty.
           </p>
           {envControls.map(control => (
+            <ControlSlider
+              key={control.id}
+              control={control}
+              onUpdate={handleUpdate}
+            />
+          ))}
+        </div>
+      )}
+
+      {waterTempControls.length > 0 && (
+        <div className="control-group">
+          <h4>Water temperatures</h4>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+            Supply and return setpoints for chilled and condenser water loops.
+          </p>
+          {waterTempControls.map(control => (
             <ControlSlider
               key={control.id}
               control={control}

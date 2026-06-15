@@ -15,6 +15,8 @@ import {
   REF_CHWP_KW,
   REF_CHWP_SPEED,
   REF_AMBIENT_TEMP,
+  REF_CHWR_SP,
+  REF_CWR_SP,
   REF_CT_FAN,
   REF_HUMIDITY_RH,
   chwsSetpointModifiers,
@@ -103,7 +105,7 @@ function defaultControls(): PlantControl[] {
     {
       id: 'ctrl-chws-sp',
       controlType: 'chwsSetpoint',
-      label: 'CHWS Temperature Setpoint',
+      label: 'Chilled Water Supply Temp',
       value: 7,
       min: 5,
       max: 10,
@@ -111,12 +113,32 @@ function defaultControls(): PlantControl[] {
       unit: '°C',
     },
     {
+      id: 'ctrl-chwr-sp',
+      controlType: 'chwrSetpoint',
+      label: 'Chilled Water Return Temp',
+      value: REF_CHWR_SP,
+      min: 9,
+      max: 16,
+      step: 0.5,
+      unit: '°C',
+    },
+    {
       id: 'ctrl-cws-sp',
       controlType: 'cwsSetpoint',
-      label: 'Condenser Water Setpoint',
+      label: 'Condenser Water Supply Temp',
       value: 29,
       min: 25,
       max: 35,
+      step: 0.5,
+      unit: '°C',
+    },
+    {
+      id: 'ctrl-cwr-sp',
+      controlType: 'cwrSetpoint',
+      label: 'Condenser Water Return Temp',
+      value: REF_CWR_SP,
+      min: 28,
+      max: 38,
       step: 0.5,
       unit: '°C',
     },
@@ -248,7 +270,9 @@ function runControlStep(): PlantState {
   internals.tick += 1;
 
   const chwsSp = getControl('ctrl-chws-sp') || 7;
+  const chwrSp = getControl('ctrl-chwr-sp') || REF_CHWR_SP;
   const cwsSp = getControl('ctrl-cws-sp') || 29;
+  const cwrSp = getControl('ctrl-cwr-sp') || REF_CWR_SP;
   const dpSp = getControl('ctrl-dp-sp') || 15;
   const ctFanOverride = getControl('ctrl-ct-fan');
   const pumpOverride = getControl('ctrl-pump-spd');
@@ -279,12 +303,16 @@ function runControlStep(): PlantState {
   const totalChwFlow = rtToKw(buildingDemandRt) / (DESIGN_DELTA_T_FLOW * 1.163);
 
   // Actual delta-T from energy balance (may differ when bypass open)
-  let deltaT = totalChwFlow > 0 ? rtToKw(buildingDemandRt) / (totalChwFlow * 1.163) : 5.5;
+  let deltaTPhysics =
+    totalChwFlow > 0 ? rtToKw(buildingDemandRt) / (totalChwFlow * 1.163) : 5.5;
 
   // Bypass reduces effective delta-T
   if (internals.bypassPercent > 0) {
-    deltaT = deltaT * (1 - internals.bypassPercent / 200);
+    deltaTPhysics = deltaTPhysics * (1 - internals.bypassPercent / 200);
   }
+
+  const deltaTFromSp = clamp(chwrSp - internals.chwsActual, 2.5, 8);
+  const deltaT = deltaTPhysics * 0.35 + deltaTFromSp * 0.65;
 
   const chwr = internals.chwsActual + deltaT;
 
@@ -324,7 +352,8 @@ function runControlStep(): PlantState {
     (internals.ctFanSpeed - REF_CT_FAN) * 0.04 +
     weatherCondenserOffset(ambientTemp, humidityRh);
   internals.cwsActual = lag(internals.cwsActual, cwsTarget, 30);
-  internals.cwrActual = lag(internals.cwrActual, internals.cwsActual + 3, 40);
+  const cwrTarget = Math.max(cwrSp, internals.cwsActual + 2);
+  internals.cwrActual = lag(internals.cwrActual, cwrTarget, 40);
 
   const runningCt = stageCoolingTowers(runningChCount);
   const ctKwEach = pumpPowerFromSpeed(10, 70, internals.ctFanSpeed);
@@ -532,6 +561,9 @@ function runControlStep(): PlantState {
     headers,
     equipment,
     chwsSetpoint: chwsSp,
+    chwrSetpoint: chwrSp,
+    cwsSetpoint: cwsSp,
+    cwrSetpoint: cwrSp,
     deltaT,
     dpSetpoint: dpSp,
     measuredDp,
@@ -544,7 +576,9 @@ function runControlStep(): PlantState {
   const cascadeTrace = buildCascadeTrace({
     trigger: lastCascadeTrigger,
     chwsSp,
+    chwrSp,
     cwsSp,
+    cwrSp,
     dpSp,
     baseLoadRt,
     ambientTemp,
@@ -558,6 +592,7 @@ function runControlStep(): PlantState {
     cop: plantCopVal,
     chwsActual: internals.chwsActual,
     chwr,
+    cwrActual: internals.cwrActual,
     deltaT,
     totalPlantKw: totalKw,
     plantCop: plantCopVal,

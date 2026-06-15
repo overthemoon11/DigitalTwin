@@ -19,7 +19,9 @@ export const CASCADE_ORDER = [
 
 export interface CascadeContext {
   chwsSp: number;
+  chwrSp: number;
   cwsSp: number;
+  cwrSp: number;
   dpSp: number;
   baseLoadRt?: number;
   ambientTemp?: number;
@@ -33,6 +35,7 @@ export interface CascadeContext {
   cop: number;
   chwsActual: number;
   chwr: number;
+  cwrActual?: number;
   deltaT: number;
   totalPlantKw: number;
   plantCop: number;
@@ -56,14 +59,16 @@ export function buildCascadeTrace(ctx: CascadeContext): string[] {
     `Building demand: ${ctx.buildingDemandRt.toFixed(0)} RT → stage ${ctx.runningChillers} chiller(s)`
   );
   steps.push(
-    `CHWS setpoint ${ctx.chwsSp.toFixed(1)}°C → load ${ctx.loadPct.toFixed(0)}%, ${ctx.chKw.toFixed(0)} kW/ch, COP ${ctx.cop.toFixed(2)}`
+    `CHWS ${ctx.chwsSp.toFixed(1)}°C / CHWR ${ctx.chwrSp.toFixed(1)}°C → load ${ctx.loadPct.toFixed(0)}%, ${ctx.chKw.toFixed(0)} kW/ch, COP ${ctx.cop.toFixed(2)}`
   );
   steps.push(
     `DP setpoint ${ctx.dpSp.toFixed(0)} psi → ${ctx.runningChwp} CHWP(s); ΔT ${ctx.deltaT.toFixed(1)}°C (CHWS ${ctx.chwsActual.toFixed(1)} / CHWR ${ctx.chwr.toFixed(1)})`
   );
-  steps.push(
-    `CWS setpoint ${ctx.cwsSp.toFixed(1)}°C → ${ctx.runningCwp} CWP(s), tower fan drives condenser temp`
-  );
+  const cwrLine =
+    ctx.cwrActual != null
+      ? `CWS ${ctx.cwsSp.toFixed(1)}°C / CWR ${ctx.cwrSp.toFixed(1)}°C → ${ctx.runningCwp} CWP(s), actual CWR ${ctx.cwrActual.toFixed(1)}°C`
+      : `CWS ${ctx.cwsSp.toFixed(1)}°C / CWR ${ctx.cwrSp.toFixed(1)}°C → ${ctx.runningCwp} CWP(s), tower fan drives condenser temp`;
+  steps.push(cwrLine);
   steps.push(
     `Plant totals: ${ctx.totalPlantKw.toFixed(0)} kW, COP ${ctx.plantCop.toFixed(2)}, efficiency ${(ctx.totalPlantKw / Math.max(ctx.buildingDemandRt, 1)).toFixed(3)} kW/RT`
   );

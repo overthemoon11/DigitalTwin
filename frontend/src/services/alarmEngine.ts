@@ -4,6 +4,9 @@ export interface AlarmContext {
   headers: PlantHeaders;
   equipment: Record<string, PlantEquipment>;
   chwsSetpoint: number;
+  chwrSetpoint: number;
+  cwsSetpoint: number;
+  cwrSetpoint: number;
   deltaT: number;
   dpSetpoint: number;
   measuredDp: number;
@@ -33,7 +36,20 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
     });
   }
 
-  if (ctx.headers.cws > 32) {
+  if (ctx.headers.chwr > ctx.chwrSetpoint + 2) {
+    alerts.push({
+      id: 'alm-chwr-high',
+      severity: 'warning',
+      message: 'High CHWR Temperature',
+      assetId: 'chwp-29-1',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: 'Check building load and CHWS setpoint',
+    });
+  }
+
+  if (ctx.headers.cws > ctx.cwsSetpoint + 3) {
     alerts.push({
       id: 'alm-cws-high',
       severity: 'warning',
