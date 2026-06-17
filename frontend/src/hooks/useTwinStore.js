@@ -217,13 +217,12 @@ export const useTwinStore = create((set, get) => ({
   sendCopilotMessage: async (message) => {
     const { conversationHistory, plantState } = get();
     const plantContext = buildPlantContextForCopilot(plantState);
-    const enrichedMessage = plantContext ? `${plantContext}\n\nOperator question: ${message}` : message;
 
     try {
       const response = await fetch(`${API_BASE}/copilot/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: enrichedMessage, conversationHistory }),
+        body: JSON.stringify({ message, plantContext, conversationHistory }),
       });
       if (!response.ok) throw new Error('Copilot API error');
       const result = await response.json();

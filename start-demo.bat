@@ -33,7 +33,7 @@ REM Check if Node.js is installed
 where node >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Node.js is not installed!
-    echo Please install Node.js 18+ from https://nodejs.org
+    echo Please install Node.js 20+ from https://nodejs.org
     pause
     exit /b 1
 )
@@ -77,7 +77,7 @@ echo.
 
 REM Start backend server in new window
 echo Starting Backend Server...
-start "HVAC Digital Twin - Backend" cmd /k "title HVAC Digital Twin - Backend && cd /d "%ROOT_DIR%backend" && echo. && echo Starting backend on http://localhost:3001... && echo. && node src/index.js"
+start "HVAC Digital Twin - Backend" cmd /k "title HVAC Digital Twin - Backend && cd /d "%ROOT_DIR%backend" && echo. && echo Starting backend on http://localhost:3001... && echo. && npm start"
 
 REM Wait for backend to initialize
 echo Waiting for backend to start...

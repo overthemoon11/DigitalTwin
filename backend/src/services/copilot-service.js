@@ -6,10 +6,10 @@
  * - Action execution (setpoints, simulation, fault injection)
  * - Grounded responses using twin state data
  * - Trend analysis and recommendations
- * - Powered by Foundry Local SDK (no raw HTTP calls)
+ * - Powered by remote OpenAI-compatible LLM or Foundry Local SDK
  */
 
-import { chatCompletion, getStatus } from './foundry-local-service.js';
+import { chatCompletion, getStatus } from './llm-service.js';
 
 /**
  * Intent classification for user messages
@@ -188,6 +188,24 @@ When the user wants to make changes, you can trigger these actions:
 - OPTIMIZE: Apply recommended optimizations
 
 When executing an action, respond with a clear confirmation of what was done and the result.`;
+}
+
+/**
+ * Extract the operator's actual question when legacy clients embed plant context in message.
+ */
+function extractUserMessage(message) {
+  const match = message.match(/Operator question:\s*([\s\S]+)$/i);
+  return (match ? match[1] : message).trim();
+}
+
+/**
+ * Short greetings / small talk should reach the LLM, not HVAC templates.
+ */
+function isCasualMessage(message) {
+  const text = message.trim().toLowerCase();
+  if (!text) return true;
+  if (text.length <= 3) return true;
+  return /^(hi|hello|hey|thanks|thank you|ok|okay|yes|no|help|good morning|good afternoon|good evening)\b/.test(text);
 }
 
 /**
@@ -591,9 +609,9 @@ async function executeAction(intent, params, twinState, simulator) {
 /**
  * Main Copilot chat handler
  */
-async function handleCopilotChat(message, conversationHistory, twinState, simulator) {
-  // Analyze user intent
-  const { intents, params } = analyzeIntent(message, twinState);
+async function handleCopilotChat(message, conversationHistory, twinState, simulator, plantContext = '') {
+  const userMessage = extractUserMessage(message);
+  const { intents, params } = analyzeIntent(userMessage, twinState);
   
   // Check if this is an action request
   const actionIntents = ['SET_TEMPERATURE', 'RUN_SIMULATION', 'INJECT_FAULT', 'RESET_SYSTEM'];
@@ -610,21 +628,24 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
     }
   }
   
-  // Generate grounded response if no action or action failed
-  if (!response) {
+  // Template responses use building twin data — skip in chiller plant mode (plantContext set)
+  if (!response && !plantContext && !isCasualMessage(userMessage)) {
     response = generateGroundedResponse(intents, twinState);
   }
   
-  // If still no response, try LLM via Foundry Local SDK
+  // If still no response, try LLM (remote API or Foundry Local)
   if (!response) {
     const modelStatus = getStatus();
     if (modelStatus.ready) {
       try {
-        const systemPrompt = buildSystemPrompt(twinState);
+        let systemPrompt = buildSystemPrompt(twinState);
+        if (plantContext) {
+          systemPrompt += `\n\n## CHILLER PLANT SIMULATOR (client-side physics)\n${plantContext}`;
+        }
         const messages = [
           { role: 'system', content: systemPrompt },
           ...conversationHistory.slice(-6),
-          { role: 'user', content: message }
+          { role: 'user', content: userMessage }
         ];
 
         const llmContent = await chatCompletion(messages, {
@@ -664,12 +685,18 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
  */
 function generateFallbackResponse(modelStatus) {
   let statusNote = '';
+  const isRemote = modelStatus.provider === 'openai';
+
   if (modelStatus.status === 'downloading') {
     statusNote = `> **Model downloading:** ${modelStatus.downloadProgress.toFixed(0)}% complete. AI-powered responses will be available shortly.\n\n`;
-  } else if (modelStatus.status === 'loading') {
-    statusNote = `> **Model loading:** The AI model is being loaded. AI-powered responses will be available shortly.\n\n`;
+  } else if (modelStatus.status === 'loading' || modelStatus.status === 'initializing') {
+    statusNote = `> **Model loading:** The AI model is being prepared. AI-powered responses will be available shortly.\n\n`;
   } else if (modelStatus.status === 'error' || modelStatus.status === 'unavailable') {
-    statusNote = `> **AI model offline.** Using built-in responses. Install Foundry Local and run \`foundry model run ${modelStatus.modelAlias}\` to enable AI features.\n\n`;
+    if (isRemote) {
+      statusNote = `> **AI model offline.** Using built-in responses. Connect OpenVPN and verify \`${modelStatus.baseUrl || process.env.OPENAI_BASE_URL}\` is reachable.\n\n`;
+    } else {
+      statusNote = `> **AI model offline.** Using built-in responses. Install Foundry Local or set \`OPENAI_BASE_URL\` for a remote LLM.\n\n`;
+    }
   }
 
   return statusNote +

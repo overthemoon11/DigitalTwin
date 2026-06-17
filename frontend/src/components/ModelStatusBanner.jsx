@@ -37,7 +37,7 @@ function ModelStatusBanner() {
             <>Loading AI model <strong>{modelAlias}</strong>…</>
           )}
           {status === 'initializing' && (
-            <>Initializing Foundry Local SDK…</>
+            <>{message || 'Connecting to AI model…'}</>
           )}
           {(status === 'error' || status === 'unavailable') && (
             <>AI model unavailable — Copilot will use built-in responses</>

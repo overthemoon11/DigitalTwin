@@ -4,9 +4,11 @@
  * Provides REST API and WebSocket for:
  * - Twin state management
  * - Simulation stepping
- * - Foundry Local SDK integration (model download, load, chat)
+ * - LLM integration (OpenAI-compatible remote API or Foundry Local SDK)
  */
 
+import './load-env.js';
+import { logEnvSummary } from './load-env.js';
 import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
@@ -18,11 +20,12 @@ import { fileURLToPath } from 'url';
 import { HVACSimulator } from './simulator/hvac-simulator.js';
 import { handleCopilotChat } from './services/copilot-service.js';
 import {
-  initialize as initFoundryLocal,
+  initialize as initLlm,
   getStatus as getModelStatus,
   onStatusChange,
-  shutdown as shutdownFoundryLocal,
-} from './services/foundry-local-service.js';
+  shutdown as shutdownLlm,
+  getProviderName,
+} from './services/llm-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -290,14 +293,14 @@ app.get('/api/twin/explain/:id', (req, res) => {
 
 // POST /api/copilot/chat - Chat with HVAC Copilot (Enhanced)
 app.post('/api/copilot/chat', async (req, res) => {
-  const { message, conversationHistory = [] } = req.body;
+  const { message, plantContext = '', conversationHistory = [] } = req.body;
   
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
   }
   
   try {
-    const result = await handleCopilotChat(message, conversationHistory, twinState, simulator);
+    const result = await handleCopilotChat(message, conversationHistory, twinState, simulator, plantContext);
     
     // If action was executed and changed state, update and save
     if (result.actionExecuted && result.actionChanges) {
@@ -456,7 +459,7 @@ app.get('/api/copilot/suggestions', (req, res) => {
   res.json(suggestions.slice(0, 5)); // Return top 5 suggestions
 });
 
-// GET /api/model/status - Get Foundry Local model status
+// GET /api/model/status - Get LLM provider / model status
 app.get('/api/model/status', (req, res) => {
   res.json(getModelStatus());
 });
@@ -519,10 +522,11 @@ wss.on('connection', (ws) => {
 
 // Start server
 loadTwinState();
+logEnvSummary();
 
-// Initialize Foundry Local SDK (non-blocking – model downloads in background)
-initFoundryLocal().catch(err => {
-  console.warn('Foundry Local initialization failed (AI features will be unavailable):', err.message);
+// Initialize LLM provider (non-blocking)
+initLlm().catch((err) => {
+  console.warn('LLM initialization failed (AI features will be unavailable):', err.message);
 });
 
 // Broadcast model status changes to all WebSocket clients
@@ -533,14 +537,18 @@ onStatusChange((status) => {
 server.listen(PORT, () => {
   console.log(`HVAC Digital Twin Backend running on http://localhost:${PORT}`);
   console.log(`WebSocket available at ws://localhost:${PORT}/ws`);
-  console.log(`Foundry Local model: ${process.env.FOUNDRY_MODEL || 'phi-3.5-mini'}`);
+  const provider = getProviderName();
+  const modelLabel = provider === 'openai'
+    ? (process.env.OPENAI_MODEL || 'remote')
+    : (process.env.FOUNDRY_MODEL || 'phi-3.5-mini');
+  console.log(`LLM provider: ${provider} (model: ${modelLabel})`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\nShutting down...');
   saveTwinState();
-  await shutdownFoundryLocal();
+  await shutdownLlm();
   server.close(() => {
     process.exit(0);
   });

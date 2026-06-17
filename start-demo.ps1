@@ -43,7 +43,7 @@ try {
     }
 } catch {
     Write-Host "  [ERROR] Node.js is not installed" -ForegroundColor Red
-    Write-Host "  Please install Node.js 18+ from https://nodejs.org" -ForegroundColor Yellow
+    Write-Host "  Please install Node.js 20+ from https://nodejs.org" -ForegroundColor Yellow
     exit 1
 }
 
@@ -113,7 +113,7 @@ Set-Location '$RootDir\backend'
 Write-Host 'Starting server on http://localhost:3001...' -ForegroundColor Yellow
 Write-Host ''
 try {
-    node src/index.js
+    npm start
 } catch {
     Write-Host 'ERROR: Backend failed to start' -ForegroundColor Red
     Write-Host `$_.Exception.Message -ForegroundColor Red

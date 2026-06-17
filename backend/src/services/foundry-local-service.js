@@ -64,6 +64,7 @@ function getStatus() {
     message: statusMessage,
     downloadProgress,
     modelAlias: MODEL_ALIAS,
+    provider: 'foundry',
     ready: currentStatus === ModelStatus.READY,
   };
 }

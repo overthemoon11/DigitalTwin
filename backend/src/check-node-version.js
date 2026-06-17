@@ -1,27 +1,35 @@
 /**
- * Guard against running the backend on unsupported Node.js versions.
- * foundry-local-sdk uses import attributes (`import ... with { type: "json" }`)
- * which require Node.js 20+.
+ * Guard against running the backend on unsupported Node.js versions when using
+ * Foundry Local. The foundry-local-sdk uses import attributes which require Node 20+.
+ *
+ * Skipped when LLM_PROVIDER=openai or OPENAI_BASE_URL is set (remote LLM only).
  */
+
+import './load-env.js';
 
 const MIN_MAJOR = 20;
 const current = process.versions.node;
 const major = Number.parseInt(current.split('.')[0], 10);
 
-if (major < MIN_MAJOR) {
+function usesFoundryLocal() {
+  const explicit = process.env.LLM_PROVIDER?.toLowerCase();
+  if (explicit === 'openai') return false;
+  if (explicit === 'foundry') return true;
+  return !process.env.OPENAI_BASE_URL;
+}
+
+if (usesFoundryLocal() && major < MIN_MAJOR) {
   console.error(`
-HVAC Digital Twin backend requires Node.js ${MIN_MAJOR}+ (current: v${current}).
+HVAC Digital Twin backend requires Node.js ${MIN_MAJOR}+ when using Foundry Local (current: v${current}).
 
 foundry-local-sdk uses import attributes ("import ... with { type: 'json' }")
-that are not supported on Node.js 18 and earlier. Without Node ${MIN_MAJOR}+,
-the server fails with: SyntaxError: Unexpected token 'with'
+that are not supported on Node.js 18 and earlier.
 
-Fix:
-  1. Install Node.js ${MIN_MAJOR} LTS or newer from https://nodejs.org/
-  2. With nvm-windows: nvm install 20 && nvm use 20
-  3. Restart the terminal, then run: npm start
+Options:
+  1. Upgrade to Node.js ${MIN_MAJOR}+ from https://nodejs.org/
+  2. Use a remote LLM instead: set OPENAI_BASE_URL and LLM_PROVIDER=openai
 
-See backend/package.json "engines" and the repo .nvmrc file.
+See backend/.env.example and backend/package.json "engines".
 `.trim());
   process.exit(1);
 }
