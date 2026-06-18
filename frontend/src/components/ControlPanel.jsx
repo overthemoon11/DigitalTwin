@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTwinStore } from '../hooks/useTwinStore';
+import SimulationOutputSummary from './SimulationOutputSummary';
 
 function ControlSlider({ control, onUpdate }) {
   const handleChange = (e) => {
@@ -38,6 +39,7 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
     applyFault,
     resetPlant,
     triggerPlantFault,
+    plantState,
   } = useTwinStore();
   
   const handleUpdate = async (controlId, value) => {
@@ -186,6 +188,18 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
       
       <div className="control-group" style={{ marginTop: '2rem' }}>
         <h4>Simulation</h4>
+        {plantMode && plantState && (
+          <SimulationOutputSummary
+            compact
+            buildingLoadRt={
+              plantState.simulation?.lastOutput?.buildingLoadRt ?? plantState.headers.buildingLoadRt
+            }
+            deltaT={
+              plantState.simulation?.lastOutput?.deltaT
+              ?? Number((plantState.headers.chwr - plantState.headers.chws).toFixed(1))
+            }
+          />
+        )}
         <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
           {plantMode
             ? 'Advances the physics engine in 2s steps (temperatures lag over virtual time).'

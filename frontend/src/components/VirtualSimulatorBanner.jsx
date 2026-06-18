@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SimulationOutputSummary from './SimulationOutputSummary';
 
 /**
  * Clarifies that the chiller plant is an offline physics simulator — not live BMS points.
@@ -8,7 +9,7 @@ export default function VirtualSimulatorBanner({ simulation }) {
 
   if (!simulation) return null;
 
-  const { tick, dtSeconds, simTimeSec, lastTrigger, cascadeTrace, mode, dataSource } = simulation;
+  const { tick, dtSeconds, simTimeSec, lastTrigger, cascadeTrace, mode, dataSource, lastOutput } = simulation;
 
   return (
     <div className="virtual-simulator-banner" role="status">
@@ -32,6 +33,15 @@ export default function VirtualSimulatorBanner({ simulation }) {
       <p className="virtual-simulator-banner__trigger">
         <strong>Last input:</strong> {lastTrigger}
       </p>
+      {lastOutput && (
+        <SimulationOutputSummary
+          compact
+          buildingLoadRt={lastOutput.buildingLoadRt}
+          primaryDeltaT={lastOutput.primaryDeltaT}
+          secondaryDeltaT={lastOutput.secondaryDeltaT}
+          deltaT={lastOutput.deltaT}
+        />
+      )}
       {expanded && cascadeTrace?.length > 0 && (
         <ol className="virtual-simulator-banner__cascade">
           {cascadeTrace.map((step, i) => (

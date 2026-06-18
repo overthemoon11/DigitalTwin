@@ -66,6 +66,14 @@ export interface DistrictCoolingSimulation {
   simTimeSec: number;
   mode: 'live' | 'fast_forward';
   lastTrigger: string;
+  /** Latest physics snapshot shown after each simulation step */
+  lastOutput?: SimulationOutputSnapshot;
+}
+
+export interface SimulationOutputSnapshot {
+  buildingLoadRt: number;
+  primaryDeltaT: number;
+  secondaryDeltaT: number;
 }
 
 export interface ScenarioComparisonRow {

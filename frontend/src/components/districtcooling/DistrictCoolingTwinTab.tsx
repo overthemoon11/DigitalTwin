@@ -1,5 +1,6 @@
 import React from 'react';
 import HeatExchangeViewer from '../heatexchange/HeatExchangeViewer';
+import SimulationOutputSummary from '../SimulationOutputSummary';
 
 /**
  * Full District Cooling Digital Twin tab — 3-column workflow from mockup.
@@ -20,7 +21,7 @@ function DistrictCoolingTwinTab({
     );
   }
 
-  const { headers, controls, kpis, alerts, recommendedActions, scenarioComparison } = districtState;
+  const { headers, controls, kpis, alerts, recommendedActions, scenarioComparison, simulation } = districtState;
   const demandPct = Math.min(100, (headers.coolingDemandRt / headers.contractDemandRt) * 100);
   const activeAlerts = alerts.filter((a) => !a.resolved);
 
@@ -100,6 +101,12 @@ function DistrictCoolingTwinTab({
           </div>
         </div>
 
+        <SimulationOutputSummary
+          buildingLoadRt={simulation?.lastOutput?.buildingLoadRt ?? headers.buildingLoadRt}
+          primaryDeltaT={simulation?.lastOutput?.primaryDeltaT ?? headers.primaryDeltaT}
+          secondaryDeltaT={simulation?.lastOutput?.secondaryDeltaT ?? headers.secondaryDeltaT}
+        />
+
         <div className="dc-output-gauge">
           <h4>Cooling Demand vs Contract</h4>
           <div className="dc-gauge-bar">
@@ -113,6 +120,7 @@ function DistrictCoolingTwinTab({
 
         <div className="dc-output-tiles">
           {[
+            { label: 'Building Load', value: `${headers.buildingLoadRt} RT` },
             { label: 'Pump Power', value: `${headers.pumpPowerKw} kW` },
             { label: 'Primary ΔT', value: `${headers.primaryDeltaT} °C` },
             { label: 'Secondary ΔT', value: `${headers.secondaryDeltaT} °C` },

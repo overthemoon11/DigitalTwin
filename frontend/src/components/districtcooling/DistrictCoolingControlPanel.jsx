@@ -1,4 +1,5 @@
 import React from 'react';
+import SimulationOutputSummary from '../SimulationOutputSummary';
 
 function ControlSlider({ control, onUpdate }) {
   const handleChange = (e) => {
@@ -66,6 +67,8 @@ const GROUP_LABELS = {
  */
 function DistrictCoolingControlPanel({
   controls,
+  headers,
+  simulation,
   onUpdate,
   onRunSimulation,
   onReset,
@@ -98,6 +101,14 @@ function DistrictCoolingControlPanel({
       {!compact && (
         <div className="control-group" style={{ marginTop: '1.5rem' }}>
           <h4>Simulation</h4>
+          {(headers || simulation?.lastOutput) && (
+            <SimulationOutputSummary
+              compact
+              buildingLoadRt={simulation?.lastOutput?.buildingLoadRt ?? headers?.buildingLoadRt}
+              primaryDeltaT={simulation?.lastOutput?.primaryDeltaT ?? headers?.primaryDeltaT}
+              secondaryDeltaT={simulation?.lastOutput?.secondaryDeltaT ?? headers?.secondaryDeltaT}
+            />
+          )}
           <button type="button" className="dc-run-btn" onClick={onRunSimulation}>
             ▶ Run Simulation
           </button>

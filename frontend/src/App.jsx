@@ -206,6 +206,8 @@ function App() {
               {activePanel === 'controls' && !isChillerScenario && (
                 <DistrictCoolingControlPanel
                   controls={districtCoolingState?.controls || []}
+                  headers={districtCoolingState?.headers}
+                  simulation={districtCoolingState?.simulation}
                   onUpdate={updateDistrictControl}
                   onRunSimulation={() => advanceDistrictCooling(30)}
                   onReset={resetDistrictCooling}

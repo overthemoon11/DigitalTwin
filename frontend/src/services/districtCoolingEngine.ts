@@ -204,11 +204,14 @@ function runStep(): DistrictCoolingState {
   }
 
   const kpis: PlantKpi[] = [
+    { id: 'dc-kpi-load', name: 'Building Load', value: headers.buildingLoadRt, unit: 'RT', category: 'operational', status: 'normal', target: baseLoadRt, trend: 'stable' },
     { id: 'dc-kpi-demand', name: 'Cooling Demand', value: headers.coolingDemandRt, unit: 'RT', category: 'operational', status: coolingDemandRt > contractRt * 0.9 ? 'warning' : 'normal', target: contractRt, trend: 'stable' },
     { id: 'dc-kpi-contract', name: 'Contract Utilization', value: round((coolingDemandRt / contractRt) * 100, 0), unit: '%', category: 'operational', status: 'normal', target: 90, trend: 'stable' },
     { id: 'dc-kpi-pump', name: 'Pump Power', value: pumpPowerKw, unit: 'kW', category: 'energy', status: 'normal', target: 350, trend: 'stable' },
     { id: 'dc-kpi-kwrt', name: 'System Efficiency', value: kwPerRt, unit: 'kW/RT', category: 'energy', status: kwPerRt > 0.35 ? 'warning' : 'normal', target: 0.32, trend: 'stable' },
     { id: 'dc-kpi-hx', name: 'HX Approach', value: hxApproach, unit: '°C', category: 'operational', status: hxApproach > 2.5 ? 'warning' : 'normal', target: 2.1, trend: 'stable' },
+    { id: 'dc-kpi-primary-dt', name: 'Primary ΔT', value: headers.primaryDeltaT, unit: '°C', category: 'operational', status: 'normal', target: 7, trend: 'stable' },
+    { id: 'dc-kpi-secondary-dt', name: 'Secondary ΔT', value: headers.secondaryDeltaT, unit: '°C', category: 'operational', status: 'normal', target: 5, trend: 'stable' },
     { id: 'dc-kpi-chws', name: 'CHWS / CHWR', value: `${headers.chws}/${headers.chwr}`, unit: '°C', category: 'comfort', status: 'normal', target: '7/12', trend: 'stable' },
     { id: 'dc-kpi-dp', name: 'Secondary DP', value: headers.secondaryDpKpa, unit: 'kPa', category: 'operational', status: 'normal', target: dpSp, trend: 'stable' },
     { id: 'dc-kpi-co2', name: 'Zone CO₂', value: co2Ppm, unit: 'ppm', category: 'iaq', status: co2Ppm > 1000 ? 'warning' : 'normal', target: 1000, trend: 'stable' },
@@ -262,6 +265,11 @@ function runStep(): DistrictCoolingState {
       simTimeSec: tick * SIM_DT_SEC,
       mode: 'live',
       lastTrigger,
+      lastOutput: {
+        buildingLoadRt: headers.buildingLoadRt,
+        primaryDeltaT: headers.primaryDeltaT,
+        secondaryDeltaT: headers.secondaryDeltaT,
+      },
     },
     scenarioComparison,
     recommendedActions,
@@ -286,10 +294,11 @@ export function updateDistrictControl(controlId: string, value: number): void {
 }
 
 export function advanceDistrictCooling(steps = 15): DistrictCoolingState {
-  lastTrigger = `Simulation run — ${steps} steps (${steps * SIM_DT_SEC}s virtual time)`;
   let state = runStep();
   for (let i = 1; i < steps; i++) state = runStep();
-  return state;
+  const { buildingLoadRt, primaryDeltaT, secondaryDeltaT } = state.headers;
+  lastTrigger = `Simulation output — ${buildingLoadRt} RT load · primary ΔT ${primaryDeltaT}°C · secondary ΔT ${secondaryDeltaT}°C (${steps * SIM_DT_SEC}s virtual)`;
+  return { ...state, simulation: { ...state.simulation, lastTrigger } };
 }
 
 export function resetDistrictCooling(): void {

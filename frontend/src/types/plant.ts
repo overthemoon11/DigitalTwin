@@ -124,6 +124,11 @@ export interface PlantSimulationMeta {
   lastTrigger: string;
   /** Ordered domino-effect steps from last calculation */
   cascadeTrace: string[];
+  /** Latest calculated load and delta-T after each physics step */
+  lastOutput?: {
+    buildingLoadRt: number;
+    deltaT: number;
+  };
 }
 
 export interface PlantState {

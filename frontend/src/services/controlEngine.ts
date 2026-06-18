@@ -598,6 +598,9 @@ function runControlStep(): PlantState {
     plantCop: plantCopVal,
   });
 
+  const buildingLoadRt = headers.buildingLoadRt;
+  const loopDeltaT = headers.chwr - headers.chws;
+
   return {
     equipment,
     headers,
@@ -613,6 +616,10 @@ function runControlStep(): PlantState {
       simTimeSec: internals.tick * SIM_DT_SEC,
       lastTrigger: lastCascadeTrigger,
       cascadeTrace,
+      lastOutput: {
+        buildingLoadRt,
+        deltaT: round(loopDeltaT, 1),
+      },
     },
   };
 }
@@ -638,14 +645,17 @@ export function updatePlantControl(controlId: string, value: number): void {
 /** Advance virtual time (dynamic lag response) without live sensors. */
 export function advancePlantSimulation(steps = 1): PlantState {
   const n = Math.max(1, Math.floor(steps));
-  if (n > 1) {
-    lastCascadeTrigger = `Fast-forward ${n} physics steps (${n * SIM_DT_SEC}s virtual time)`;
-  }
   let state = runControlStep();
   for (let i = 1; i < n; i++) {
     state = runControlStep();
   }
-  return state;
+  const load = state.headers.buildingLoadRt;
+  const dt = round(state.headers.chwr - state.headers.chws, 1);
+  lastCascadeTrigger = `Simulation output — ${load} RT load · ΔT ${dt}°C (${n * SIM_DT_SEC}s virtual)`;
+  return {
+    ...state,
+    simulation: { ...state.simulation, lastTrigger: lastCascadeTrigger },
+  };
 }
 
 export function resetPlantControls(): void {
