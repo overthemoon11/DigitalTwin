@@ -115,14 +115,14 @@ app.get('/api/twin/assets/:id', (req, res) => {
 app.get('/api/twin/telemetry', (req, res) => {
   const { assetId, pointType } = req.query;
   let telemetry = twinState?.telemetry || [];
-  
+
   if (assetId) {
     telemetry = telemetry.filter(t => t.assetId === assetId);
   }
   if (pointType) {
     telemetry = telemetry.filter(t => t.pointType === pointType);
   }
-  
+
   res.json(telemetry);
 });
 
@@ -130,11 +130,11 @@ app.get('/api/twin/telemetry', (req, res) => {
 app.get('/api/twin/controls', (req, res) => {
   const { assetId } = req.query;
   let controls = twinState?.controls || [];
-  
+
   if (assetId) {
     controls = controls.filter(c => c.assetId === assetId);
   }
-  
+
   res.json(controls);
 });
 
@@ -144,12 +144,12 @@ app.put('/api/twin/controls/:id', (req, res) => {
   if (!control) {
     return res.status(404).json({ error: 'Control not found' });
   }
-  
+
   const { value } = req.body;
   if (value === undefined) {
     return res.status(400).json({ error: 'Value is required' });
   }
-  
+
   // Validate against min/max
   if (typeof value === 'number') {
     if (control.min !== undefined && value < control.min) {
@@ -159,12 +159,12 @@ app.put('/api/twin/controls/:id', (req, res) => {
       return res.status(400).json({ error: `Value must be <= ${control.max}` });
     }
   }
-  
+
   // Apply change through simulator
   const result = simulator.step(60, { [control.id]: value });
   twinState = result.state;
   saveTwinState();
-  
+
   res.json({
     control: twinState.controls.find(c => c.id === req.params.id),
     simulationLog: result.log,
@@ -181,11 +181,11 @@ app.get('/api/twin/kpis', (req, res) => {
 app.get('/api/twin/alerts', (req, res) => {
   const { active } = req.query;
   let alerts = twinState?.alerts || [];
-  
+
   if (active === 'true') {
     alerts = alerts.filter(a => !a.resolved);
   }
-  
+
   res.json(alerts);
 });
 
@@ -195,11 +195,11 @@ app.put('/api/twin/alerts/:id/acknowledge', (req, res) => {
   if (!alert) {
     return res.status(404).json({ error: 'Alert not found' });
   }
-  
+
   alert.acknowledged = true;
   alert.acknowledgedAt = new Date().toISOString();
   alert.acknowledgedBy = req.body.user || 'operator';
-  
+
   saveTwinState();
   res.json(alert);
 });
@@ -207,11 +207,11 @@ app.put('/api/twin/alerts/:id/acknowledge', (req, res) => {
 // POST /api/twin/simulate - Run simulation step
 app.post('/api/twin/simulate', (req, res) => {
   const { timeStep = 60, controlChanges = {} } = req.body;
-  
+
   const result = simulator.step(timeStep, controlChanges);
   twinState = result.state;
   saveTwinState();
-  
+
   res.json({
     success: true,
     simulationTime: twinState.metadata.simulationTime,
@@ -224,18 +224,18 @@ app.post('/api/twin/simulate', (req, res) => {
 // POST /api/twin/fault - Apply a fault scenario
 app.post('/api/twin/fault', (req, res) => {
   const { faultType, params = {} } = req.body;
-  
+
   if (!faultType) {
     return res.status(400).json({ error: 'faultType is required' });
   }
-  
+
   twinState = simulator.applyFault(faultType, params);
-  
+
   // Run simulation step to see effects
   const result = simulator.step(60);
   twinState = result.state;
   saveTwinState();
-  
+
   res.json({
     success: true,
     faultType,
@@ -270,10 +270,10 @@ app.post('/api/twin/reset', (req, res) => {
     twinState = JSON.parse(baseline);
     twinState.metadata.lastUpdated = new Date().toISOString();
     twinState.metadata.simulationTime = new Date().toISOString();
-    
+
     simulator = new HVACSimulator(twinState);
     saveTwinState();
-    
+
     res.json({ success: true, message: 'Twin state reset to baseline' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to reset: ' + err.message });
@@ -293,20 +293,28 @@ app.get('/api/twin/explain/:id', (req, res) => {
 
 // POST /api/copilot/chat - Chat with HVAC Copilot (Enhanced)
 app.post('/api/copilot/chat', async (req, res) => {
-  const { message, plantContext = '', conversationHistory = [] } = req.body;
+  const { message, plantContext = '', plantControls = [], appliedControls = [], conversationHistory = [] } = req.body;
   
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
   }
   
   try {
-    const result = await handleCopilotChat(message, conversationHistory, twinState, simulator, plantContext);
-    
+    const result = await handleCopilotChat(
+      message,
+      conversationHistory,
+      twinState,
+      simulator,
+      plantContext,
+      plantControls,
+      appliedControls
+    );
+
     // If action was executed and changed state, update and save
     if (result.actionExecuted && result.actionChanges) {
       twinState = result.actionChanges.state;
       saveTwinState();
-      
+
       // Broadcast update to WebSocket clients
       broadcastState(wss, {
         type: 'update',
@@ -317,18 +325,19 @@ app.post('/api/copilot/chat', async (req, res) => {
         }
       });
     }
-    
+
     res.json({
       response: result.response,
       actionExecuted: result.actionExecuted,
+      controlsApplied: result.controlsApplied,
       intents: result.intents,
       groundedIn: result.groundedIn
     });
   } catch (err) {
     console.error('Copilot error:', err.message);
-    res.status(500).json({ 
-      error: 'Copilot processing failed', 
-      response: 'I encountered an error processing your request. Please try again.' 
+    res.status(500).json({
+      error: 'Copilot processing failed',
+      response: 'I encountered an error processing your request. Please try again.'
     });
   }
 });
@@ -336,14 +345,14 @@ app.post('/api/copilot/chat', async (req, res) => {
 // POST /api/copilot/action - Execute a specific action
 app.post('/api/copilot/action', async (req, res) => {
   const { action, params = {} } = req.body;
-  
+
   if (!action) {
     return res.status(400).json({ error: 'Action is required' });
   }
-  
+
   try {
     let result;
-    
+
     switch (action) {
       case 'SET_SETPOINT':
         const control = twinState.controls.find(c => c.id === params.controlId);
@@ -353,18 +362,18 @@ app.post('/api/copilot/action', async (req, res) => {
         result = simulator.step(60, { [params.controlId]: params.value });
         twinState = result.state;
         break;
-        
+
       case 'RUN_SIMULATION':
         result = simulator.step(params.timeStep || 60);
         twinState = result.state;
         break;
-        
+
       case 'INJECT_FAULT':
         twinState = simulator.applyFault(params.faultType, params.faultParams || {});
         result = simulator.step(60);
         twinState = result.state;
         break;
-        
+
       case 'ACKNOWLEDGE_ALERT':
         const alert = twinState.alerts.find(a => a.id === params.alertId);
         if (alert) {
@@ -373,13 +382,13 @@ app.post('/api/copilot/action', async (req, res) => {
         }
         result = { state: twinState };
         break;
-        
+
       default:
         return res.status(400).json({ error: `Unknown action: ${action}` });
     }
-    
+
     saveTwinState();
-    
+
     // Broadcast update
     broadcastState(wss, {
       type: 'update',
@@ -389,7 +398,7 @@ app.post('/api/copilot/action', async (req, res) => {
         newAlerts: result?.newAlerts
       }
     });
-    
+
     res.json({
       success: true,
       action,
@@ -407,7 +416,7 @@ app.post('/api/copilot/action', async (req, res) => {
 // GET /api/copilot/suggestions - Get context-aware quick actions
 app.get('/api/copilot/suggestions', (req, res) => {
   const suggestions = [];
-  
+
   // Check for active alerts
   const activeAlerts = twinState.alerts.filter(a => !a.resolved);
   if (activeAlerts.length > 0) {
@@ -418,7 +427,7 @@ app.get('/api/copilot/suggestions', (req, res) => {
       priority: 'high'
     });
   }
-  
+
   // Check energy usage
   const power = twinState.kpis.find(k => k.id === 'kpi-total-power');
   if (power && power.value > power.target * 0.9) {
@@ -429,7 +438,7 @@ app.get('/api/copilot/suggestions', (req, res) => {
       priority: 'medium'
     });
   }
-  
+
   // Check CO2
   const co2 = twinState.kpis.find(k => k.id === 'kpi-avg-co2');
   if (co2 && co2.status === 'warning') {
@@ -440,7 +449,7 @@ app.get('/api/copilot/suggestions', (req, res) => {
       priority: 'high'
     });
   }
-  
+
   // Always available actions
   suggestions.push({
     id: 'status',
@@ -448,14 +457,14 @@ app.get('/api/copilot/suggestions', (req, res) => {
     prompt: 'Give me a summary of building status',
     priority: 'low'
   });
-  
+
   suggestions.push({
     id: 'optimize',
     label: 'Optimization recommendations',
     prompt: 'What should I optimize?',
     priority: 'low'
   });
-  
+
   res.json(suggestions.slice(0, 5)); // Return top 5 suggestions
 });
 
@@ -473,19 +482,19 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 // WebSocket connection handler
 wss.on('connection', (ws) => {
   console.log('WebSocket client connected');
-  
+
   // Send current state on connect
   ws.send(JSON.stringify({ type: 'state', data: twinState }));
-  
+
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
-      
+
       if (data.type === 'control_change') {
         const result = simulator.step(60, data.changes);
         twinState = result.state;
         saveTwinState();
-        
+
         broadcastState(wss, {
           type: 'update',
           data: {
@@ -495,12 +504,12 @@ wss.on('connection', (ws) => {
           }
         });
       }
-      
+
       if (data.type === 'simulate') {
         const result = simulator.step(data.timeStep || 60);
         twinState = result.state;
         saveTwinState();
-        
+
         broadcastState(wss, {
           type: 'update',
           data: {
@@ -514,7 +523,7 @@ wss.on('connection', (ws) => {
       console.error('WebSocket message error:', err);
     }
   });
-  
+
   ws.on('close', () => {
     console.log('WebSocket client disconnected');
   });

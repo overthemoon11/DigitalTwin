@@ -1,73 +1,101 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useTwinStore } from '../hooks/useTwinStore';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useTwinStore } from "../hooks/useTwinStore";
 
 // Simple Markdown-like renderer for chat messages
 function renderMarkdown(text) {
   if (!text) return null;
-  
-  const lines = text.split('\n');
+
+  const lines = text.split("\n");
   const elements = [];
   let currentList = null;
   let listItems = [];
-  
+
   lines.forEach((line, idx) => {
     // Headers
-    if (line.startsWith('## ')) {
+    if (line.startsWith("## ")) {
       if (currentList) {
-        elements.push(<ul key={`list-${elements.length}`} className="chat-list">{listItems}</ul>);
+        elements.push(
+          <ul key={`list-${elements.length}`} className="chat-list">
+            {listItems}
+          </ul>,
+        );
         listItems = [];
         currentList = null;
       }
-      elements.push(<h3 key={idx} className="chat-header">{line.slice(3)}</h3>);
+      elements.push(
+        <h3 key={idx} className="chat-header">
+          {line.slice(3)}
+        </h3>,
+      );
       return;
     }
-    if (line.startsWith('### ')) {
+    if (line.startsWith("### ")) {
       if (currentList) {
-        elements.push(<ul key={`list-${elements.length}`} className="chat-list">{listItems}</ul>);
+        elements.push(
+          <ul key={`list-${elements.length}`} className="chat-list">
+            {listItems}
+          </ul>,
+        );
         listItems = [];
         currentList = null;
       }
-      elements.push(<h4 key={idx} className="chat-subheader">{line.slice(4)}</h4>);
+      elements.push(
+        <h4 key={idx} className="chat-subheader">
+          {line.slice(4)}
+        </h4>,
+      );
       return;
     }
-    
+
     // List items
-    if (line.startsWith('- ')) {
+    if (line.startsWith("- ")) {
       currentList = true;
       const content = processInlineFormatting(line.slice(2));
       listItems.push(<li key={idx}>{content}</li>);
       return;
     }
-    
+
     // Close list if not in a list item anymore
-    if (currentList && !line.startsWith('- ')) {
-      elements.push(<ul key={`list-${elements.length}`} className="chat-list">{listItems}</ul>);
+    if (currentList && !line.startsWith("- ")) {
+      elements.push(
+        <ul key={`list-${elements.length}`} className="chat-list">
+          {listItems}
+        </ul>,
+      );
       listItems = [];
       currentList = null;
     }
-    
+
     // Empty lines
-    if (line.trim() === '') {
+    if (line.trim() === "") {
       elements.push(<br key={idx} />);
       return;
     }
-    
+
     // Regular text
     const content = processInlineFormatting(line);
-    elements.push(<p key={idx} className="chat-paragraph">{content}</p>);
+    elements.push(
+      <p key={idx} className="chat-paragraph">
+        {content}
+      </p>,
+    );
   });
-  
+
   if (currentList && listItems.length > 0) {
-    elements.push(<ul key={`list-${elements.length}`} className="chat-list">{listItems}</ul>);
+    elements.push(
+      <ul key={`list-${elements.length}`} className="chat-list">
+        {listItems}
+      </ul>,
+    );
   }
-  
+
   return elements;
 }
 
 function processInlineFormatting(text) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, idx) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
+    if (part.startsWith("**") && part.endsWith("**")) {
       return <strong key={idx}>{part.slice(2, -2)}</strong>;
     }
     return part;
@@ -76,19 +104,40 @@ function processInlineFormatting(text) {
 
 // Icons
 const SendIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
   </svg>
 );
 
 const ClearIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
   </svg>
 );
 
 const CopilotIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <circle cx="12" cy="12" r="10" />
     <path d="M8 14s1.5 2 4 2 4-2 4-2" />
     <line x1="9" y1="9" x2="9.01" y2="9" />
@@ -97,7 +146,14 @@ const CopilotIcon = () => (
 );
 
 const UserIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+  <svg
+    width="16"
+    height="16"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
   </svg>
@@ -111,112 +167,123 @@ const SparkleIcon = () => (
 );
 
 function CopilotChat() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  
-  const { 
-    conversationHistory, 
-    sendCopilotMessage, 
+
+  const {
+    conversationHistory,
+    sendCopilotMessage,
     clearConversation,
-    loadTwinState 
+    loadTwinState,
   } = useTwinStore();
-  
+
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [conversationHistory, scrollToBottom]);
-  
+
   // Fetch context-aware suggestions
   const fetchSuggestions = useCallback(async () => {
     try {
-      const response = await fetch('/api/copilot/suggestions');
+      const response = await fetch("/api/copilot/suggestions");
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data);
       }
     } catch (err) {
-      console.error('Failed to fetch suggestions:', err);
+      console.error("Failed to fetch suggestions:", err);
     }
   }, []);
-  
+
   useEffect(() => {
     fetchSuggestions();
     const interval = setInterval(fetchSuggestions, 30000);
     return () => clearInterval(interval);
   }, [fetchSuggestions]);
-  
+
   useEffect(() => {
     if (conversationHistory.length > 0) {
       fetchSuggestions();
     }
   }, [conversationHistory.length, fetchSuggestions]);
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    
+
     const message = input.trim();
-    setInput('');
+    setInput("");
     setIsLoading(true);
     setShowSuggestions(false);
-    
+
     try {
       const result = await sendCopilotMessage(message);
       if (result?.actionExecuted) {
         loadTwinState();
       }
     } catch (err) {
-      console.error('Failed to send message:', err);
+      console.error("Failed to send message:", err);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const handleSuggestionClick = (prompt) => {
     setInput(prompt);
     inputRef.current?.focus();
   };
-  
+
   const handleQuickPromptClick = async (prompt) => {
-    setInput('');
+    setInput("");
     setIsLoading(true);
     setShowSuggestions(false);
-    
+
     try {
       const result = await sendCopilotMessage(prompt);
       if (result?.actionExecuted) {
         loadTwinState();
       }
     } catch (err) {
-      console.error('Failed to send message:', err);
+      console.error("Failed to send message:", err);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const defaultPrompts = [
-    { label: 'Building Status', prompt: 'Give me a summary of building status', icon: '📊' },
-    { label: 'Energy Analysis', prompt: 'How is energy usage?', icon: '⚡' },
-    { label: 'Air Quality', prompt: 'Check air quality', icon: '🌬️' },
-    { label: 'Active Alerts', prompt: 'Are there any alerts?', icon: '🔔' },
-    { label: 'Optimize', prompt: 'What should I optimize?', icon: '🎯' },
+    {
+      label: "Set Load 1100",
+      prompt: "Set building load to 1100 RT",
+      icon: "🏢",
+    },
+    {
+      label: "Hot Day 36°C",
+      prompt: "Set outdoor temperature to 36°C",
+      icon: "☀️",
+    },
+    { label: "Why COP low?", prompt: "Why is plant COP low?", icon: "📉" },
+    { label: "Plant Alarms", prompt: "Show active alarms", icon: "🔔" },
+    { label: "Save Energy", prompt: "How can we save energy?", icon: "⚡" },
   ];
-  
+
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'high': return 'var(--danger)';
-      case 'medium': return 'var(--warning)';
-      default: return 'var(--text-muted)';
+      case "high":
+        return "var(--danger)";
+      case "medium":
+        return "var(--warning)";
+      default:
+        return "var(--text-muted)";
     }
   };
-  
+
   return (
     <div className="copilot-container">
       {/* Header */}
@@ -238,7 +305,7 @@ function CopilotChat() {
           </button>
         )}
       </div>
-      
+
       {/* Messages area */}
       <div className="chat-messages">
         {/* Empty state with suggestions */}
@@ -246,9 +313,13 @@ function CopilotChat() {
           <div className="copilot-empty">
             <div className="copilot-intro">
               <SparkleIcon />
-              <p>Ask about plant status, alarms, chiller sequencing, COP optimization, or root-cause analysis for high CHWS temperature.</p>
+              <p>
+                Ask about plant status, alarms, COP optimization, or adjust
+                controls directly — e.g. &quot;Set building load to 1100 RT&quot;
+                or &quot;Set outdoor temperature to 36°C&quot;.
+              </p>
             </div>
-            
+
             {/* Context-aware suggestions */}
             {suggestions.length > 0 && (
               <div className="copilot-suggestions">
@@ -258,14 +329,16 @@ function CopilotChat() {
                     key={suggestion.id}
                     onClick={() => handleQuickPromptClick(suggestion.prompt)}
                     className="suggestion-btn"
-                    style={{ borderLeftColor: getPriorityColor(suggestion.priority) }}
+                    style={{
+                      borderLeftColor: getPriorityColor(suggestion.priority),
+                    }}
                   >
                     <span className="suggestion-label">{suggestion.label}</span>
                   </button>
                 ))}
               </div>
             )}
-            
+
             {/* Default quick prompts */}
             <div className="copilot-quick-prompts">
               <div className="prompts-label">Quick actions:</div>
@@ -284,22 +357,24 @@ function CopilotChat() {
             </div>
           </div>
         )}
-        
+
         {/* Conversation messages */}
         {conversationHistory.map((msg, idx) => (
           <div key={idx} className={`chat-message ${msg.role}`}>
             <div className="message-header">
-              {msg.role === 'user' ? <UserIcon /> : <CopilotIcon />}
+              {msg.role === "user" ? <UserIcon /> : <CopilotIcon />}
               <span className="role-label">
-                {msg.role === 'user' ? 'You' : 'Copilot'}
+                {msg.role === "user" ? "You" : "Copilot"}
               </span>
             </div>
             <div className="message-content">
-              {msg.role === 'assistant' ? renderMarkdown(msg.content) : msg.content}
+              {msg.role === "assistant"
+                ? renderMarkdown(msg.content)
+                : msg.content}
             </div>
           </div>
         ))}
-        
+
         {/* Loading indicator */}
         {isLoading && (
           <div className="chat-message assistant">
@@ -317,10 +392,10 @@ function CopilotChat() {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
-      
+
       {/* Input area */}
       <form className="chat-input" onSubmit={handleSubmit}>
         <input
@@ -331,16 +406,21 @@ function CopilotChat() {
           placeholder="Why is plant COP low? Which chiller to stop?"
           disabled={isLoading}
         />
-        <button type="submit" disabled={isLoading || !input.trim()} title="Send message">
+        <button
+          type="submit"
+          disabled={isLoading || !input.trim()}
+          title="Send message"
+        >
           <SendIcon />
         </button>
       </form>
-      
+
       {/* Command hints */}
       <div className="copilot-hints">
-        Try: "Set lobby temp to 72" · "Run simulation 30 min" · "Inject stuck damper fault"
+        Try: &quot;Set building load to 1100 RT&quot; · &quot;Set outdoor
+        temperature to 35°C&quot; · &quot;Why is COP low?&quot;
       </div>
-      
+
       <style>{`
         .copilot-header {
           display: flex;

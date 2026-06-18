@@ -7,8 +7,14 @@ import {
   stepPlantSimulation,
   advancePlantSimulation,
   acknowledgePlantAlert as ackPlantAlert,
+  getPlantControls,
 } from '../services/plantSimulator';
 import { analyzePlantQuery, buildPlantContextForCopilot } from '../services/copilotAnalysis';
+import {
+  parsePlantControlIntents,
+  formatPlantControlConfirmation,
+  buildPlantControlsSummary,
+} from '../services/plantCopilotActions';
 
 const API_BASE = '/api';
 
@@ -75,7 +81,7 @@ export const useTwinStore = create((set, get) => ({
       const response = await fetch(`${API_BASE}/twin`);
       const data = await response.json();
       set({ twinState: data, isConnected: true });
-      
+
       // Setup WebSocket connection
       get().connectWebSocket();
 
@@ -100,12 +106,12 @@ export const useTwinStore = create((set, get) => ({
   connectWebSocket: () => {
     const wsUrl = `ws://${window.location.hostname}:3001/ws`;
     const ws = new WebSocket(wsUrl);
-    
+
     ws.onopen = () => {
       console.log('WebSocket connected');
       set({ isConnected: true, ws });
     };
-    
+
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (message.type === 'state' || message.type === 'update') {
@@ -115,14 +121,14 @@ export const useTwinStore = create((set, get) => ({
         set({ modelStatus: message.data });
       }
     };
-    
+
     ws.onclose = () => {
       console.log('WebSocket disconnected');
       set({ isConnected: false, ws: null });
       // Reconnect after delay
       setTimeout(() => get().connectWebSocket(), 3000);
     };
-    
+
     ws.onerror = (err) => {
       console.error('WebSocket error:', err);
     };
@@ -142,7 +148,7 @@ export const useTwinStore = create((set, get) => ({
         body: JSON.stringify({ value }),
       });
       const result = await response.json();
-      
+
       // Reload state
       get().loadTwinState();
       return result;
@@ -215,32 +221,47 @@ export const useTwinStore = create((set, get) => ({
   },
 
   sendCopilotMessage: async (message) => {
-    const { conversationHistory, plantState } = get();
+    const { conversationHistory, plantState, updatePlantControl } = get();
     const plantContext = buildPlantContextForCopilot(plantState);
+    const controls = getPlantControls();
+    const plantControls = buildPlantControlsSummary(controls);
+
+    const { applied, errors } = parsePlantControlIntents(message, controls);
+    for (const action of applied) {
+      updatePlantControl(action.controlId, action.newValue);
+    }
+
+    const appliedControls = applied.map((a) => ({
+      controlId: a.controlId,
+      label: a.label,
+      oldValue: a.oldValue,
+      newValue: a.newValue,
+      unit: a.unit,
+    }));
+
+    const prependConfirmation = (text) => {
+      if (!applied.length) return text;
+      const header = formatPlantControlConfirmation(applied);
+      const errNote = errors.length ? `\n\n⚠️ ${errors.join(' ')}` : '';
+      return text ? `${header}${errNote}\n\n${text}` : `${header}${errNote}`;
+    };
 
     try {
       const response = await fetch(`${API_BASE}/copilot/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, plantContext, conversationHistory }),
+        body: JSON.stringify({
+          message,
+          plantContext,
+          plantControls,
+          appliedControls,
+          conversationHistory,
+        }),
       });
       if (!response.ok) throw new Error('Copilot API error');
       const result = await response.json();
 
-      set({
-        conversationHistory: [
-          ...conversationHistory,
-          { role: 'user', content: message },
-          { role: 'assistant', content: result.response },
-        ],
-      });
-
-      return result;
-    } catch (err) {
-      const local = analyzePlantQuery(message, plantState);
-      const responseText =
-        local ||
-        '## Chiller Plant Copilot\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.';
+      const responseText = prependConfirmation(result.response);
 
       set({
         conversationHistory: [
@@ -250,7 +271,23 @@ export const useTwinStore = create((set, get) => ({
         ],
       });
 
-      return { response: responseText, source: 'local-analysis' };
+      return { ...result, response: responseText, controlsApplied: applied.length > 0 };
+    } catch (err) {
+      const local = analyzePlantQuery(message, get().plantState);
+      const responseText = prependConfirmation(
+        local ||
+          '## Chiller Plant Copilot\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.'
+      );
+
+      set({
+        conversationHistory: [
+          ...conversationHistory,
+          { role: 'user', content: message },
+          { role: 'assistant', content: responseText },
+        ],
+      });
+
+      return { response: responseText, source: 'local-analysis', controlsApplied: applied.length > 0 };
     }
   },
 

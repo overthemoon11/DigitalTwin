@@ -23,14 +23,14 @@ const INTENT_PATTERNS = {
   EQUIPMENT_QUERY: /\b(ahu|chiller|boiler|pump|vav|filter|equipment|hvac)\b/i,
   KPI_QUERY: /\b(kpi|metric|performance|efficiency|cop|compliance)\b/i,
   ZONE_QUERY: /\b(zone|room|floor|lobby|office|meeting|executive|area)\b/i,
-  
+
   // Action requests
   SET_TEMPERATURE: /\b(set|change|adjust|raise|lower|increase|decrease).*(temp|setpoint|degree)/i,
   RUN_SIMULATION: /\b(simulate|run|step|advance|fast forward|time)\b/i,
   INJECT_FAULT: /\b(inject|create|simulate|test).*(fault|failure|problem|scenario)\b/i,
   RESET_SYSTEM: /\b(reset|restore|baseline|default|undo)\b/i,
   OPTIMIZE: /\b(optimize|auto|automatic|recommend|suggest|improve|best)\b/i,
-  
+
   // Analysis requests
   COMPARE: /\b(compare|versus|vs|difference|between)\b/i,
   TREND: /\b(trend|history|over time|chart|graph|forecast|predict)\b/i,
@@ -52,14 +52,14 @@ function extractNumber(text) {
 function extractZoneName(text, assets) {
   const zones = assets.filter(a => a.type === 'zone');
   const lowerText = text.toLowerCase();
-  
+
   // Try exact match first
   for (const zone of zones) {
     if (lowerText.includes(zone.name.toLowerCase())) {
       return zone;
     }
   }
-  
+
   // Try partial match
   const keywords = ['lobby', 'office', 'meeting', 'executive', 'mechanical', 'conference'];
   for (const keyword of keywords) {
@@ -68,13 +68,13 @@ function extractZoneName(text, assets) {
       if (match) return match;
     }
   }
-  
+
   // Try floor match
   const floorMatch = lowerText.match(/floor\s*(\d)/i);
   if (floorMatch) {
     return zones.find(z => z.name.includes(`Floor ${floorMatch[1]}`));
   }
-  
+
   return null;
 }
 
@@ -83,7 +83,7 @@ function extractZoneName(text, assets) {
  */
 function buildSystemPrompt(twinState) {
   const { assets, telemetry, controls, kpis, alerts, simulatorState } = twinState;
-  
+
   // Build detailed context
   const kpiContext = kpis.map(k => ({
     name: k.name,
@@ -93,9 +93,9 @@ function buildSystemPrompt(twinState) {
     trend: k.trend,
     target: k.target
   }));
-  
+
   const activeAlerts = alerts.filter(a => !a.resolved);
-  
+
   const zoneContext = assets
     .filter(a => a.type === 'zone' && a.properties?.zoneType !== 'mechanical')
     .map(zone => {
@@ -105,7 +105,7 @@ function buildSystemPrompt(twinState) {
       const occupancy = zone.properties?.currentOccupancy || 0;
       const coolingSetpoint = controls.find(c => c.assetId === zone.id && c.controlType === 'coolingSetpoint')?.value;
       const heatingSetpoint = controls.find(c => c.assetId === zone.id && c.controlType === 'heatingSetpoint')?.value;
-      
+
       return {
         name: zone.name,
         id: zone.id,
@@ -118,14 +118,14 @@ function buildSystemPrompt(twinState) {
         status: zone.status
       };
     });
-  
+
   const equipmentContext = assets
     .filter(a => ['ahu', 'chiller', 'boiler', 'pump'].includes(a.type))
     .map(equip => {
       const power = telemetry.find(t => t.assetId === equip.id && t.pointType === 'power')?.value;
       const status = equip.status;
       const enabled = equip.enabled !== false;
-      
+
       return {
         name: equip.name,
         type: equip.type,
@@ -167,14 +167,14 @@ You can:
 ${kpiContext.map(k => `- ${k.name}: ${k.value} ${k.unit} (target: ${k.target}, ${k.status}, ${k.trend})`).join('\n')}
 
 ### Active Alerts (${activeAlerts.length})
-${activeAlerts.length > 0 
-  ? activeAlerts.map(a => `- [${a.severity.toUpperCase()}] ${a.message}`).join('\n')
-  : 'No active alerts'}
+${activeAlerts.length > 0
+      ? activeAlerts.map(a => `- [${a.severity.toUpperCase()}] ${a.message}`).join('\n')
+      : 'No active alerts'}
 
 ### Zone Conditions
-${zoneContext.map(z => 
-  `- ${z.name}: ${z.temperature}°F, ${z.co2} ppm CO2, ${z.occupancy} occupants, setpoint ${z.coolingSetpoint}°F cooling / ${z.heatingSetpoint}°F heating`
-).join('\n')}
+${zoneContext.map(z =>
+        `- ${z.name}: ${z.temperature}°F, ${z.co2} ppm CO2, ${z.occupancy} occupants, setpoint ${z.coolingSetpoint}°F cooling / ${z.heatingSetpoint}°F heating`
+      ).join('\n')}
 
 ### Equipment Status
 ${equipmentContext.map(e => `- ${e.name}: ${e.power}, ${e.status}${!e.enabled ? ' (DISABLED)' : ''}`).join('\n')}
@@ -215,20 +215,20 @@ function analyzeIntent(message, twinState) {
   const lowerMsg = message.toLowerCase();
   const intents = [];
   const params = {};
-  
+
   // Check each intent pattern
   for (const [intent, pattern] of Object.entries(INTENT_PATTERNS)) {
     if (pattern.test(message)) {
       intents.push(intent);
     }
   }
-  
+
   // Extract specific parameters
   if (intents.includes('SET_TEMPERATURE')) {
     params.temperature = extractNumber(message);
     params.zone = extractZoneName(message, twinState.assets);
   }
-  
+
   if (intents.includes('RUN_SIMULATION')) {
     const timeMatch = message.match(/(\d+)\s*(minute|min|hour|hr)/i);
     if (timeMatch) {
@@ -237,7 +237,7 @@ function analyzeIntent(message, twinState) {
       params.timeStep = 60; // Default 1 hour
     }
   }
-  
+
   if (intents.includes('INJECT_FAULT')) {
     if (lowerMsg.includes('damper') || lowerMsg.includes('stuck')) {
       params.faultType = 'stuck_damper';
@@ -249,7 +249,7 @@ function analyzeIntent(message, twinState) {
       params.faultType = 'filter_clog';
     }
   }
-  
+
   return { intents, params };
 }
 
@@ -258,22 +258,22 @@ function analyzeIntent(message, twinState) {
  */
 function generateGroundedResponse(intents, twinState) {
   const { assets, telemetry, controls, kpis, alerts, simulatorState } = twinState;
-  
+
   let response = '';
-  
+
   if (intents.includes('SUMMARY')) {
     const totalPower = kpis.find(k => k.id === 'kpi-total-power');
     const comfort = kpis.find(k => k.id === 'kpi-comfort-compliance');
     const iaq = kpis.find(k => k.id === 'kpi-iaq-compliance');
     const activeAlerts = alerts.filter(a => !a.resolved);
-    
+
     response = `## Building Status Summary\n\n`;
     response += `**Energy:** ${totalPower?.value || 'N/A'} kW (${totalPower?.status || 'unknown'})\n`;
     response += `**Comfort Compliance:** ${comfort?.value || 'N/A'}% (target: ${comfort?.target}%)\n`;
     response += `**IAQ Compliance:** ${iaq?.value || 'N/A'}% (target: ${iaq?.target}%)\n`;
     response += `**Active Alerts:** ${activeAlerts.length}\n`;
     response += `**Outdoor Conditions:** ${simulatorState.outdoorTemp}°F, ${simulatorState.outdoorHumidity}% RH\n`;
-    
+
     if (activeAlerts.length > 0) {
       response += `\n**Priority Issues:**\n`;
       activeAlerts.slice(0, 3).forEach(a => {
@@ -282,19 +282,19 @@ function generateGroundedResponse(intents, twinState) {
     }
     return response;
   }
-  
+
   if (intents.includes('ENERGY_QUERY')) {
     const power = kpis.find(k => k.id === 'kpi-total-power');
     const dailyEnergy = kpis.find(k => k.id === 'kpi-daily-energy');
     const cost = kpis.find(k => k.id === 'kpi-energy-cost');
     const chillerEff = kpis.find(k => k.id === 'kpi-chiller-efficiency');
-    
+
     response += `## Energy Analysis\n\n`;
     response += `- **Current Power:** ${power?.value || 'N/A'} kW (target: <${power?.target} kW) - ${power?.status}\n`;
     response += `- **Projected Daily Usage:** ${dailyEnergy?.value || 'N/A'} kWh\n`;
     response += `- **Estimated Daily Cost:** $${cost?.value?.toFixed(2) || 'N/A'}\n`;
     response += `- **Chiller COP:** ${chillerEff?.value || 'N/A'} (target: >${chillerEff?.target})\n\n`;
-    
+
     // Equipment breakdown
     const equipPower = assets
       .filter(a => ['ahu', 'chiller', 'boiler', 'pump'].includes(a.type))
@@ -303,25 +303,25 @@ function generateGroundedResponse(intents, twinState) {
         return { name: e.name, power: pwr || 0 };
       })
       .sort((a, b) => b.power - a.power);
-    
+
     response += `**Power Breakdown:**\n`;
     equipPower.forEach(e => {
       response += `- ${e.name}: ${e.power.toFixed(1)} kW\n`;
     });
-    
+
     return response;
   }
-  
+
   if (intents.includes('AIR_QUALITY_QUERY')) {
     const avgCO2 = kpis.find(k => k.id === 'kpi-avg-co2');
     const iaqCompliance = kpis.find(k => k.id === 'kpi-iaq-compliance');
     const ventilation = kpis.find(k => k.id === 'kpi-ventilation-adequacy');
-    
+
     response += `## Air Quality Analysis\n\n`;
     response += `- **Average CO2:** ${avgCO2?.value || 'N/A'} ppm (target: <${avgCO2?.target} ppm) - ${avgCO2?.status}\n`;
     response += `- **IAQ Compliance:** ${iaqCompliance?.value || 'N/A'}%\n`;
     response += `- **Ventilation Adequacy:** ${ventilation?.value || 'N/A'}%\n\n`;
-    
+
     // Zone-by-zone CO2
     const zones = assets.filter(a => a.type === 'zone' && a.properties?.zoneType !== 'mechanical');
     response += `**Zone CO2 Levels:**\n`;
@@ -330,7 +330,7 @@ function generateGroundedResponse(intents, twinState) {
       const status = co2 > 1000 ? '🔴' : co2 > 800 ? '🟡' : '🟢';
       response += `- ${z.name}: ${co2 || 'N/A'} ppm ${status}\n`;
     });
-    
+
     // CO2 alerts
     const co2Alerts = alerts.filter(a => !a.resolved && a.message.toLowerCase().includes('co2'));
     if (co2Alerts.length > 0) {
@@ -339,18 +339,18 @@ function generateGroundedResponse(intents, twinState) {
         response += `- ${a.message} → ${a.recommendedAction}\n`;
       });
     }
-    
+
     return response;
   }
-  
+
   if (intents.includes('COMFORT_QUERY')) {
     const deviation = kpis.find(k => k.id === 'kpi-avg-temp-deviation');
     const compliance = kpis.find(k => k.id === 'kpi-comfort-compliance');
-    
+
     response += `## Comfort Analysis\n\n`;
     response += `- **Avg Temperature Deviation:** ${deviation?.value || 'N/A'}°F from setpoint\n`;
     response += `- **Comfort Compliance:** ${compliance?.value || 'N/A'}% (target: ${compliance?.target}%)\n\n`;
-    
+
     // Zone temperatures
     const zones = assets.filter(a => a.type === 'zone' && a.properties?.zoneType !== 'mechanical');
     response += `**Zone Temperatures:**\n`;
@@ -361,17 +361,17 @@ function generateGroundedResponse(intents, twinState) {
       const status = Math.abs(parseFloat(deviation)) > 2 ? '🔴' : Math.abs(parseFloat(deviation)) > 1 ? '🟡' : '🟢';
       response += `- ${z.name}: ${temp?.toFixed(1) || 'N/A'}°F (setpoint: ${setpoint}°F, deviation: ${deviation}°F) ${status}\n`;
     });
-    
+
     return response;
   }
-  
+
   if (intents.includes('ALERT_QUERY')) {
     const activeAlerts = alerts.filter(a => !a.resolved);
-    
+
     if (activeAlerts.length === 0) {
       return `## Alert Status\n\nNo active alerts. All systems operating normally.`;
     }
-    
+
     response += `## Active Alerts (${activeAlerts.length})\n\n`;
     activeAlerts.forEach(a => {
       const severity = a.severity === 'critical' ? '🔴' : a.severity === 'warning' ? '🟡' : '🟢';
@@ -383,13 +383,13 @@ function generateGroundedResponse(intents, twinState) {
       response += `- **Time:** ${a.timestamp}\n`;
       response += `- **Acknowledged:** ${a.acknowledged ? 'Yes' : 'No'}\n\n`;
     });
-    
+
     return response;
   }
-  
+
   if (intents.includes('EQUIPMENT_QUERY')) {
     response += `## Equipment Status\n\n`;
-    
+
     // AHUs
     const ahus = assets.filter(a => a.type === 'ahu');
     response += `**Air Handling Units:**\n`;
@@ -400,7 +400,7 @@ function generateGroundedResponse(intents, twinState) {
       const fanSpeed = telemetry.find(t => t.assetId === ahu.id && t.pointType === 'fanSpeed')?.value;
       response += `- **${ahu.name}:** SAT ${sat}°F, ${flow} CFM, ${power} kW, Fan ${fanSpeed}%\n`;
     });
-    
+
     // Chiller
     const chillers = assets.filter(a => a.type === 'chiller');
     response += `\n**Chillers:**\n`;
@@ -409,7 +409,7 @@ function generateGroundedResponse(intents, twinState) {
       const power = telemetry.find(t => t.assetId === ch.id && t.pointType === 'power')?.value;
       response += `- **${ch.name}:** ${(load * 100).toFixed(0)}% load, ${power} kW\n`;
     });
-    
+
     // Boiler
     const boilers = assets.filter(a => a.type === 'boiler');
     response += `\n**Boilers:**\n`;
@@ -418,21 +418,21 @@ function generateGroundedResponse(intents, twinState) {
       const power = telemetry.find(t => t.assetId === b.id && t.pointType === 'power')?.value;
       response += `- **${b.name}:** ${(load * 100).toFixed(0)}% load, ${power} kW\n`;
     });
-    
+
     // Filters
     const filterKPI = kpis.find(k => k.id === 'kpi-filter-life-ahu1');
     response += `\n**Filter Status:**\n`;
     response += `- AHU-1 Filter: ${filterKPI?.value || 'N/A'}% life remaining\n`;
-    
+
     return response;
   }
-  
+
   if (intents.includes('OPTIMIZE')) {
     response += `## Optimization Recommendations\n\n`;
-    
+
     // Check for specific optimization opportunities
     const recommendations = [];
-    
+
     // Check energy
     const power = kpis.find(k => k.id === 'kpi-total-power');
     if (power && power.value > power.target * 0.9) {
@@ -443,7 +443,7 @@ function generateGroundedResponse(intents, twinState) {
         tradeoff: 'Minor comfort impact during peak hours'
       });
     }
-    
+
     // Check CO2
     const avgCO2 = kpis.find(k => k.id === 'kpi-avg-co2');
     const co2Alerts = alerts.filter(a => !a.resolved && a.message.toLowerCase().includes('co2'));
@@ -455,7 +455,7 @@ function generateGroundedResponse(intents, twinState) {
         tradeoff: 'Slightly higher energy consumption'
       });
     }
-    
+
     // Check comfort compliance
     const comfort = kpis.find(k => k.id === 'kpi-comfort-compliance');
     if (comfort && comfort.value < comfort.target) {
@@ -466,7 +466,7 @@ function generateGroundedResponse(intents, twinState) {
         tradeoff: 'May require individual zone adjustments'
       });
     }
-    
+
     // Check filter
     const filterLife = kpis.find(k => k.id === 'kpi-filter-life-ahu1');
     if (filterLife && filterLife.value < 40) {
@@ -477,7 +477,7 @@ function generateGroundedResponse(intents, twinState) {
         tradeoff: 'Maintenance cost and brief service interruption'
       });
     }
-    
+
     // Demand response
     if (simulatorState.outdoorTemp > 85 && !simulatorState.demandResponseActive) {
       recommendations.push({
@@ -487,7 +487,7 @@ function generateGroundedResponse(intents, twinState) {
         tradeoff: 'Slightly wider temperature deadband'
       });
     }
-    
+
     if (recommendations.length === 0) {
       response += `System is operating optimally. No immediate actions recommended.\n`;
     } else {
@@ -499,10 +499,10 @@ function generateGroundedResponse(intents, twinState) {
         response += `- **Tradeoff:** ${rec.tradeoff}\n\n`;
       });
     }
-    
+
     return response;
   }
-  
+
   // Default: provide helpful guidance
   return null;
 }
@@ -512,7 +512,7 @@ function generateGroundedResponse(intents, twinState) {
  */
 async function executeAction(intent, params, twinState, simulator) {
   const result = { success: false, message: '', changes: null };
-  
+
   if (intent === 'SET_TEMPERATURE') {
     if (!params.zone) {
       result.message = 'Please specify which zone you want to adjust (e.g., "Set lobby temperature to 72°F").';
@@ -522,27 +522,27 @@ async function executeAction(intent, params, twinState, simulator) {
       result.message = 'Please specify the target temperature (e.g., "Set lobby temperature to 72°F").';
       return result;
     }
-    
+
     // Find the control
     const coolingControl = twinState.controls.find(
       c => c.assetId === params.zone.id && c.controlType === 'coolingSetpoint'
     );
-    
+
     if (!coolingControl) {
       result.message = `Cannot find temperature control for ${params.zone.name}.`;
       return result;
     }
-    
+
     // Validate temperature range
     if (params.temperature < coolingControl.min || params.temperature > coolingControl.max) {
       result.message = `Temperature must be between ${coolingControl.min}°F and ${coolingControl.max}°F.`;
       return result;
     }
-    
+
     // Apply the change
     const oldValue = coolingControl.value;
     const simResult = simulator.step(60, { [coolingControl.id]: params.temperature });
-    
+
     result.success = true;
     result.message = `✅ **Setpoint Changed**\n\n` +
       `- **Zone:** ${params.zone.name}\n` +
@@ -550,26 +550,26 @@ async function executeAction(intent, params, twinState, simulator) {
       `- **New Setpoint:** ${params.temperature}°F\n\n` +
       `The change has been applied. Zone temperature will adjust over the next few minutes.`;
     result.changes = simResult;
-    
+
     return result;
   }
-  
+
   if (intent === 'RUN_SIMULATION') {
     const timeStep = params.timeStep || 60;
     const simResult = simulator.step(timeStep);
-    
+
     result.success = true;
     result.message = `✅ **Simulation Advanced**\n\n` +
       `- **Time Step:** ${timeStep} minutes\n` +
       `- **New Time:** ${simResult.state.metadata.simulationTime}\n` +
-      (simResult.newAlerts?.length > 0 
+      (simResult.newAlerts?.length > 0
         ? `\n**New Alerts Generated:**\n${simResult.newAlerts.map(a => `- ${a.message}`).join('\n')}`
         : '\nNo new alerts generated.');
     result.changes = simResult;
-    
+
     return result;
   }
-  
+
   if (intent === 'INJECT_FAULT') {
     if (!params.faultType) {
       result.message = 'Please specify the type of fault to inject:\n' +
@@ -579,47 +579,55 @@ async function executeAction(intent, params, twinState, simulator) {
         '- **Filter clog**: Simulate blocked filter condition';
       return result;
     }
-    
+
     simulator.applyFault(params.faultType, params);
     const simResult = simulator.step(60);
-    
+
     result.success = true;
     result.message = `✅ **Fault Injected**\n\n` +
       `- **Fault Type:** ${params.faultType}\n` +
       `- **Status:** Active\n\n` +
       `The fault scenario has been applied. Monitor alerts and KPIs to observe system response.`;
     result.changes = simResult;
-    
+
     return result;
   }
-  
+
   if (intent === 'RESET_SYSTEM') {
     result.success = true;
     result.message = `✅ **Reset Requested**\n\n` +
       `To reset the digital twin to baseline state, use the "Reset Twin" button in the Control Panel.`;
     result.requiresConfirmation = true;
     result.action = 'RESET';
-    
+
     return result;
   }
-  
+
   return result;
 }
 
 /**
  * Main Copilot chat handler
  */
-async function handleCopilotChat(message, conversationHistory, twinState, simulator, plantContext = '') {
+async function handleCopilotChat(
+  message,
+  conversationHistory,
+  twinState,
+  simulator,
+  plantContext = '',
+  plantControls = [],
+  appliedControls = []
+) {
   const userMessage = extractUserMessage(message);
   const { intents, params } = analyzeIntent(userMessage, twinState);
-  
+
   // Check if this is an action request
   const actionIntents = ['SET_TEMPERATURE', 'RUN_SIMULATION', 'INJECT_FAULT', 'RESET_SYSTEM'];
   const requestedAction = intents.find(i => actionIntents.includes(i));
-  
+
   let response = '';
   let actionResult = null;
-  
+
   // Try to execute action if requested
   if (requestedAction) {
     actionResult = await executeAction(requestedAction, params, twinState, simulator);
@@ -627,12 +635,12 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
       response = actionResult.message;
     }
   }
-  
+
   // Template responses use building twin data — skip in chiller plant mode (plantContext set)
   if (!response && !plantContext && !isCasualMessage(userMessage)) {
     response = generateGroundedResponse(intents, twinState);
   }
-  
+
   // If still no response, try LLM (remote API or Foundry Local)
   if (!response) {
     const modelStatus = getStatus();
@@ -641,6 +649,12 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
         let systemPrompt = buildSystemPrompt(twinState);
         if (plantContext) {
           systemPrompt += `\n\n## CHILLER PLANT SIMULATOR (client-side physics)\n${plantContext}`;
+        }
+        if (plantControls.length > 0) {
+          systemPrompt += `\n\n## ADJUSTABLE PLANT CONTROLS\nOperators change these via chat (building load, outdoor temp, humidity, water setpoints). Current values:\n${plantControls.map((c) => `- ${c.label}: ${c.value} ${c.unit} (range ${c.min}–${c.max})`).join('\n')}`;
+        }
+        if (appliedControls.length > 0) {
+          systemPrompt += `\n\n## APPLIED CONTROL CHANGES (already executed in the simulator)\n${appliedControls.map((c) => `- ${c.label}: ${c.oldValue} → ${c.newValue} ${c.unit}`).join('\n')}\nAcknowledge these changes and briefly explain the expected impact on plant load, COP, and condenser performance.`;
         }
         const messages = [
           { role: 'system', content: systemPrompt },
@@ -666,11 +680,12 @@ async function handleCopilotChat(message, conversationHistory, twinState, simula
       response = generateFallbackResponse(modelStatus);
     }
   }
-  
+
   return {
     response,
     actionExecuted: actionResult?.success || false,
     actionChanges: actionResult?.changes || null,
+    controlsApplied: appliedControls.length > 0,
     intents,
     groundedIn: {
       kpis: twinState.kpis.map(k => ({ id: k.id, value: k.value, status: k.status })),
