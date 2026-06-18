@@ -7,6 +7,7 @@ import {
   viewBoxString,
   zoomDcsAt,
 } from './dcsPlantLayout';
+import { resolveEtsBuildingId } from './resolveEtsBuilding';
 
 export function useDcsViewport(selectedId: string | null) {
   const [view, setView] = useState(DCS_FULL_VIEW);
@@ -18,6 +19,8 @@ export function useDcsViewport(selectedId: string | null) {
       setView(DCS_FULL_VIEW);
       return;
     }
+    // ORQ / MBFC / MBS / PHE clicks drill to ETS — do not zoom campus first
+    if (resolveEtsBuildingId(selectedId)) return;
     const bounds = boundsForDcsEquipment(selectedId);
     if (bounds) setView(focusDcsViewport(bounds));
   }, [selectedId]);

@@ -251,7 +251,7 @@ export default function EtsDetail2DView({
     handlePointerMove,
     handlePointerUp,
     zoomStep,
-  } = useEtsViewport(selectedId);
+  } = useEtsViewport(buildingId, selectedId);
 
   const h = headers;
   const pipes = etsPipes();

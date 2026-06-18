@@ -1,24 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ETS_FULL_VIEW,
-  boundsForEtsEquipment,
-  focusEtsViewport,
   panEtsView,
   viewBoxString,
   zoomEtsAt,
 } from './etsDetailLayout';
 
-export function useEtsViewport(selectedId: string | null) {
+export function useEtsViewport(buildingId: string, _selectedId: string | null) {
   const [view, setView] = useState(ETS_FULL_VIEW);
   const svgRef = useRef<SVGSVGElement>(null);
   const panRef = useRef({ active: false, lastX: 0, lastY: 0 });
 
+  // New building ETS — always open at full schematic (no zoom from campus selection)
   useEffect(() => {
     setView(ETS_FULL_VIEW);
-    if (!selectedId) return;
-    const bounds = boundsForEtsEquipment(selectedId);
-    if (bounds) setView(focusEtsViewport(bounds));
-  }, [selectedId]);
+  }, [buildingId]);
 
   const fitAll = useCallback(() => setView(ETS_FULL_VIEW), []);
 
