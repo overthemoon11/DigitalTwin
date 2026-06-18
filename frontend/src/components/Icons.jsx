@@ -152,7 +152,7 @@ export const CloseIcon = (props) => (
   </Icon>
 );
 
-// Robot / AI Copilot icon
+// Robot / chatbot icon
 export const CopilotIcon = (props) => (
   <Icon {...props}>
     <rect x="3" y="11" width="18" height="10" rx="2" />

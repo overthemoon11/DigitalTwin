@@ -336,7 +336,7 @@ app.post('/api/copilot/chat', async (req, res) => {
   } catch (err) {
     console.error('Copilot error:', err.message);
     res.status(500).json({
-      error: 'Copilot processing failed',
+      error: 'Chatbot processing failed',
       response: 'I encountered an error processing your request. Please try again.'
     });
   }

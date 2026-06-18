@@ -16,22 +16,43 @@ import {
   buildPlantControlsSummary,
 } from '../services/plantCopilotActions';
 
+import {
+  startDistrictCoolingSimulator,
+  updateDistrictControl as setDistrictControlValue,
+  resetDistrictCooling,
+  stepDistrictCooling,
+  advanceDistrictCooling,
+} from '../services/districtCoolingSimulator';
+
 const API_BASE = '/api';
 
 export const useTwinStore = create((set, get) => ({
   twinState: null,
   plantState: null,
+  districtCoolingState: null,
+  activeAppTab: 'chiller_plant',
+  activePlantScenario: 'chiller',
   selectedAsset: null,
   isConnected: false,
   ws: null,
   conversationHistory: [],
-  modelStatus: null, // { status, message, downloadProgress, modelAlias, ready }
+  modelStatus: null,
   _plantStop: null,
+  _districtStop: null,
+
+  setActiveAppTab: (tab) => set({ activeAppTab: tab }),
+
+  setActivePlantScenario: (scenario) => {
+    set({ activePlantScenario: scenario, selectedAsset: null });
+  },
 
   initPlantTelemetry: () => {
-    const existing = get()._plantStop;
-    if (existing) existing();
-    const stop = startPlantSimulator((plantState) => {
+    const existingPlant = get()._plantStop;
+    if (existingPlant) existingPlant();
+    const existingDc = get()._districtStop;
+    if (existingDc) existingDc();
+
+    const plantStop = startPlantSimulator((plantState) => {
       set({ plantState });
       const twin = get().twinState;
       if (twin) {
@@ -46,8 +67,31 @@ export const useTwinStore = create((set, get) => ({
         });
       }
     });
-    set({ _plantStop: stop });
-    return stop;
+
+    const districtStop = startDistrictCoolingSimulator((districtCoolingState) => {
+      set({ districtCoolingState });
+    });
+
+    set({ _plantStop: plantStop, _districtStop: districtStop });
+    return () => {
+      plantStop();
+      districtStop();
+    };
+  },
+
+  updateDistrictControl: (controlId, value) => {
+    setDistrictControlValue(controlId, value);
+    set({ districtCoolingState: stepDistrictCooling() });
+  },
+
+  advanceDistrictCooling: (seconds = 30) => {
+    const steps = Math.max(1, Math.floor(seconds / 2));
+    set({ districtCoolingState: advanceDistrictCooling(steps) });
+  },
+
+  resetDistrictCooling: () => {
+    resetDistrictCooling();
+    set({ districtCoolingState: stepDistrictCooling() });
   },
 
   updatePlantControl: (controlId, value) => {
@@ -258,7 +302,7 @@ export const useTwinStore = create((set, get) => ({
           conversationHistory,
         }),
       });
-      if (!response.ok) throw new Error('Copilot API error');
+      if (!response.ok) throw new Error('Chatbot API error');
       const result = await response.json();
 
       const responseText = prependConfirmation(result.response);
@@ -276,7 +320,7 @@ export const useTwinStore = create((set, get) => ({
       const local = analyzePlantQuery(message, get().plantState);
       const responseText = prependConfirmation(
         local ||
-          '## Chiller Plant Copilot\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.'
+          '## Plant Chatbot (Local LLM)\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.'
       );
 
       set({

@@ -40,7 +40,7 @@ function ModelStatusBanner() {
             <>{message || 'Connecting to AI model…'}</>
           )}
           {(status === 'error' || status === 'unavailable') && (
-            <>AI model unavailable — Copilot will use built-in responses</>
+            <>AI model unavailable — chatbot will use built-in responses</>
           )}
         </span>
       </div>

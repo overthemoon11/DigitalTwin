@@ -135,7 +135,7 @@ function buildSystemPrompt(twinState) {
       };
     });
 
-  return `You are the HVAC Operations Copilot for the "${twinState.metadata.name}" digital twin.
+  return `You are the HVAC Operations assistant (Local LLM) for the "${twinState.metadata.name}" digital twin.
 You assist building operators with monitoring, analysis, and control of HVAC systems.
 
 ## CAPABILITIES

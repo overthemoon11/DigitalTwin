@@ -7,9 +7,10 @@ interface Props {
   flowSpeed?: number;
   running?: boolean;
   width?: number;
+  dashed?: boolean;
 }
 
-export function ScadaPipe({ d, loop, flowSpeed = 0, running = true, width = 10 }: Props) {
+export function ScadaPipe({ d, loop, flowSpeed = 0, running = true, width = 10, dashed = false }: Props) {
   const { stroke } = LOOP[loop];
   const dur = flowDuration(flowSpeed, running);
   const animated = dur > 0;
@@ -23,7 +24,8 @@ export function ScadaPipe({ d, loop, flowSpeed = 0, running = true, width = 10 }
         strokeWidth={width}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className={animated ? 'scada-pipe-flow' : 'scada-pipe-idle'}
+        strokeDasharray={dashed ? '8 6' : undefined}
+        className={animated && !dashed ? 'scada-pipe-flow' : 'scada-pipe-idle'}
         style={animated ? { ['--flow-dur' as string]: `${dur}s` } : undefined}
         opacity={running ? 0.9 : 0.4}
       />

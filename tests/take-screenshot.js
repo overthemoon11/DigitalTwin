@@ -54,7 +54,7 @@ async function takeScreenshots() {
 
     // 3. Copilot panel - click Copilot/Chat tab
     console.log('Taking copilot-panel screenshot...');
-    const copilotTab = page.getByRole('button', { name: /copilot|chat/i });
+    const copilotTab = page.getByRole('button', { name: /chatbot|local llm/i });
     if (await copilotTab.count()) {
       await copilotTab.first().click();
       await page.waitForTimeout(500);

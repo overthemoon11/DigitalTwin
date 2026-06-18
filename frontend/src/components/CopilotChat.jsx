@@ -290,7 +290,7 @@ function CopilotChat() {
       <div className="copilot-header">
         <div className="copilot-title">
           <CopilotIcon />
-          <span>Chiller Plant AI Copilot</span>
+          <span>Plant Chatbot · Local LLM</span>
         </div>
         {conversationHistory.length > 0 && (
           <button
@@ -364,7 +364,7 @@ function CopilotChat() {
             <div className="message-header">
               {msg.role === "user" ? <UserIcon /> : <CopilotIcon />}
               <span className="role-label">
-                {msg.role === "user" ? "You" : "Copilot"}
+                {msg.role === "user" ? "You" : "Local LLM"}
               </span>
             </div>
             <div className="message-content">
@@ -380,7 +380,7 @@ function CopilotChat() {
           <div className="chat-message assistant">
             <div className="message-header">
               <CopilotIcon />
-              <span className="role-label">Copilot</span>
+              <span className="role-label">Local LLM</span>
             </div>
             <div className="message-content loading">
               <span className="typing-indicator">
