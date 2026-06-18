@@ -8,21 +8,23 @@ function PlantScenarioSwitcher({ activeScenario, onSelect }) {
     <div className="plant-scenario-switcher">
       <button
         type="button"
-        className={`plant-scenario-btn ${activeScenario === 'chiller' ? 'active' : ''}`}
+        className={`plant-scenario-btn plant-scenario-btn--chiller ${activeScenario === 'chiller' ? 'active' : ''}`}
         onClick={() => onSelect('chiller')}
       >
-        <span className="plant-scenario-icon">❄️</span>
-        <span className="plant-scenario-label">Chiller Plant</span>
-        <span className="plant-scenario-desc">On-site chillers &amp; towers</span>
+        <div className="plant-scenario-head">
+          <span className="plant-scenario-icon">❄️</span>
+          <span className="plant-scenario-label">Chiller Plant</span>
+        </div>
       </button>
       <button
         type="button"
-        className={`plant-scenario-btn ${activeScenario === 'heat_exchange' ? 'active' : ''}`}
+        className={`plant-scenario-btn plant-scenario-btn--heat ${activeScenario === 'heat_exchange' ? 'active' : ''}`}
         onClick={() => onSelect('heat_exchange')}
       >
-        <span className="plant-scenario-icon">🔄</span>
-        <span className="plant-scenario-label">Heat Exchange Plant</span>
-        <span className="plant-scenario-desc">District cooling + plate HX</span>
+        <div className="plant-scenario-head">
+          <span className="plant-scenario-icon">🔄</span>
+          <span className="plant-scenario-label">Heat Exchange Plant</span>
+        </div>
       </button>
     </div>
   );

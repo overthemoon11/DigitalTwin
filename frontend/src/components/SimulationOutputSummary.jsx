@@ -18,7 +18,9 @@ export default function SimulationOutputSummary({
   return (
     <div className={`sim-output-summary${compact ? ' sim-output-summary--compact' : ''}`}>
       <h4 className="sim-output-summary__title">Simulation output</h4>
-      <div className="sim-output-summary__grid">
+      <div
+        className={`sim-output-summary__grid${hasDistrict ? ' sim-output-summary__grid--cols-3' : ''}`}
+      >
         {buildingLoadRt != null && (
           <div className="sim-output-summary__item">
             <span className="sim-output-summary__label">Building load</span>

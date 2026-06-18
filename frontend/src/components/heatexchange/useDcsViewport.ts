@@ -15,7 +15,7 @@ export function useDcsViewport(selectedId: string | null) {
   const panRef = useRef({ active: false, lastX: 0, lastY: 0 });
 
   useEffect(() => {
-    if (!selectedId) {
+    if (!selectedId || selectedId === 'dcs-plant') {
       setView(DCS_FULL_VIEW);
       return;
     }
