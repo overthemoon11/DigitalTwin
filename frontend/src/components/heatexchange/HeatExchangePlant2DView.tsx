@@ -113,7 +113,7 @@ export default function HeatExchangePlant2DView({ headers, buildings, selectedId
         <button type="button" onClick={clearSelection} title="Fit full plant">⊡</button>
       </div>
       <p className="scada-viewport-hint">
-        Scroll to zoom · drag background to pan · click equipment to focus · DCS campus schematic (ORQ / MBFC / MBS)
+        Scroll to zoom · drag background to pan · click building / PHE in diagram to open ETS
       </p>
 
       <SystemSnapshotButton headers={h} />

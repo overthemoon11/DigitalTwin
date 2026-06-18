@@ -34,10 +34,25 @@ function App() {
     resetDistrictCooling,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
+  const [hxEtsBuildingId, setHxEtsBuildingId] = useState(null);
 
   useEffect(() => {
     loadTwinState();
   }, [loadTwinState]);
+
+  useEffect(() => {
+    setHxEtsBuildingId(null);
+  }, [activePlantScenario]);
+
+  const selectHxSidebarAsset = (assetId) => {
+    setHxEtsBuildingId(null);
+    selectAsset(assetId);
+  };
+
+  const exitHxEts = () => {
+    setHxEtsBuildingId(null);
+    selectAsset('dcs-plant');
+  };
 
   usePlantTelemetry();
 
@@ -129,7 +144,7 @@ function App() {
               <HeatExchangeAssetTree
                 equipment={districtCoolingState?.equipment || {}}
                 selectedAsset={selectedAsset}
-                onSelectAsset={selectAsset}
+                onSelectAsset={selectHxSidebarAsset}
               />
             )}
           </aside>
@@ -154,6 +169,9 @@ function App() {
                 buildings={districtCoolingState.buildings}
                 selectedId={selectedAsset}
                 onSelect={selectAsset}
+                etsBuildingId={hxEtsBuildingId}
+                onDrillToEts={setHxEtsBuildingId}
+                onExitEts={exitHxEts}
               />
             ) : (
               <div className="loading" style={{ height: '100%' }}>

@@ -77,7 +77,7 @@ echo.
 
 REM Start backend server in new window
 echo Starting Backend Server...
-start "HVAC Digital Twin - Backend" cmd /k "title HVAC Digital Twin - Backend && cd /d "%ROOT_DIR%backend" && echo. && echo Starting backend on http://localhost:3001... && echo. && npm start"
+start "HVAC Digital Twin - Backend" cmd /k "title HVAC Digital Twin - Backend && cd /d "%ROOT_DIR%backend" && echo. && echo Starting backend on http://localhost:3003... && echo. && npm start"
 
 REM Wait for backend to initialize
 echo Waiting for backend to start...
@@ -85,7 +85,7 @@ timeout /t 4 /nobreak >nul
 
 REM Start frontend server in new window
 echo Starting Frontend Server...
-start "HVAC Digital Twin - Frontend" cmd /k "title HVAC Digital Twin - Frontend && cd /d "%ROOT_DIR%frontend" && echo. && echo Starting frontend on http://localhost:3000... && echo. && npm run dev"
+start "HVAC Digital Twin - Frontend" cmd /k "title HVAC Digital Twin - Frontend && cd /d "%ROOT_DIR%frontend" && echo. && echo Starting frontend on http://localhost:3002... && echo. && npm run dev"
 
 REM Wait for frontend to start
 timeout /t 3 /nobreak >nul
@@ -95,9 +95,9 @@ echo ========================================
 echo   Demo Started Successfully!
 echo ========================================
 echo.
-echo   Backend API:  http://localhost:3001
-echo   Frontend UI:  http://localhost:3000
-echo   WebSocket:    ws://localhost:3001/ws
+echo   Backend API:  http://localhost:3003
+echo   Frontend UI:  http://localhost:3002
+echo   WebSocket:    ws://localhost:3003/ws
 echo.
 echo   Two command windows have been opened:
 echo     - Backend server (Node.js/Express)
@@ -109,7 +109,7 @@ echo   Opening browser in 3 seconds...
 timeout /t 3 /nobreak >nul
 
 REM Open default browser
-start "" "http://localhost:3000"
+start "" "http://localhost:3002"
 
 echo.
 echo Browser opened. You can close this window.

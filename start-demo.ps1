@@ -85,16 +85,16 @@ Write-Host ""
 
 # Kill any existing processes on our ports
 Write-Host "Checking for existing processes..." -ForegroundColor Yellow
-$existingBackend = Get-NetTCPConnection -LocalPort 3001 -ErrorAction SilentlyContinue
-$existingFrontend = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
+$existingBackend = Get-NetTCPConnection -LocalPort 3003 -ErrorAction SilentlyContinue
+$existingFrontend = Get-NetTCPConnection -LocalPort 3002 -ErrorAction SilentlyContinue
 
 if ($existingBackend) {
-    Write-Host "  Port 3001 in use - attempting to free..." -ForegroundColor Yellow
+    Write-Host "  Port 3003 in use - attempting to free..." -ForegroundColor Yellow
     Stop-Process -Id (Get-Process -Id $existingBackend.OwningProcess).Id -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
 }
 if ($existingFrontend) {
-    Write-Host "  Port 3000 in use - attempting to free..." -ForegroundColor Yellow
+    Write-Host "  Port 3002 in use - attempting to free..." -ForegroundColor Yellow
     Stop-Process -Id (Get-Process -Id $existingFrontend.OwningProcess).Id -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 500
 }
@@ -110,7 +110,7 @@ Write-Host '  HVAC Digital Twin - Backend Server' -ForegroundColor Cyan
 Write-Host '========================================' -ForegroundColor Cyan
 Write-Host ''
 Set-Location '$RootDir\backend'
-Write-Host 'Starting server on http://localhost:3001...' -ForegroundColor Yellow
+Write-Host 'Starting server on http://localhost:3003...' -ForegroundColor Yellow
 Write-Host ''
 try {
     npm start
@@ -133,9 +133,9 @@ Write-Host 'Press any key to close...' -ForegroundColor Gray
         Start-Sleep -Seconds 1
         $waited++
         try {
-            $response = Invoke-WebRequest -Uri "http://localhost:3001/api/twin" -TimeoutSec 2 -ErrorAction SilentlyContinue
+            $response = Invoke-WebRequest -Uri "http://localhost:3003/api/twin" -TimeoutSec 2 -ErrorAction SilentlyContinue
             if ($response.StatusCode -eq 200) {
-                Write-Host "  [OK] Backend running on http://localhost:3001" -ForegroundColor Green
+                Write-Host "  [OK] Backend running on http://localhost:3003" -ForegroundColor Green
                 break
             }
         } catch {
@@ -156,7 +156,7 @@ Write-Host '  HVAC Digital Twin - Frontend Server' -ForegroundColor Cyan
 Write-Host '========================================' -ForegroundColor Cyan
 Write-Host ''
 Set-Location '$RootDir\frontend'
-Write-Host 'Starting Vite dev server on http://localhost:3000...' -ForegroundColor Yellow
+Write-Host 'Starting Vite dev server on http://localhost:3002...' -ForegroundColor Yellow
 Write-Host ''
 npm run dev
 Write-Host ''
@@ -167,7 +167,7 @@ Write-Host 'Press any key to close...' -ForegroundColor Gray
     Start-Process powershell -ArgumentList "-NoExit", "-EncodedCommand", $encodedFrontend
     
     Start-Sleep -Seconds 2
-    Write-Host "  [OK] Frontend starting on http://localhost:3000" -ForegroundColor Green
+    Write-Host "  [OK] Frontend starting on http://localhost:3002" -ForegroundColor Green
 }
 
 # Success message
@@ -176,9 +176,9 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "  Demo Started Successfully!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "  Backend API:  http://localhost:3001" -ForegroundColor White
-Write-Host "  Frontend UI:  http://localhost:3000" -ForegroundColor White
-Write-Host "  WebSocket:    ws://localhost:3001/ws" -ForegroundColor White
+Write-Host "  Backend API:  http://localhost:3003" -ForegroundColor White
+Write-Host "  Frontend UI:  http://localhost:3002" -ForegroundColor White
+Write-Host "  WebSocket:    ws://localhost:3003/ws" -ForegroundColor White
 Write-Host ""
 Write-Host "  Two terminal windows have been opened:" -ForegroundColor Gray
 Write-Host "    - Backend server (Node.js/Express)" -ForegroundColor Gray
@@ -191,5 +191,5 @@ Write-Host ""
 if (-not $NoBrowser) {
     Start-Sleep -Seconds 2
     Write-Host "Opening browser..." -ForegroundColor Gray
-    Start-Process "http://localhost:3000"
+    Start-Process "http://localhost:3002"
 }

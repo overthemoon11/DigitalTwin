@@ -9,8 +9,8 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 
-const API_BASE = 'http://localhost:3001';
-const FRONTEND_URL = 'http://localhost:3000';
+const API_BASE = 'http://localhost:3003';
+const FRONTEND_URL = 'http://localhost:3002';
 
 describe('System Health Checks', () => {
   
@@ -212,16 +212,16 @@ describe('System Health Checks', () => {
       
       assert.ok(content.includes('proxy'), 'Should have proxy configuration');
       assert.ok(content.includes("'/api'"), 'Should proxy /api routes');
-      assert.ok(content.includes('3001'), 'Should proxy to port 3001');
+      assert.ok(content.includes('3003'), 'Should proxy to port 3003');
     });
 
-    test('backend should be configured for port 3001', () => {
+    test('backend should be configured for port 3003', () => {
       const indexPath = path.join(__dirname, '../../backend/src/index.js');
       const content = fs.readFileSync(indexPath, 'utf8');
       
       assert.ok(
-        content.includes('3001'),
-        'Backend should listen on port 3001'
+        content.includes('3003'),
+        'Backend should listen on port 3003'
       );
     });
   });

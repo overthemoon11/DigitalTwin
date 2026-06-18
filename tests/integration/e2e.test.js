@@ -7,7 +7,7 @@
 const { test, describe, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'http://localhost:3003';
 
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
@@ -333,4 +333,4 @@ describe('End-to-End Workflows', () => {
 });
 
 console.log('\nRunning End-to-End Tests...\n');
-console.log('Note: Backend server must be running on port 3001\n');
+console.log('Note: Backend server must be running on port 3003\n');

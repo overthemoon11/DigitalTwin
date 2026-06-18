@@ -8,7 +8,7 @@ This script walks through a demonstration of the Smart Building HVAC Digital Twi
 ## Setup (before demo)
 1. Ensure backend is running: `cd backend && npm start`
 2. Ensure frontend is running: `cd frontend && npm run dev`
-3. Open browser to `http://localhost:3000`
+3. Open browser to `http://localhost:3002`
 4. (Optional) Start Foundry Local for AI copilot
 
 ---

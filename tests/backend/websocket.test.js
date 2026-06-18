@@ -8,8 +8,8 @@ const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert');
 const WebSocket = require('ws');
 
-const WS_URL = 'ws://localhost:3001/ws';
-const API_BASE = 'http://localhost:3001';
+const WS_URL = 'ws://localhost:3003/ws';
+const API_BASE = 'http://localhost:3003';
 
 describe('WebSocket Connectivity', () => {
   
@@ -212,4 +212,4 @@ describe('WebSocket Connectivity', () => {
 });
 
 console.log('\nRunning WebSocket Tests...\n');
-console.log('Note: Backend server must be running on port 3001\n');
+console.log('Note: Backend server must be running on port 3003\n');

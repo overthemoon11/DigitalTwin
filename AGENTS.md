@@ -10,8 +10,8 @@ This is a full-stack web application (React + Node.js) that simulates a multi-fl
 
 | Folder | Purpose |
 |--------|---------|
-| `frontend/` | React + Three.js web UI (Vite dev server on port 3000) |
-| `backend/` | Node.js/Express API server (port 3001) + HVAC simulator |
+| `frontend/` | React + Three.js web UI (Vite dev server on port 3002) |
+| `backend/` | Node.js/Express API server (port 3003) + HVAC simulator |
 | `twin/` | JSON-based digital twin state, schema, and baseline |
 | `tests/` | Integration, validation, and E2E tests |
 | `docs/` | Architecture diagrams, demo scripts, images |

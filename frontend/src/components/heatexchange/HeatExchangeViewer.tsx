@@ -8,17 +8,34 @@ interface Props {
   buildings: DcsBuildingBranch[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  /** When set, shows building ETS schematic (middle-view drill-down only). */
+  etsBuildingId?: string | null;
+  onDrillToEts?: (buildingId: string) => void;
+  onExitEts?: () => void;
 }
 
-export default function HeatExchangeViewer({ headers, buildings, selectedId, onSelect }: Props) {
-  const buildingId = resolveEtsBuildingId(selectedId);
+export default function HeatExchangeViewer({
+  headers,
+  buildings,
+  selectedId,
+  onSelect,
+  etsBuildingId = null,
+  onDrillToEts,
+  onExitEts,
+}: Props) {
+  const handleDiagramSelect = (id: string | null) => {
+    onSelect(id);
+    if (!id) return;
+    const building = resolveEtsBuildingId(id);
+    if (building) onDrillToEts?.(building);
+  };
 
-  if (buildingId) {
+  if (etsBuildingId) {
     const branch =
-      buildings.find((b) => b.id === buildingId) ??
+      buildings.find((b) => b.id === etsBuildingId) ??
       ({
-        id: buildingId,
-        name: buildingId.toUpperCase(),
+        id: etsBuildingId,
+        name: etsBuildingId.toUpperCase(),
         loadRt: headers.buildingLoadRt,
         chws: headers.chws,
         chwr: headers.chwr,
@@ -29,12 +46,12 @@ export default function HeatExchangeViewer({ headers, buildings, selectedId, onS
 
     return (
       <EtsDetail2DView
-        buildingId={buildingId}
+        buildingId={etsBuildingId}
         branch={branch}
         headers={headers}
         selectedId={selectedId}
         onSelect={onSelect}
-        onBackToCampus={() => onSelect('dcs-plant')}
+        onBackToCampus={() => onExitEts?.()}
       />
     );
   }
@@ -44,7 +61,7 @@ export default function HeatExchangeViewer({ headers, buildings, selectedId, onS
       headers={headers}
       buildings={buildings}
       selectedId={selectedId}
-      onSelect={onSelect}
+      onSelect={handleDiagramSelect}
     />
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import HeatExchangeViewer from '../heatexchange/HeatExchangeViewer';
 import SimulationOutputSummary from '../SimulationOutputSummary';
 
@@ -24,6 +24,12 @@ function DistrictCoolingTwinTab({
   const { headers, controls, kpis, alerts, recommendedActions, scenarioComparison, simulation } = districtState;
   const demandPct = Math.min(100, (headers.coolingDemandRt / headers.contractDemandRt) * 100);
   const activeAlerts = alerts.filter((a) => !a.resolved);
+  const [etsBuildingId, setEtsBuildingId] = useState<string | null>(null);
+
+  const exitEts = () => {
+    setEtsBuildingId(null);
+    onSelectAsset('dcs-plant');
+  };
 
   return (
     <div className="dc-twin-tab">
@@ -41,6 +47,9 @@ function DistrictCoolingTwinTab({
           buildings={districtState.buildings}
           selectedId={selectedAsset}
           onSelect={onSelectAsset}
+          etsBuildingId={etsBuildingId}
+          onDrillToEts={setEtsBuildingId}
+          onExitEts={exitEts}
         />
         <div className="dc-how-it-works">
           <strong>How this works:</strong> Adjust controls → run simulation → review outputs and recommended actions.

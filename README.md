@@ -106,7 +106,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3000 in your browser.
+Then open http://localhost:3002 in your browser.
 
 ### Option B: Using Startup Scripts
 
@@ -235,7 +235,7 @@ To reset the digital twin to its baseline state:
 
 **Via API:**
 ```bash
-curl -X POST http://localhost:3001/api/twin/reset
+curl -X POST http://localhost:3003/api/twin/reset
 ```
 
 **Via UI:**
@@ -290,8 +290,8 @@ Tests cover 5 impact scenarios:
 
 ### Prerequisites for Integration Tests
 
-- Backend server must be running on port 3001
-- Frontend server must be running on port 3000 (for full E2E)
+- Backend server must be running on port 3003
+- Frontend server must be running on port 3002 (for full E2E)
 
 Start servers first:
 ```powershell

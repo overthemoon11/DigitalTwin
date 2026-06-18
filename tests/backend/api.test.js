@@ -7,7 +7,7 @@
 const { test, describe, beforeEach, before, after } = require('node:test');
 const assert = require('node:assert');
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'http://localhost:3003';
 
 // Helper function to make API requests
 async function apiRequest(endpoint, options = {}) {

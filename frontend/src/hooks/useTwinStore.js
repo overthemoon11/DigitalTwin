@@ -148,7 +148,8 @@ export const useTwinStore = create((set, get) => ({
   },
 
   connectWebSocket: () => {
-    const wsUrl = `ws://${window.location.hostname}:3001/ws`;
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {

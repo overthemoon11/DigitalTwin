@@ -1,6 +1,6 @@
 // Screenshot script using Playwright
 // Takes high-resolution screenshots of each application view using Chrome.
-// Requires both the backend (port 3001) and frontend (port 3000) to be running.
+// Requires both the backend (port 3003) and frontend (port 3002) to be running.
 
 import { chromium } from '@playwright/test';
 import { fileURLToPath } from 'url';
@@ -9,7 +9,7 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:3002';
 const OUTPUT_DIR = path.resolve(__dirname, '..', 'docs', 'images');
 const DEMO_OUTPUT = path.resolve(__dirname, '..', 'docs', 'AppDemo.png');
 
@@ -98,6 +98,6 @@ async function takeScreenshots() {
 
 takeScreenshots().catch((err) => {
   console.error('Screenshot capture failed:', err.message);
-  console.error('Ensure both backend (port 3001) and frontend (port 3000) are running.');
+  console.error('Ensure both backend (port 3003) and frontend (port 3002) are running.');
   process.exit(1);
 });
