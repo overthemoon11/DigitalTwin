@@ -252,7 +252,7 @@ export default function HeatExchangePlant2DView({ headers, buildings, selectedId
         <DcsLegend />
 
         <text x={DCS_WIDTH / 2} y={DCS_FOOTER_Y} textAnchor="middle" fill={SCADA.textMuted} fontSize={10} fontFamily={SCADA.mono}>
-          DISTRICT COOLING SYSTEM · ORQ / MBFC / MBS · VIRTUAL SIMULATOR
+          DISTRICT COOLING SYSTEM · MBS · VIRTUAL SIMULATOR
         </text>
       </svg>
     </div>

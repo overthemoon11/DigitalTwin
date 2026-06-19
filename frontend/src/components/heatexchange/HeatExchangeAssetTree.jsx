@@ -10,24 +10,6 @@ const HX_TREE = [
         children: [{ id: 'dcs-plant', name: 'District Chiller Plant' }],
       },
       {
-        name: 'ORQ — Energy Transfer Station',
-        children: [
-          { id: 'dcv-orq', name: 'Primary Control Valve' },
-          { id: 'hx-orq', name: 'Plate Heat Exchanger' },
-          { id: 'orq', name: 'ORQ Building' },
-          { id: 'ahu-orq', name: 'AHU / FCU Bank' },
-        ],
-      },
-      {
-        name: 'MBFC — Energy Transfer Station',
-        children: [
-          { id: 'dcv-mbfc', name: 'Primary Control Valve' },
-          { id: 'hx-mbfc', name: 'Plate Heat Exchanger' },
-          { id: 'mbfc', name: 'MBFC Building' },
-          { id: 'ahu-mbfc', name: 'AHU / FCU Bank' },
-        ],
-      },
-      {
         name: 'MBS — Energy Transfer Station',
         children: [
           { id: 'dcv-mbs', name: 'Primary Control Valve' },

@@ -81,21 +81,20 @@ export function etsPipes(): EtsPipePath[] {
 }
 
 export function boundsForEtsAsset(assetId: string): { x: number; y: number; w: number; h: number } | null {
-  const building = assetId.match(/(orq|mbfc|mbs)/)?.[1];
-  if (!building) return null;
+  if (!assetId.includes('mbs')) return null;
 
-  if (assetId === `flow-${building}`) return { x: EQUIP.flowMeter.x, y: EQUIP.flowMeter.y, w: 40, h: 40 };
-  if (assetId === `dcv-${building}`) return { x: EQUIP.valve.x, y: EQUIP.valve.y, w: 40, h: 32 };
-  if (assetId === `hx-${building}`) return { ...PHE };
-  if (assetId === `meter-${building}`) return { x: EQUIP.energyMeter.x, y: EQUIP.energyMeter.y, w: 72, h: 48 };
-  if (assetId === `pump-${building}`) return { x: EQUIP.pump.x, y: EQUIP.pump.y, w: 60, h: 52 };
-  if (assetId === `bypass-${building}`) return { x: BYPASS.cx - 24, y: BYPASS.y - 14, w: 48, h: 28 };
-  if (assetId === building) return { x: 480, y: SECONDARY_Y - 40, w: 120, h: 56 };
-  const ahuMatch = assetId.match(/^ahu-(orq|mbfc|mbs)-(\d)$/);
+  if (assetId === 'flow-mbs') return { x: EQUIP.flowMeter.x, y: EQUIP.flowMeter.y, w: 40, h: 40 };
+  if (assetId === 'dcv-mbs') return { x: EQUIP.valve.x, y: EQUIP.valve.y, w: 40, h: 32 };
+  if (assetId === 'hx-mbs') return { ...PHE };
+  if (assetId === 'meter-mbs') return { x: EQUIP.energyMeter.x, y: EQUIP.energyMeter.y, w: 72, h: 48 };
+  if (assetId === 'pump-mbs') return { x: EQUIP.pump.x, y: EQUIP.pump.y, w: 60, h: 52 };
+  if (assetId === 'bypass-mbs') return { x: BYPASS.cx - 24, y: BYPASS.y - 14, w: 48, h: 28 };
+  if (assetId === 'mbs') return { x: 480, y: SECONDARY_Y - 40, w: 120, h: 56 };
+  const ahuMatch = assetId.match(/^ahu-mbs-(\d)$/);
   if (ahuMatch) {
-    const idx = Number(ahuMatch[2]) - 1;
+    const idx = Number(ahuMatch[1]) - 1;
     return { x: EQUIP.ahu.x + idx * EQUIP.ahu.gap, y: EQUIP.ahu.y, w: EQUIP.ahu.w, h: EQUIP.ahu.h };
   }
-  if (assetId === `ahu-${building}`) return { x: EQUIP.ahu.x, y: EQUIP.ahu.y, w: EQUIP.ahu.w * 3 + EQUIP.ahu.gap * 2, h: EQUIP.ahu.h };
+  if (assetId === 'ahu-mbs') return { x: EQUIP.ahu.x, y: EQUIP.ahu.y, w: EQUIP.ahu.w * 3 + EQUIP.ahu.gap * 2, h: EQUIP.ahu.h };
   return null;
 }

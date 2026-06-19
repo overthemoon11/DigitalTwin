@@ -18,12 +18,10 @@ export const SUPPLY_Y = 132 + CONTENT_OFFSET_Y;
 export const RETURN_Y = 492 + CONTENT_OFFSET_Y;
 export const PLANT_CX = PLANT.x + PLANT.w / 2;
 
-/** Branch center X: ORQ, MBFC, MBS (left → right) */
-export const BRANCH_X = [180, 540, 900] as const;
+/** Single building branch centre X (MBS) */
+export const BRANCH_X = [PLANT_CX] as const;
 
 export const BUILDING_DEFS = [
-  { id: 'orq', name: 'ORQ', hxId: 'hx-orq', ahuId: 'ahu-orq', valveId: 'dcv-orq' },
-  { id: 'mbfc', name: 'MBFC', hxId: 'hx-mbfc', ahuId: 'ahu-mbfc', valveId: 'dcv-mbfc' },
   { id: 'mbs', name: 'MBS', hxId: 'hx-mbs', ahuId: 'ahu-mbs', valveId: 'dcv-mbs' },
 ] as const;
 

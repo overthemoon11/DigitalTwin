@@ -48,14 +48,8 @@ function defaultControls(): DistrictCoolingControl[] {
 function defaultEquipment(): Record<string, DistrictCoolingEquipment> {
   return {
     'dcs-plant': { id: 'dcs-plant', name: 'District Chiller Plant', type: 'plant', status: 'running', category: 'Central Plant' },
-    'hx-orq': { id: 'hx-orq', name: 'HX — ORQ', type: 'heat_exchanger', status: 'running', category: 'Energy Transfer Station' },
-    'hx-mbfc': { id: 'hx-mbfc', name: 'HX — MBFC', type: 'heat_exchanger', status: 'running', category: 'Energy Transfer Station' },
     'hx-mbs': { id: 'hx-mbs', name: 'HX — MBS', type: 'heat_exchanger', status: 'running', category: 'Energy Transfer Station' },
-    'dcv-orq': { id: 'dcv-orq', name: 'Primary Valve ORQ', type: 'valve', status: 'running', category: 'District Interface' },
-    'dcv-mbfc': { id: 'dcv-mbfc', name: 'Primary Valve MBFC', type: 'valve', status: 'running', category: 'District Interface' },
     'dcv-mbs': { id: 'dcv-mbs', name: 'Primary Valve MBS', type: 'valve', status: 'running', category: 'District Interface' },
-    'ahu-orq': { id: 'ahu-orq', name: 'AHU Bank ORQ', type: 'ahu', status: 'running', category: 'Building Loads' },
-    'ahu-mbfc': { id: 'ahu-mbfc', name: 'AHU Bank MBFC', type: 'ahu', status: 'running', category: 'Building Loads' },
     'ahu-mbs': { id: 'ahu-mbs', name: 'AHU Bank MBS', type: 'ahu', status: 'running', category: 'Building Loads' },
     'chwp-dc-1': { id: 'chwp-dc-1', name: 'Header CHWP', type: 'pump', status: 'running', category: 'Secondary Pumps' },
   };
@@ -68,25 +62,18 @@ function buildBuildingBranches(
   hxApproach: number,
   primaryValve: number
 ) {
-  const splits = [
-    { id: 'orq', name: 'ORQ', share: 0.32 },
-    { id: 'mbfc', name: 'MBFC', share: 0.35 },
-    { id: 'mbs', name: 'MBS', share: 0.33 },
+  return [
+    {
+      id: 'mbs',
+      name: 'MBS',
+      loadRt: round(coolingDemandRt, 0),
+      chws: round(lagChws, 1),
+      chwr: round(chwr, 1),
+      hxApproach: round(hxApproach, 1),
+      valvePct: round(primaryValve, 0),
+      status: coolingDemandRt > 0 ? ('running' as const) : ('stopped' as const),
+    },
   ];
-  return splits.map((b, i) => {
-    const loadRt = round(coolingDemandRt * b.share, 0);
-    const approach = round(hxApproach + (i - 1) * 0.15, 1);
-    return {
-      id: b.id,
-      name: b.name,
-      loadRt,
-      chws: round(lagChws + (i - 1) * 0.1, 1),
-      chwr: round(chwr + (i - 1) * 0.15, 1),
-      hxApproach: approach,
-      valvePct: round(primaryValve + (i - 1) * 4, 0),
-      status: loadRt > 0 ? 'running' as const : 'stopped' as const,
-    };
-  });
 }
 
 function dewPointC(tempC: number, rhPct: number): number {
@@ -171,7 +158,7 @@ function runStep(): DistrictCoolingState {
       id: 'dc-alert-contract',
       severity: 'warning',
       message: `Cooling demand ${round(coolingDemandRt, 0)} RT approaching contract limit ${contractRt} RT`,
-      assetId: 'dcv-orq',
+      assetId: 'dcv-mbs',
       resolved: false,
       acknowledged: false,
       timestamp: new Date().toISOString(),
@@ -183,7 +170,7 @@ function runStep(): DistrictCoolingState {
       id: 'dc-alert-condensation',
       severity: 'critical',
       message: 'Condensation risk — surface temperature near dew point',
-      assetId: 'ahu-mbfc',
+      assetId: 'ahu-mbs',
       resolved: false,
       acknowledged: false,
       timestamp: new Date().toISOString(),
