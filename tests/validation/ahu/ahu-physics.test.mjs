@@ -34,10 +34,10 @@ test('BMS baseline — recirculation, high RA humidity drives CHW valve open', (
     ratC: 25.1,
     raRhPct: 74.4,
     satSpC: 13.5,
-    saCfmSp: 1800,
-    raCfmSp: 1500,
-    raTempSpC: 24.0,
-    raRhSpPct: 52.0,
+    saCfmSp: 2555,
+    raCfmSp: 1235,
+    raTempSpC: 25.0,
+    raRhSpPct: 75.0,
     spSpPa: 650,
     chwEnterC: 7.0,
     hwEnterC: 45.0,
@@ -51,9 +51,32 @@ test('BMS baseline — recirculation, high RA humidity drives CHW valve open', (
   approx(r.ratC, 25.1, 0.1, 'RA temp');
   approx(r.raRhPct, 74.4, 0.1, 'RA RH');
   assert.ok(r.chwValvePct >= 85, `CHW valve should be high: ${r.chwValvePct}`);
-  approx(r.saCfm, 2555, 150, 'SA CFM near BMS');
-  approx(r.raCfm, 1235, 150, 'RA CFM near BMS');
+  approx(r.saCfm, 2555, 50, 'SA CFM tracks BMS setpoint');
+  approx(r.raCfm, 1235, 50, 'RA CFM tracks BMS setpoint');
+  approx(r.satC, 13.5, 1.5, 'SAT near setpoint with CHW open');
+  approx(r.staticPressurePa, 650, 80, 'static pressure at SP');
   assert.ok(r.saCfm > r.raCfm, 'positive building pressurization');
+});
+
+test('BMS baseline ACT vs setpoint KPIs are on-target', () => {
+  const r = solveAhu01Airside({
+    modeIndex: 0,
+    ratC: 25.1,
+    raRhPct: 74.4,
+    satSpC: 13.5,
+    saCfmSp: 2555,
+    raCfmSp: 1235,
+    raTempSpC: 25.0,
+    raRhSpPct: 75.0,
+    spSpPa: 650,
+  });
+
+  assert.ok(Math.abs(r.satC - r.satSpC) <= 1.5, `SAT deviation ${Math.abs(r.satC - r.satSpC)}`);
+  assert.ok(r.ratC <= r.raTempSpC + 0.5, 'RA temp on SP');
+  assert.ok(r.raRhPct <= r.raRhSpPct + 5, 'RA RH on SP');
+  assert.ok(Math.abs(r.saCfm - r.saCfmSp) <= r.saCfmSp * 0.15, 'SA CFM on SP');
+  assert.ok(Math.abs(r.raCfm - r.raCfmSp) <= r.raCfmSp * 0.12, 'RA CFM on SP');
+  assert.ok(Math.abs(r.staticPressurePa - r.spSpPa) <= r.spSpPa * 0.12, 'static pressure on SP');
 });
 
 test('economizer mode increases OA fraction when OAT below RA', () => {

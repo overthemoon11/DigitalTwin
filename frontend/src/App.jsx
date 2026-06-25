@@ -323,6 +323,12 @@ function App() {
                 <AhuControlPanel
                   controls={ahuState?.controls || []}
                   headers={ahuState?.headers}
+                  chwCoil={ahuState?.chwCoil}
+                  hwCoil={ahuState?.hwCoil}
+                  saFan={ahuState?.saFan}
+                  raFan={ahuState?.raFan}
+                  dampers={ahuState?.dampers}
+                  filters={ahuState?.filters}
                   simulation={ahuState?.simulation}
                   onUpdate={updateAhuControl}
                   onRunSimulation={() => advanceAhu(30)}

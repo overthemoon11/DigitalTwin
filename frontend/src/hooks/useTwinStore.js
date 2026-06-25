@@ -27,6 +27,16 @@ import {
 } from '../services/etsCopilotActions';
 
 import {
+  parseAhuCopilotIntents,
+  formatAhuControlConfirmation,
+  formatAhuScenarioConfirmation,
+  formatAhuCustomScenarioConfirmation,
+  buildAhuControlsSummary,
+  buildAhuContextForCopilot,
+  analyzeAhuQuery,
+} from '../services/ahuCopilotActions';
+
+import {
   startDistrictCoolingSimulator,
   updateDistrictControl as setDistrictControlValue,
   resetDistrictCooling,
@@ -51,6 +61,7 @@ import {
   stepAhu,
   advanceAhu as advanceAhuEngine,
   applyAhuScenario as applyAhuScenarioEngine,
+  applyAhuScenarioPayload as applyAhuScenarioPayloadEngine,
 } from '../services/ahuEngine';
 
 const API_BASE = '/api';
@@ -351,8 +362,18 @@ export const useTwinStore = create((set, get) => ({
   },
 
   sendCopilotMessage: async (message) => {
-    const { conversationHistory, plantState, etsState, activePlantScenario, updatePlantControl, updateEtsControl } = get();
+    const {
+      conversationHistory,
+      plantState,
+      etsState,
+      ahuState,
+      activePlantScenario,
+      updatePlantControl,
+      updateEtsControl,
+      updateAhuControl,
+    } = get();
     const isEts = activePlantScenario === 'ets';
+    const isAhu = activePlantScenario === 'ahu';
 
     let prependHeader = '';
     let parseErrors = [];
@@ -391,6 +412,36 @@ export const useTwinStore = create((set, get) => ({
 
       plantContext = buildEtsContextForCopilot(get().etsState);
       plantControls = buildEtsControlsSummary(get().etsState?.controls ?? []);
+    } else if (isAhu) {
+      const controls = ahuState?.controls ?? [];
+      const parsed = parseAhuCopilotIntents(message, controls);
+      parseErrors = parsed.errors;
+
+      if (parsed.scenarioId) {
+        set({ ahuState: applyAhuScenarioEngine(parsed.scenarioId) });
+        prependHeader = formatAhuScenarioConfirmation(parsed.scenarioId);
+        controlsApplied = true;
+      } else if (parsed.scenarioPayload) {
+        set({ ahuState: applyAhuScenarioPayloadEngine(parsed.scenarioPayload) });
+        prependHeader = formatAhuCustomScenarioConfirmation(parsed.scenarioPayload);
+        controlsApplied = true;
+      } else if (parsed.applied.length) {
+        for (const action of parsed.applied) {
+          updateAhuControl(action.controlId, action.newValue);
+        }
+        prependHeader = formatAhuControlConfirmation(parsed.applied);
+        controlsApplied = true;
+        appliedControls = parsed.applied.map((a) => ({
+          controlId: a.controlId,
+          label: a.label,
+          oldValue: a.oldValue,
+          newValue: a.newValue,
+          unit: a.unit,
+        }));
+      }
+
+      plantContext = buildAhuContextForCopilot(get().ahuState);
+      plantControls = buildAhuControlsSummary(get().ahuState?.controls ?? []);
     } else {
       plantContext = buildPlantContextForCopilot(plantState);
       const controls = getPlantControls();
@@ -420,6 +471,42 @@ export const useTwinStore = create((set, get) => ({
       return text ? `${prependHeader}${errNote}\n\n${text}` : `${prependHeader}${errNote}`;
     };
 
+    // Scenario / control commands — apply in simulator first, respond locally (no backend wait)
+    if (controlsApplied && prependHeader) {
+      const local = isEts
+        ? analyzeEtsQuery(message, get().etsState)
+        : isAhu
+          ? analyzeAhuQuery(message, get().ahuState)
+          : null;
+      const responseText = prependConfirmation(local || '');
+      set({
+        conversationHistory: [
+          ...conversationHistory,
+          { role: 'user', content: message },
+          { role: 'assistant', content: responseText },
+        ],
+      });
+      return { response: responseText, controlsApplied, source: 'local-action' };
+    }
+
+    // AHU/ETS status & query buttons — answer locally without backend round-trip
+    if (isAhu || isEts) {
+      const localQuery = isAhu
+        ? analyzeAhuQuery(message, get().ahuState)
+        : analyzeEtsQuery(message, get().etsState);
+      if (localQuery) {
+        const responseText = prependConfirmation(localQuery);
+        set({
+          conversationHistory: [
+            ...conversationHistory,
+            { role: 'user', content: message },
+            { role: 'assistant', content: responseText },
+          ],
+        });
+        return { response: responseText, controlsApplied: false, source: 'local-analysis' };
+      }
+    }
+
     try {
       const response = await fetch(`${API_BASE}/copilot/chat`, {
         method: 'POST',
@@ -430,7 +517,7 @@ export const useTwinStore = create((set, get) => ({
           plantControls,
           appliedControls,
           conversationHistory,
-          simulatorMode: isEts ? 'ets' : 'chiller_plant',
+          simulatorMode: isEts ? 'ets' : isAhu ? 'ahu' : 'chiller_plant',
         }),
       });
       if (!response.ok) throw new Error('Chatbot API error');
@@ -450,11 +537,15 @@ export const useTwinStore = create((set, get) => ({
     } catch (err) {
       const local = isEts
         ? analyzeEtsQuery(message, get().etsState)
-        : analyzePlantQuery(message, get().plantState);
+        : isAhu
+          ? analyzeAhuQuery(message, get().ahuState)
+          : analyzePlantQuery(message, get().plantState);
       const fallback = local ||
         (isEts
           ? '## ETS Chatbot\n\nTry **"run peak summer scenario"**, paste scenario JSON, or **"set building load to 950 RT"**.'
-          : '## Plant Chatbot (Local LLM)\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.');
+          : isAhu
+            ? '## AHU01 Chatbot\n\nTry **"run high humidity scenario"**, paste scenario JSON, or **"set zone load to 1.35"**.'
+            : '## Plant Chatbot (Local LLM)\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.');
       const responseText = prependConfirmation(fallback);
 
       set({

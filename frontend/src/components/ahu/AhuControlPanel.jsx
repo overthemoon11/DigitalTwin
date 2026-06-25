@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { AHU_SCENARIOS } from '../../services/ahuScenarios';
 import { MODE_LABELS } from './ahu01Topology';
+import {
+  AHU_CONTROL_META,
+  AHU_CORE_FORMULAS,
+  AHU_DERIVED_LABELS,
+  AHU_DERIVED_EXTRAS,
+} from './ahuControlMeta';
 
 const GROUP_ORDER = ['mode', 'setpoints', 'coils', 'fans', 'dampers', 'load', 'weather'];
 const GROUP_LABELS = {
@@ -13,12 +19,38 @@ const GROUP_LABELS = {
   weather: 'Weather',
 };
 
+function ControlMeta({ meta }) {
+  return (
+    <div className="ets-control-meta">
+      <div className="ets-control-formula"><strong>ƒ</strong> {meta.formula}</div>
+      <div className="ets-control-affects"><strong>Affects:</strong> {meta.affects.join(' · ')}</div>
+      <p className="ets-control-desc">{meta.description}</p>
+    </div>
+  );
+}
+
 function ControlSlider({ control, onUpdate }) {
+  const meta = AHU_CONTROL_META[control.id];
+  const [showMeta, setShowMeta] = useState(false);
+
+  const labelBtn = meta ? (
+    <button
+      type="button"
+      className="ets-control-label-btn"
+      onClick={() => setShowMeta((s) => !s)}
+      aria-expanded={showMeta}
+    >
+      {control.label}
+    </button>
+  ) : (
+    <label>{control.label}</label>
+  );
+
   if (control.id === 'ahu-mode') {
     const mode = Math.round(control.value);
     return (
       <div className="control-item ets-control-item">
-        <label>{control.label}</label>
+        {labelBtn}
         <div className="dc-toggle-row" style={{ flexWrap: 'wrap' }}>
           {MODE_LABELS.map((label, i) => (
             <button key={label} type="button" className={`dc-toggle-btn ${mode === i ? 'active' : ''}`} onClick={() => onUpdate(control.id, i)}>
@@ -26,6 +58,7 @@ function ControlSlider({ control, onUpdate }) {
             </button>
           ))}
         </div>
+        {showMeta && meta && <ControlMeta meta={meta} />}
       </div>
     );
   }
@@ -33,17 +66,18 @@ function ControlSlider({ control, onUpdate }) {
     const on = control.value >= 1;
     return (
       <div className="control-item ets-control-item">
-        <label>{control.label}</label>
+        {labelBtn}
         <div className="dc-toggle-row">
           <button type="button" className={`dc-toggle-btn ${on ? 'active' : ''}`} onClick={() => onUpdate(control.id, 1)}>ON</button>
           <button type="button" className={`dc-toggle-btn ${!on ? 'active' : ''}`} onClick={() => onUpdate(control.id, 0)}>OFF</button>
         </div>
+        {showMeta && meta && <ControlMeta meta={meta} />}
       </div>
     );
   }
   return (
     <div className="control-item ets-control-item">
-      <label>{control.label}</label>
+      {labelBtn}
       <input type="range" min={control.min} max={control.max} step={control.step} value={control.value}
         onChange={(e) => onUpdate(control.id, parseFloat(e.target.value))} />
       <div className="value-display">
@@ -51,6 +85,7 @@ function ControlSlider({ control, onUpdate }) {
         <span><strong>{control.value}</strong> {control.unit}</span>
         <span>{control.max} {control.unit}</span>
       </div>
+      {showMeta && meta && <ControlMeta meta={meta} />}
     </div>
   );
 }
@@ -58,12 +93,20 @@ function ControlSlider({ control, onUpdate }) {
 export default function AhuControlPanel({
   controls,
   headers,
+  chwCoil,
+  hwCoil,
+  saFan,
+  raFan,
+  dampers,
+  filters,
   simulation,
   onUpdate,
   onRunSimulation,
   onApplyScenario,
   onReset,
 }) {
+  const [showFormulas, setShowFormulas] = useState(false);
+  const [showOutputs, setShowOutputs] = useState(false);
   const [expandedScenario, setExpandedScenario] = useState(null);
   const activeScenarioId = simulation?.scenarioId ?? null;
   const groups = GROUP_ORDER.map((key) => ({
@@ -72,18 +115,72 @@ export default function AhuControlPanel({
     items: controls.filter((c) => c.group === key),
   })).filter((g) => g.items.length > 0);
 
+  const derivedState = { headers, chwCoil, hwCoil, saFan, raFan, dampers, filters };
+
   return (
     <div className="dc-control-panel ets-control-panel">
       <div className="control-group">
         <h4>AHU01 Controls</h4>
+        <button
+          type="button"
+          className="ets-formula-toggle"
+          onClick={() => setShowFormulas((s) => !s)}
+        >
+          {showFormulas ? '▾ Hide core formulas' : '▸ Show core formulas'}
+        </button>
+        {showFormulas && (
+          <ul className="ets-core-formulas">
+            {AHU_CORE_FORMULAS.map((f) => (
+              <li key={f.name}>
+                <span className="ets-formula-name">{f.name}</span>
+                <span className="ets-formula-eq">{f.eq}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         {headers && (
+          <>
+            <button
+              type="button"
+              className="ets-formula-toggle"
+              onClick={() => setShowOutputs((s) => !s)}
+            >
+              {showOutputs ? '▾ Hide schematic outputs' : '▸ Show schematic outputs'}
+            </button>
+            {showOutputs && (
+              <div className="ets-derived-grid">
+                <div className="ets-derived-row"><span>Mode</span><strong>{headers.mode.toUpperCase()}</strong></div>
+                <div className="ets-derived-row"><span>RA T / RH</span><strong>{headers.ratC}°C / {headers.raRhPct}%</strong></div>
+                {AHU_DERIVED_LABELS.map(({ key, label, unit, fmt }) => (
+                  <div key={key} className="ets-derived-row">
+                    <span>{label}</span>
+                    <strong>{fmt ? fmt(headers[key]) : `${headers[key]}${unit ? ` ${unit}` : ''}`}</strong>
+                  </div>
+                ))}
+                {AHU_DERIVED_EXTRAS.map(({ id, label, get, unit }) => {
+                  const val = get(derivedState);
+                  if (val == null) return null;
+                  return (
+                    <div key={id} className="ets-derived-row">
+                      <span>{label}</span>
+                      <strong>{typeof val === 'number' ? val.toFixed(1) : val}{unit ? ` ${unit}` : ''}</strong>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+        {!showOutputs && headers && (
           <div className="ets-derived-grid">
-            <div className="ets-derived-row"><span>Mode</span><strong>{headers.mode.toUpperCase()}</strong></div>
             <div className="ets-derived-row"><span>SA / RA CFM</span><strong>{headers.saCfm} / {headers.raCfm}</strong></div>
-            <div className="ets-derived-row"><span>RA T / RH</span><strong>{headers.ratC}°C / {headers.raRhPct}%</strong></div>
-            <div className="ets-derived-row"><span>Fan power</span><strong>{headers.fanPowerKw} kW</strong></div>
+            <div className="ets-derived-row"><span>SAT / MAT</span><strong>{headers.satC}°C / {headers.matC}°C</strong></div>
+            <div className="ets-derived-row"><span>Cooling / Fans</span><strong>{headers.coolingKw} kW / {headers.fanPowerKw} kW</strong></div>
           </div>
         )}
+        <p className="ets-scenario-hint" style={{ marginTop: '0.5rem' }}>
+          Click a control label to expand its formula and downstream effects.
+        </p>
       </div>
 
       {groups.map((g) => (

@@ -11,13 +11,12 @@ export const AHU_SCENARIOS = [
   {
     id: 'high-humidity',
     label: 'High room humidity',
-    description: 'Elevated return RH — max cooling/dehumidification, CHW valve saturated.',
+    description: 'Zone load + sticky RA humidity — CHW saturated, SAT hunts setpoint.',
     controls: {
-      'ahu-zone-load': 1.2,
-      'ahu-ra-rh-sp': 52,
+      'ahu-zone-load': 1.35,
       'ahu-mode': 0,
     },
-    advanceSec: 60,
+    advanceSec: 90,
   },
   {
     id: 'economizer',

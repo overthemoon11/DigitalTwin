@@ -270,22 +270,134 @@ export function buildEtsContextForCopilot(state) {
     .join('\n');
 }
 
+/** @param {import('../types/ets').EtsState | null} state */
+export function buildEtsChatSuggestions(state) {
+  if (!state) return [];
+  /** @type {{ id: string; label: string; prompt: string; priority: string }[]} */
+  const suggestions = [];
+  const activeAlerts = state.alerts?.filter((a) => !a.resolved) ?? [];
+
+  if (activeAlerts.length > 0) {
+    suggestions.push({
+      id: 'review_alerts',
+      label: `Review ${activeAlerts.length} active alert${activeAlerts.length > 1 ? 's' : ''}`,
+      prompt: 'show active alarms',
+      priority: 'high',
+    });
+  }
+
+  const pumpKpi = state.kpis?.find((k) => k.id === 'ets-kpi-pumpeff');
+  const approachKpi = state.kpis?.find((k) => k.id === 'ets-kpi-approach');
+  if (pumpKpi?.status === 'warning') {
+    suggestions.push({
+      id: 'pump_eff',
+      label: 'Pump kW/RT is high',
+      prompt: 'what should I optimize on ETS?',
+      priority: 'medium',
+    });
+  }
+  if (approachKpi?.status === 'warning' && !suggestions.some((s) => s.id === 'review_alerts')) {
+    suggestions.push({
+      id: 'hx_approach',
+      label: 'HX approach elevated',
+      prompt: 'what is the HX approach?',
+      priority: 'medium',
+    });
+  }
+
+  suggestions.push({
+    id: 'status',
+    label: 'ETS status summary',
+    prompt: 'give me an ETS status summary',
+    priority: 'low',
+  });
+
+  suggestions.push({
+    id: 'optimize',
+    label: 'Optimization recommendations',
+    prompt: 'what should I optimize on ETS?',
+    priority: 'low',
+  });
+
+  return suggestions.slice(0, 5);
+}
+
+function formatEtsAlertBlock(alerts) {
+  const active = alerts?.filter((a) => !a.resolved) ?? [];
+  if (!active.length) return 'No active ETS alerts.';
+  return active.map((a) => {
+    let block = `- **${a.severity}:** ${a.message}`;
+    if (a.recommendedAdjustments?.length) {
+      block += '\n  Recommended:';
+      for (const adj of a.recommendedAdjustments) {
+        block += `\n  - ${adj.label}: **${adj.suggestedValue}** ${adj.unit || ''} (now ${adj.currentValue})`;
+      }
+    } else if (a.recommendedAction) {
+      block += `\n  → ${a.recommendedAction}`;
+    }
+    return block;
+  }).join('\n');
+}
+
 /** @param {string} message @param {import('../types/ets').EtsState | null} state */
 export function analyzeEtsQuery(message, state) {
   if (!state) return 'ETS telemetry is not available yet. Wait for the simulation to initialize.';
   const q = message.toLowerCase();
-  const { headers, alerts } = state;
+
+  // Command messages — handled by parseEtsCopilotIntents / scenario runner
+  if (
+    /\b(run|apply|simulate|trigger)\b.*\bscenario\b/i.test(q)
+    || /\bset\b.*\b(load|temp|dp|chws|dcs|chwrt)\b/i.test(q)
+  ) {
+    return null;
+  }
+
+  const { headers, alerts, recommendedActions, simulation } = state;
+
+  if (q.includes('alarm') || q.includes('alert')) {
+    return `## Active Alerts\n\n${formatEtsAlertBlock(alerts)}`;
+  }
+
+  if (q.includes('summary') || q.includes('status')) {
+    const activeCount = alerts?.filter((a) => !a.resolved).length ?? 0;
+    return [
+      '## ETS Status Summary',
+      '',
+      `- **Demand:** ${headers.coolingDemandRt} RT · **CHWS/CHWR:** ${headers.chws}/${headers.chwr}°C`,
+      `- **Approach:** ${headers.approachC}°C · **Pump kW/RT:** ${headers.pumpKwPerRt}`,
+      `- **Active alerts:** ${activeCount}`,
+      simulation?.lastTrigger ? `- **Last change:** ${simulation.lastTrigger}` : '',
+      recommendedActions?.[0] ? `\n**Hint:** ${recommendedActions[0]}` : '',
+    ].filter(Boolean).join('\n');
+  }
+
+  if (q.includes('energy') || q.includes('reduce') || q.includes('optim') || q.includes('save')) {
+    const tips = [
+      `- Pump **${headers.pumpPowerKw} kW** (${headers.pumpKwPerRt} kW/RT) — trim header DP setpoint if high`,
+      `- Approach **${headers.approachC}°C** — verify HX count and DCS supply temperature`,
+    ];
+    if (recommendedActions?.length) tips.push(`- ${recommendedActions[0]}`);
+    return `## ETS Optimization\n\n${tips.join('\n')}`;
+  }
 
   if (q.includes('approach') || q.includes('hx')) {
-    return `## HX Approach\n\nCurrent approach **${headers.approachC}°C** (target ≤ 3.2°C alarm). Effectiveness **${(headers.effectiveness * 100).toFixed(1)}%**.`;
+    const lines = [
+      `Current approach **${headers.approachC}°C** (alarm limit 3.2°C). Effectiveness **${(headers.effectiveness * 100).toFixed(1)}%**.`,
+      `- DCS/DCR **${headers.dcsSupplyC}/${headers.dcrReturnC}°C** · demand **${headers.coolingDemandRt} RT**`,
+    ];
+    const approachAlert = alerts?.find((a) => !a.resolved && a.id === 'ets-alert-approach');
+    if (approachAlert?.recommendedAdjustments?.length) {
+      lines.push('', '**Recommended adjustments:**');
+      for (const adj of approachAlert.recommendedAdjustments) {
+        lines.push(`- ${adj.label}: **${adj.suggestedValue}** ${adj.unit || ''} (now ${adj.currentValue})`);
+      }
+    } else if (approachAlert?.recommendedAction) {
+      lines.push('', `→ ${approachAlert.recommendedAction}`);
+    }
+    return `## HX Approach\n\n${lines.join('\n')}`;
   }
   if (q.includes('pump') || q.includes('kw/rt')) {
     return `## Pumping\n\nPump power **${headers.pumpPowerKw} kW** · **${headers.pumpKwPerRt} kW/RT** (target ≤ 0.07).`;
-  }
-  if (q.includes('alarm') || q.includes('alert')) {
-    const active = alerts?.filter((a) => !a.resolved) ?? [];
-    if (!active.length) return 'No active ETS alerts.';
-    return `## Active Alerts\n\n${active.map((a) => `- **${a.severity}:** ${a.message}${a.recommendedAction ? `\n  → ${a.recommendedAction}` : ''}`).join('\n')}`;
   }
   if (q.includes('scenario') || q.includes('simulate')) {
     return `## ETS Scenarios\n\nSay **"run peak summer scenario"** or paste preset JSON (with \`id: "peak-summer"\`).\n\nAvailable: ${ETS_SCENARIOS.map((s) => `**${s.id}** — ${s.label}`).join('\n')}`;

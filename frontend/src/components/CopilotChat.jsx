@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useTwinStore } from "../hooks/useTwinStore";
+import { buildAhuChatSuggestions } from "../services/ahuCopilotActions";
+import { buildEtsChatSuggestions } from "../services/etsCopilotActions";
 
 // Simple Markdown-like renderer for chat messages
 function renderMarkdown(text) {
@@ -179,7 +181,73 @@ function CopilotChat() {
     sendCopilotMessage,
     clearConversation,
     loadTwinState,
+    activePlantScenario,
+    ahuState,
+    etsState,
   } = useTwinStore();
+
+  const isEts = activePlantScenario === 'ets';
+  const isAhu = activePlantScenario === 'ahu';
+
+  const chatTitle = isAhu
+    ? 'AHU01 Chatbot · Local LLM'
+    : isEts
+      ? 'ETS Chatbot · Local LLM'
+      : 'Plant Chatbot · Local LLM';
+
+  const loadingLabel = isAhu
+    ? 'Applying AHU01 scenario…'
+    : isEts
+      ? 'Analyzing ETS station data…'
+      : 'Analyzing chiller plant data…';
+
+  const defaultPrompts = isAhu
+    ? [
+        { label: 'High humidity', prompt: 'run high humidity scenario', icon: '💧' },
+        { label: 'Dirty filters', prompt: 'run dirty filter scenario', icon: '🌫️' },
+        { label: 'Economizer', prompt: 'run economizer scenario', icon: '🌬️' },
+        { label: 'AHU alarms', prompt: 'show active alarms', icon: '🔔' },
+        { label: 'Set zone load', prompt: 'set zone load to 1.35', icon: '🏢' },
+      ]
+    : isEts
+      ? [
+          { label: 'Peak summer', prompt: 'run peak summer scenario', icon: '☀️' },
+          { label: 'Night setback', prompt: 'run night setback scenario', icon: '🌙' },
+          { label: 'Set load 950', prompt: 'set building load to 950 RT', icon: '🏢' },
+          { label: 'ETS alarms', prompt: 'show active alarms', icon: '🔔' },
+          { label: 'HX approach', prompt: 'what is the HX approach?', icon: '🔄' },
+        ]
+      : [
+          { label: 'Set Load 1100', prompt: 'Set building load to 1100 RT', icon: '🏢' },
+          { label: 'Hot Day 36°C', prompt: 'Set outdoor temperature to 36°C', icon: '☀️' },
+          { label: 'Why COP low?', prompt: 'Why is plant COP low?', icon: '📉' },
+          { label: 'Plant Alarms', prompt: 'Show active alarms', icon: '🔔' },
+          { label: 'Save Energy', prompt: 'How can we save energy?', icon: '⚡' },
+        ];
+
+  const introText = isAhu
+    ? 'Ask about AHU01 airflow, SAT, alarms, or run scenarios — e.g. "run high humidity scenario", paste scenario JSON, or "set zone load to 1.35".'
+    : isEts
+      ? 'Ask about ETS load, approach, pumping, or run scenarios — e.g. "run peak summer scenario" or "set building load to 950 RT".'
+      : 'Ask about plant status, alarms, COP optimization, or adjust controls directly — e.g. "Set building load to 1100 RT" or "Set outdoor temperature to 36°C".';
+
+  const inputPlaceholder = isAhu
+    ? 'run high humidity scenario · set SAT to 13°C'
+    : isEts
+      ? 'run peak summer scenario · set building load to 950 RT'
+      : 'Why is plant COP low? Which chiller to stop?';
+
+  const hintText = isAhu
+    ? 'Try: "run high humidity scenario" · paste scenario JSON · "set zone load to 1.35"'
+    : isEts
+      ? 'Try: "run peak summer scenario" · "set building load to 950 RT" · "show active alarms"'
+      : 'Try: "Set building load to 1100 RT" · "Set outdoor temperature to 35°C" · "Why is COP low?"';
+
+  const localSuggestions = useMemo(() => {
+    if (isAhu) return buildAhuChatSuggestions(ahuState);
+    if (isEts) return buildEtsChatSuggestions(etsState);
+    return [];
+  }, [isAhu, isEts, ahuState, etsState]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -189,8 +257,12 @@ function CopilotChat() {
     scrollToBottom();
   }, [conversationHistory, scrollToBottom]);
 
-  // Fetch context-aware suggestions
+  // Context-aware suggestions — local for AHU/ETS, API for chiller plant
   const fetchSuggestions = useCallback(async () => {
+    if (isAhu || isEts) {
+      setSuggestions(localSuggestions);
+      return;
+    }
     try {
       const response = await fetch("/api/copilot/suggestions");
       if (response.ok) {
@@ -200,19 +272,24 @@ function CopilotChat() {
     } catch (err) {
       console.error("Failed to fetch suggestions:", err);
     }
-  }, []);
+  }, [isAhu, isEts, localSuggestions]);
 
   useEffect(() => {
     fetchSuggestions();
-    const interval = setInterval(fetchSuggestions, 30000);
-    return () => clearInterval(interval);
-  }, [fetchSuggestions]);
+  }, [fetchSuggestions, activePlantScenario]);
 
   useEffect(() => {
-    if (conversationHistory.length > 0) {
-      fetchSuggestions();
+    if (isAhu || isEts) {
+      setSuggestions(localSuggestions);
     }
-  }, [conversationHistory.length, fetchSuggestions]);
+  }, [isAhu, isEts, localSuggestions]);
+
+  useEffect(() => {
+    if (!isAhu && !isEts) {
+      const interval = setInterval(fetchSuggestions, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchSuggestions, isAhu, isEts]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -235,12 +312,8 @@ function CopilotChat() {
     }
   };
 
-  const handleSuggestionClick = (prompt) => {
-    setInput(prompt);
-    inputRef.current?.focus();
-  };
-
   const handleQuickPromptClick = async (prompt) => {
+    if (isLoading) return;
     setInput("");
     setIsLoading(true);
     setShowSuggestions(false);
@@ -256,22 +329,6 @@ function CopilotChat() {
       setIsLoading(false);
     }
   };
-
-  const defaultPrompts = [
-    {
-      label: "Set Load 1100",
-      prompt: "Set building load to 1100 RT",
-      icon: "🏢",
-    },
-    {
-      label: "Hot Day 36°C",
-      prompt: "Set outdoor temperature to 36°C",
-      icon: "☀️",
-    },
-    { label: "Why COP low?", prompt: "Why is plant COP low?", icon: "📉" },
-    { label: "Plant Alarms", prompt: "Show active alarms", icon: "🔔" },
-    { label: "Save Energy", prompt: "How can we save energy?", icon: "⚡" },
-  ];
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -290,7 +347,7 @@ function CopilotChat() {
       <div className="copilot-header">
         <div className="copilot-title">
           <CopilotIcon />
-          <span>Plant Chatbot · Local LLM</span>
+          <span>{chatTitle}</span>
         </div>
         {conversationHistory.length > 0 && (
           <button
@@ -313,11 +370,7 @@ function CopilotChat() {
           <div className="copilot-empty">
             <div className="copilot-intro">
               <SparkleIcon />
-              <p>
-                Ask about plant status, alarms, COP optimization, or adjust
-                controls directly — e.g. &quot;Set building load to 1100 RT&quot;
-                or &quot;Set outdoor temperature to 36°C&quot;.
-              </p>
+              <p>{introText}</p>
             </div>
 
             {/* Context-aware suggestions */}
@@ -327,6 +380,8 @@ function CopilotChat() {
                 {suggestions.slice(0, 3).map((suggestion) => (
                   <button
                     key={suggestion.id}
+                    type="button"
+                    disabled={isLoading}
                     onClick={() => handleQuickPromptClick(suggestion.prompt)}
                     className="suggestion-btn"
                     style={{
@@ -346,7 +401,9 @@ function CopilotChat() {
                 {defaultPrompts.map((item, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleSuggestionClick(item.prompt)}
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleQuickPromptClick(item.prompt)}
                     className="quick-prompt-btn"
                   >
                     <span className="prompt-icon">{item.icon}</span>
@@ -388,7 +445,7 @@ function CopilotChat() {
                 <span></span>
                 <span></span>
               </span>
-              Analyzing chiller plant data...
+              {loadingLabel}
             </div>
           </div>
         )}
@@ -403,7 +460,7 @@ function CopilotChat() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Why is plant COP low? Which chiller to stop?"
+          placeholder={inputPlaceholder}
           disabled={isLoading}
         />
         <button
@@ -417,8 +474,7 @@ function CopilotChat() {
 
       {/* Command hints */}
       <div className="copilot-hints">
-        Try: &quot;Set building load to 1100 RT&quot; · &quot;Set outdoor
-        temperature to 35°C&quot; · &quot;Why is COP low?&quot;
+        {hintText}
       </div>
 
       <style>{`

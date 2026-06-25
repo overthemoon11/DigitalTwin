@@ -58,10 +58,10 @@ export function solveAhu01Airside(inp) {
   const ratC = inp.ratC ?? 25.1;
   const raRhPct = inp.raRhPct ?? 74.4;
   const satSpC = inp.satSpC ?? AHU01.REF_SAT_C;
-  const saCfmSp = inp.saCfmSp ?? 1800;
-  const raCfmSp = inp.raCfmSp ?? 1500;
-  const raTempSpC = inp.raTempSpC ?? 24.0;
-  const raRhSpPct = inp.raRhSpPct ?? 52.0;
+  const saCfmSp = inp.saCfmSp ?? 2555;
+  const raCfmSp = inp.raCfmSp ?? 1235;
+  const raTempSpC = inp.raTempSpC ?? 25.0;
+  const raRhSpPct = inp.raRhSpPct ?? 75.0;
   const spSpPa = inp.spSpPa ?? AHU01.DESIGN_SP_PA;
   const chwEnterC = inp.chwEnterC ?? AHU01.REF_CHW_ENTER_C;
   const hwEnterC = inp.hwEnterC ?? AHU01.REF_HW_ENTER_C;
@@ -75,25 +75,41 @@ export function solveAhu01Airside(inp) {
 
   const tempError = ratC - raTempSpC;
   const rhError = raRhPct - raRhSpPct;
-  const coolingDemand = clamp(0.4 * tempError + 0.03 * rhError, 0, 1.35) * zoneLoadIdx;
-
-  let chwValvePct = mode === 'heating' ? 0 : clamp(18 + coolingDemand * 72, 0, 100);
-  let hwValvePct = mode === 'heating' ? clamp(30 + tempError * 8, 0, 100) : clamp(5 + Math.max(0, 18 - oatC) * 0.5, 0, 40);
 
   const matC = oaFrac * oatC + (1 - oaFrac) * ratC;
   const matRh = oaFrac * oaRhPct + (1 - oaFrac) * raRhPct;
 
-  const approachSat = clamp((matC - satSpC) * (1 - chwValvePct / 110), 0.5, matC - satSpC);
-  const satC = matC - approachSat;
+  // Coil load: SAT lift + absolute RA humidity (BMS: 74% RH drives CHW ~100% even when RA at RH SP)
+  const coilLoad = clamp(
+    zoneLoadIdx * (
+      0.25 * (matC - satSpC) / 12
+      + 0.75 * clamp((raRhPct - 52) / 22, 0, 1)
+      + 0.1 * Math.max(0, tempError)
+    ),
+    0.35,
+    1.35,
+  );
 
-  const fanDemandBoost = 1 + clamp(coolingDemand * 0.38 + Math.max(0, tempError) * 0.08, 0, 0.42);
+  let chwValvePct = mode === 'heating' ? 0 : clamp(18 + coilLoad * 82, 0, 100);
+  let hwValvePct = mode === 'heating' ? clamp(30 + Math.max(0, satSpC - matC) * 6, 0, 100) : clamp(5 + Math.max(0, 18 - oatC) * 0.5, 0, 40);
 
+  const coilAuth = mode === 'heating' ? 0 : clamp(chwValvePct / 100, 0, 1);
+  const heatAuth = mode === 'heating' ? clamp(hwValvePct / 100, 0, 1) : 0;
+  const minCoilApproachC = 2.0;
+  let satC;
+  if (mode === 'heating') {
+    satC = matC + heatAuth * Math.max(0, satSpC + 6 - matC);
+  } else {
+    const targetSatC = Math.max(satSpC, chwEnterC + minCoilApproachC);
+    satC = matC - coilAuth * (matC - targetSatC);
+  }
+
+  // VFD tracks flow setpoints (inverse affinity); CFM matches SP at baseline
   const saFanSpeedPct = saFanOn
-    ? clamp((saCfmSp / AHU01.DESIGN_SA_CFM) * 100 * fanDemandBoost * (spSpPa / AHU01.DESIGN_SP_PA) ** 0.35 / filterFactor, 25, 100)
+    ? clamp(100 * (saCfmSp / (AHU01.DESIGN_SA_CFM * filterFactor)) ** (1 / 0.85), 25, 100)
     : 0;
-  const raPressureTrim = clamp(raCfmSp / (saCfmSp * fanDemandBoost) + 0.15, 0.58, 0.95);
   const raFanSpeedPct = raFanOn
-    ? clamp((raCfmSp / AHU01.DESIGN_RA_CFM) * 100 * raPressureTrim / filterFactor, 25, 100)
+    ? clamp(100 * (raCfmSp / (AHU01.DESIGN_RA_CFM * filterFactor)) ** (1 / 0.85), 25, 100)
     : 0;
 
   const saCfm = saFanOn ? AHU01.DESIGN_SA_CFM * (saFanSpeedPct / 100) ** 0.85 * filterFactor : 0;
@@ -101,7 +117,8 @@ export function solveAhu01Airside(inp) {
   const oaCfm = saCfm * oaFrac;
   const eaCfm = Math.max(0, saCfm - raCfm * (1 - oaFrac));
 
-  const staticPressurePa = spSpPa * (saFanSpeedPct / 100) ** 1.8;
+  // Static pressure tracks SP when SA flow is on setpoint
+  const staticPressurePa = spSpPa * clamp((saCfm / Math.max(saCfmSp, 1)) ** 0.12, 0.75, 1.12);
 
   const saFanKw = fanKwFromSpeed(18, 100, saFanSpeedPct);
   const raFanKw = fanKwFromSpeed(12, 100, raFanSpeedPct);
@@ -146,7 +163,7 @@ export function solveAhu01Airside(inp) {
     raFanKw: round(raFanKw, 2),
     fanPowerKw: round(saFanKw + raFanKw, 2),
     coolingKw: round(coolingKw, 1),
-    kwPerCfm: saCfm > 0 ? round((saFanKw + raFanKw) / saCfm * 1000, 3) : 0,
+    kwPerCfm: saCfm > 0 ? round((saFanKw + raFanKw) / saCfm, 4) : 0,
     filterDpPa: round(50 + filterLoadingPct * 4.5, 0),
     oaDamperPct: round(oaDamperPct, 0),
     raDamperPct: round(raDamperPct, 0),

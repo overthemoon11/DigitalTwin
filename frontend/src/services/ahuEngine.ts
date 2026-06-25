@@ -16,6 +16,18 @@ import type {
 import { clamp, round, solveAhu01Airside } from './ahuPhysics.js';
 import { buildAhuCascadeTrace } from './ahuCascade.js';
 import { getAhuScenarioById } from './ahuScenarios.js';
+import {
+  recommendForRaTempHigh,
+  recommendForRaRhHigh,
+  recommendForSatOffSp,
+  recommendForChwSaturated,
+  recommendForSaCfmHigh,
+  recommendForSaCfmLow,
+  recommendForStaticPressureOffSp,
+  recommendForSaFanSaturation,
+  recommendForFilterLoading,
+  recommendForLowPressurization,
+} from './ahuAlertRecommendations.js';
 
 const SIM_DT_SEC = 2;
 
@@ -34,10 +46,10 @@ function defaultControls(): AhuControl[] {
   return [
     { id: 'ahu-mode', controlType: 'mode', label: 'Operating Mode', value: 0, min: 0, max: 3, step: 1, unit: '', group: 'mode' },
     { id: 'ahu-sat-sp', controlType: 'satSetpoint', label: 'SAT Setpoint', value: 13.5, min: 10, max: 18, step: 0.5, unit: '°C', group: 'setpoints' },
-    { id: 'ahu-ra-temp-sp', controlType: 'raTempSetpoint', label: 'RA Temp Setpoint', value: 24.0, min: 20, max: 28, step: 0.5, unit: '°C', group: 'setpoints' },
-    { id: 'ahu-ra-rh-sp', controlType: 'raRhSetpoint', label: 'RA RH Setpoint', value: 52.0, min: 40, max: 70, step: 1, unit: '%', group: 'setpoints' },
-    { id: 'ahu-sa-cfm-sp', controlType: 'saCfmSetpoint', label: 'SA Airflow Setpoint', value: 1800, min: 800, max: 3500, step: 50, unit: 'CFM', group: 'setpoints' },
-    { id: 'ahu-ra-cfm-sp', controlType: 'raCfmSetpoint', label: 'RA Airflow Setpoint', value: 1500, min: 600, max: 2500, step: 50, unit: 'CFM', group: 'setpoints' },
+    { id: 'ahu-ra-temp-sp', controlType: 'raTempSetpoint', label: 'RA Temp Setpoint', value: 25.0, min: 20, max: 28, step: 0.5, unit: '°C', group: 'setpoints' },
+    { id: 'ahu-ra-rh-sp', controlType: 'raRhSetpoint', label: 'RA RH Setpoint', value: 75.0, min: 40, max: 80, step: 1, unit: '%', group: 'setpoints' },
+    { id: 'ahu-sa-cfm-sp', controlType: 'saCfmSetpoint', label: 'SA Airflow Setpoint', value: 2555, min: 800, max: 3500, step: 50, unit: 'CFM', group: 'setpoints' },
+    { id: 'ahu-ra-cfm-sp', controlType: 'raCfmSetpoint', label: 'RA Airflow Setpoint', value: 1235, min: 600, max: 2500, step: 50, unit: 'CFM', group: 'setpoints' },
     { id: 'ahu-sp-sp', controlType: 'staticPressure', label: 'Static Pressure SP', value: 650, min: 400, max: 900, step: 25, unit: 'Pa', group: 'setpoints' },
     { id: 'ahu-chw-enter', controlType: 'chwEntering', label: 'CHW Entering Temp', value: 7.0, min: 4, max: 12, step: 0.5, unit: '°C', group: 'coils' },
     { id: 'ahu-hw-enter', controlType: 'hwEntering', label: 'HW Entering Temp', value: 45.0, min: 35, max: 70, step: 1, unit: '°C', group: 'coils' },
@@ -74,8 +86,8 @@ function runStep(): AhuState {
   const saFanOn = getControl('ahu-sa-fan') >= 1;
   const raFanOn = getControl('ahu-ra-fan') >= 1;
 
-  const targetRat = raTempSp + zoneLoad * 1.2;
-  const targetRh = raRhSp + zoneLoad * 18;
+  const targetRat = raTempSp + (zoneLoad - 1) * 3;
+  const targetRh = raRhSp + (zoneLoad - 1) * 12;
   lagRatC += (targetRat - lagRatC) * 0.12;
   lagRaRh += (targetRh - lagRaRh) * 0.1;
 
@@ -182,9 +194,34 @@ function runStep(): AhuState {
   ];
 
   const ts = new Date().toISOString();
+  const satDev = Math.abs(s.satC - satSp);
+  const spDev = Math.abs(s.staticPressurePa - spSp);
+  const pressCfm = round(s.saCfm - s.raCfm, 0);
+  const pressTarget = saCfmSp - raCfmSp;
+  const filterDp = s.filterDpPa;
+  const saFanSat = saFanOn && s.saFanSpeedPct >= 98 && spDev > spSp * 0.08;
+
+  const alertCtx = {
+    chwEnter,
+    hwEnter,
+    satSp,
+    satC: s.satC,
+    spSp,
+    staticPressurePa: s.staticPressurePa,
+    saCfmSp,
+    raCfmSp,
+    saCfm: s.saCfm,
+    raCfm: s.raCfm,
+    chwValvePct: s.chwValvePct,
+    filterLoad,
+    zoneLoad,
+    mode: s.mode,
+  };
+
   const alerts: PlantAlert[] = [];
 
   if (s.ratC > raTempSp + 1.5) {
+    const rec = recommendForRaTempHigh(alertCtx);
     alerts.push({
       id: 'ahu-alert-ra-temp',
       severity: 'warning',
@@ -193,14 +230,12 @@ function runStep(): AhuState {
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: `Adjust: CHW Entering Temp → ${Math.max(4, chwEnter - 0.5)}°C (now ${chwEnter}°C); SAT Setpoint → ${Math.max(10, satSp - 0.5)}°C (now ${satSp}°C)`,
-      recommendedAdjustments: [
-        { controlId: 'ahu-chw-enter', label: 'CHW Entering Temp', currentValue: chwEnter, suggestedValue: Math.max(4, round(chwEnter - 0.5, 1)), unit: '°C' },
-        { controlId: 'ahu-sat-sp', label: 'SAT Setpoint', currentValue: satSp, suggestedValue: Math.max(10, round(satSp - 0.5, 1)), unit: '°C' },
-      ],
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
   if (s.raRhPct > raRhSp + 15) {
+    const rec = recommendForRaRhHigh(alertCtx);
     alerts.push({
       id: 'ahu-alert-ra-rh',
       severity: 'warning',
@@ -209,51 +244,145 @@ function runStep(): AhuState {
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: `Adjust: SAT Setpoint → ${Math.max(10, satSp - 1)}°C (now ${satSp}°C)`,
-      recommendedAdjustments: [
-        { controlId: 'ahu-sat-sp', label: 'SAT Setpoint', currentValue: satSp, suggestedValue: Math.max(10, satSp - 1), unit: '°C' },
-      ],
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (satDev > 1.5 && s.mode !== 'heating') {
+    const rec = recommendForSatOffSp(alertCtx);
+    alerts.push({
+      id: 'ahu-alert-sat',
+      severity: 'warning',
+      message: `SAT off setpoint (${s.satC}°C vs SP ${satSp}°C)`,
+      assetId: 'ahu01-chw-coil',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (s.chwValvePct >= 95 && s.mode !== 'heating') {
+    const rec = recommendForChwSaturated(alertCtx);
+    alerts.push({
+      id: 'ahu-alert-chw-sat',
+      severity: 'warning',
+      message: `CHW valve near limit (${s.chwValvePct}% open) — coil at capacity`,
+      assetId: 'ahu01-chw-coil',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
   if (s.saCfm > saCfmSp * 1.2) {
+    const rec = recommendForSaCfmHigh(alertCtx);
     alerts.push({
-      id: 'ahu-alert-sa-cfm',
+      id: 'ahu-alert-sa-cfm-high',
       severity: 'warning',
       message: `SA airflow high (${s.saCfm} CFM vs SP ${saCfmSp} CFM)`,
       assetId: 'ahu01-sa-fan',
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: `Adjust: Static Pressure SP → ${Math.max(400, spSp - 50)} Pa (now ${spSp} Pa)`,
-      recommendedAdjustments: [
-        { controlId: 'ahu-sp-sp', label: 'Static Pressure SP', currentValue: spSp, suggestedValue: Math.max(400, spSp - 50), unit: 'Pa' },
-      ],
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
-  if (filterLoad > 70) {
+  if (filterLoad > 70 || filterDp > 200) {
+    const rec = recommendForFilterLoading(alertCtx);
     alerts.push({
       id: 'ahu-alert-filter',
-      severity: 'warning',
-      message: `Filter loading high (${filterLoad}%) — airflow penalty`,
+      severity: filterLoad > 80 ? 'critical' : 'warning',
+      message: `Filter loading high (${filterLoad}%, ΔP ${filterDp} Pa) — airflow penalty`,
       assetId: 'ahu01-sa-eu13',
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: 'Replace SA/RA filters — restore design airflow and reduce fan kW',
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  } else if (saFanOn && s.saCfm < saCfmSp * 0.85) {
+    const rec = recommendForSaCfmLow(alertCtx);
+    alerts.push({
+      id: 'ahu-alert-sa-cfm-low',
+      severity: 'warning',
+      message: `SA airflow low (${s.saCfm} CFM vs SP ${saCfmSp} CFM)`,
+      assetId: 'ahu01-sa-fan',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (spDev > spSp * 0.12) {
+    const rec = recommendForStaticPressureOffSp(alertCtx);
+    alerts.push({
+      id: 'ahu-alert-sp',
+      severity: 'warning',
+      message: `Static pressure off setpoint (${s.staticPressurePa} Pa vs SP ${spSp} Pa)`,
+      assetId: 'ahu01-sa-fan',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (saFanSat) {
+    const rec = recommendForSaFanSaturation(alertCtx);
+    alerts.push({
+      id: 'ahu-alert-sa-fan-sat',
+      severity: 'warning',
+      message: `SA fan at max speed (${s.saFanSpeedPct}%) with duct static low — G36 saturation`,
+      assetId: 'ahu01-sa-fan',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (pressCfm < pressTarget * 0.5 && saFanOn && raFanOn) {
+    const rec = recommendForLowPressurization(alertCtx);
+    alerts.push({
+      id: 'ahu-alert-pressurization',
+      severity: 'warning',
+      message: `Building pressurization low (Δ ${pressCfm} CFM vs target ${pressTarget} CFM)`,
+      assetId: 'ahu01-sa-fan',
+      resolved: false,
+      acknowledged: false,
+      timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
 
   const kpis: PlantKpi[] = [
+    // ACT vs setpoint — Metasys PVT / on-prem operator priority
+    { id: 'ahu-kpi-sat', name: 'SAT', value: s.satC, unit: '°C', category: 'comfort', status: satDev > 1.5 ? 'warning' : 'normal', target: satSp, trend: 'stable' },
     { id: 'ahu-kpi-ra-temp', name: 'RA TEMP', value: s.ratC, unit: '°C', category: 'comfort', status: s.ratC > raTempSp + 0.5 ? 'warning' : 'normal', target: raTempSp, trend: 'stable' },
     { id: 'ahu-kpi-ra-rh', name: 'RA RH', value: s.raRhPct, unit: '%', category: 'comfort', status: s.raRhPct > raRhSp + 5 ? 'warning' : 'normal', target: raRhSp, trend: 'stable' },
-    { id: 'ahu-kpi-sa-cfm', name: 'SA VELOCITY', value: s.saCfm, unit: 'CFM', category: 'operational', status: Math.abs(s.saCfm - saCfmSp) > saCfmSp * 0.15 ? 'warning' : 'normal', target: saCfmSp, trend: 'stable' },
-    { id: 'ahu-kpi-ra-cfm', name: 'RA VELOCITY', value: s.raCfm, unit: 'CFM', category: 'operational', status: Math.abs(s.raCfm - raCfmSp) > raCfmSp * 0.12 ? 'warning' : 'normal', target: raCfmSp, trend: 'stable' },
-    { id: 'ahu-kpi-sat', name: 'SAT', value: s.satC, unit: '°C', category: 'comfort', status: 'normal', target: satSp, trend: 'stable' },
-    { id: 'ahu-kpi-chw', name: 'CHW Valve', value: s.chwValvePct, unit: '%', category: 'operational', status: s.chwValvePct > 95 ? 'warning' : 'normal', target: 70, trend: 'stable' },
-    { id: 'ahu-kpi-hw', name: 'HW Valve', value: s.hwValvePct, unit: '%', category: 'operational', status: 'normal', target: 10, trend: 'stable' },
-    { id: 'ahu-kpi-fan', name: 'Fan Power', value: s.fanPowerKw, unit: 'kW', category: 'energy', status: 'normal', target: 25, trend: 'stable' },
+    { id: 'ahu-kpi-sa-cfm', name: 'SA CFM', value: s.saCfm, unit: 'CFM', category: 'operational', status: Math.abs(s.saCfm - saCfmSp) > saCfmSp * 0.15 ? 'warning' : 'normal', target: saCfmSp, trend: 'stable' },
+    { id: 'ahu-kpi-ra-cfm', name: 'RA CFM', value: s.raCfm, unit: 'CFM', category: 'operational', status: Math.abs(s.raCfm - raCfmSp) > raCfmSp * 0.12 ? 'warning' : 'normal', target: raCfmSp, trend: 'stable' },
+    { id: 'ahu-kpi-sp', name: 'Static Pressure', value: s.staticPressurePa, unit: 'Pa', category: 'operational', status: spDev > spSp * 0.12 ? 'warning' : 'normal', target: spSp, trend: 'stable' },
+    // Airside diagnostics — ASHRAE G36 equipment detail
+    { id: 'ahu-kpi-mat', name: 'MAT', value: s.matC, unit: '°C', category: 'operational', status: 'normal', target: 'f(OA, RA)', trend: 'stable' },
+    { id: 'ahu-kpi-oat', name: 'OAT', value: s.oatC, unit: '°C', category: 'weather', status: 'normal', target: 'ambient', trend: 'stable' },
+    { id: 'ahu-kpi-oarh', name: 'OA RH', value: s.oaRhPct, unit: '%', category: 'weather', status: 'normal', target: 'ambient', trend: 'stable' },
+    { id: 'ahu-kpi-oa-frac', name: 'OA Fraction', value: round(s.oaFraction * 100, 0), unit: '%', category: 'operational', status: 'normal', target: 'mode', trend: 'stable' },
+    { id: 'ahu-kpi-sa-fan-spd', name: 'SA Fan SPD', value: s.saFanSpeedPct, unit: '%', category: 'operational', status: saFanSat ? 'warning' : 'normal', target: 'VFD', trend: 'stable' },
+    { id: 'ahu-kpi-ra-fan-spd', name: 'RA Fan SPD', value: s.raFanSpeedPct, unit: '%', category: 'operational', status: !raFanOn ? 'warning' : 'normal', target: 'VFD', trend: 'stable' },
+    { id: 'ahu-kpi-filter-dp', name: 'Filter ΔP', value: filterDp, unit: 'Pa', category: 'operational', status: filterDp > 200 || filterLoad > 70 ? 'warning' : 'normal', target: '< 200', trend: 'stable' },
+    // Energy & balance
+    { id: 'ahu-kpi-chw', name: 'CHW Valve', value: s.chwValvePct, unit: '%', category: 'operational', status: s.chwValvePct > 95 ? 'warning' : 'normal', target: '< 95', trend: 'stable' },
+    { id: 'ahu-kpi-hw', name: 'HW Valve', value: s.hwValvePct, unit: '%', category: 'operational', status: s.hwValvePct > 40 && s.chwValvePct > 50 ? 'warning' : 'normal', target: '< 40', trend: 'stable' },
     { id: 'ahu-kpi-cool', name: 'Cooling Duty', value: s.coolingKw, unit: 'kW', category: 'energy', status: 'normal', target: 80, trend: 'stable' },
-    { id: 'ahu-kpi-sp', name: 'Static Pressure', value: s.staticPressurePa, unit: 'Pa', category: 'operational', status: 'normal', target: spSp, trend: 'stable' },
+    { id: 'ahu-kpi-fan', name: 'Fan Power', value: s.fanPowerKw, unit: 'kW', category: 'energy', status: s.fanPowerKw > 35 ? 'warning' : 'normal', target: 25, trend: 'stable' },
+    { id: 'ahu-kpi-kw-cfm', name: 'Fan kW/CFM', value: s.kwPerCfm, unit: 'kW/CFM', category: 'energy', status: s.kwPerCfm > 0.008 ? 'warning' : 'normal', target: 0.007, trend: 'stable' },
+    { id: 'ahu-kpi-press', name: 'Pressurization', value: pressCfm, unit: 'CFM', category: 'operational', status: pressCfm < pressTarget * 0.5 ? 'warning' : 'normal', target: pressTarget, trend: 'stable' },
   ];
 
   const equipment: Record<string, AhuEquipment> = {
@@ -369,8 +498,8 @@ function snapZoneLag(): void {
   const raTempSp = getControl('ahu-ra-temp-sp');
   const raRhSp = getControl('ahu-ra-rh-sp');
   const zoneLoad = getControl('ahu-zone-load');
-  lagRatC = raTempSp + zoneLoad * 1.2;
-  lagRaRh = raRhSp + zoneLoad * 18;
+  lagRatC = raTempSp + (zoneLoad - 1) * 3;
+  lagRaRh = raRhSp + (zoneLoad - 1) * 12;
 }
 
 function applyScenarioInternal(scenario: {
@@ -387,9 +516,9 @@ function applyScenarioInternal(scenario: {
         controls = controls.map((c) => (c.id === id ? { ...c, value } : c));
       }
     }
+    snapZoneLag();
   }
   lastControlId = `scenario:${scenario.id}`;
-  snapZoneLag();
   const advanceSec = scenario.advanceSec ?? 0;
   const steps = advanceSec > 0 ? Math.max(1, Math.floor(advanceSec / SIM_DT_SEC)) : 1;
   let state = runStep();
@@ -410,6 +539,24 @@ export function applyAhuScenario(scenarioId: string): AhuState {
     reset: scenario.reset,
     controls: scenario.controls,
     advanceSec: scenario.advanceSec,
+  });
+}
+
+/** Apply scenario from chatbot JSON or ad-hoc payload. */
+export function applyAhuScenarioPayload(payload: {
+  id?: string;
+  label?: string;
+  description?: string;
+  reset?: boolean;
+  controls?: Record<string, number>;
+  advanceSec?: number;
+}): AhuState {
+  return applyScenarioInternal({
+    id: payload.id ?? 'chatbot-custom',
+    label: payload.label ?? 'Custom scenario (chatbot)',
+    reset: payload.reset,
+    controls: payload.controls,
+    advanceSec: payload.advanceSec,
   });
 }
 

@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 
+/** On-prem BMS KPI layout — ASHRAE G36 / Metasys PVT aligned. */
 const AHU_KPI_GROUPS = [
   {
     key: 'setpoints',
     label: 'ACT vs Setpoint',
-    ids: ['ahu-kpi-ra-temp', 'ahu-kpi-ra-rh', 'ahu-kpi-sa-cfm', 'ahu-kpi-ra-cfm'],
+    ids: ['ahu-kpi-sat', 'ahu-kpi-ra-temp', 'ahu-kpi-ra-rh', 'ahu-kpi-sa-cfm', 'ahu-kpi-ra-cfm', 'ahu-kpi-sp'],
     defaultOpen: true,
   },
   {
-    key: 'summary',
-    label: 'Summary',
-    ids: ['ahu-kpi-sat', 'ahu-kpi-chw', 'ahu-kpi-hw', 'ahu-kpi-fan', 'ahu-kpi-cool', 'ahu-kpi-sp'],
+    key: 'airside',
+    label: 'Airside diagnostics',
+    ids: ['ahu-kpi-mat', 'ahu-kpi-oat', 'ahu-kpi-oarh', 'ahu-kpi-oa-frac', 'ahu-kpi-sa-fan-spd', 'ahu-kpi-ra-fan-spd', 'ahu-kpi-filter-dp'],
+    defaultOpen: true,
+  },
+  {
+    key: 'energy',
+    label: 'Energy & balance',
+    ids: ['ahu-kpi-chw', 'ahu-kpi-hw', 'ahu-kpi-cool', 'ahu-kpi-fan', 'ahu-kpi-kw-cfm', 'ahu-kpi-press'],
     defaultOpen: true,
     compact: 'grid',
   },
@@ -101,7 +108,7 @@ export default function AhuKPIPanel({ kpis }) {
   return (
     <div className="ets-kpi-panel">
       <p className="ets-kpi-panel-hint">
-        AHU01 — BMS setpoints & performance
+        AHU01 — on-prem BMS KPIs (G36 / PVT aligned)
         {warningCount > 0 ? ` · ${warningCount} off-target` : ''}
       </p>
       {AHU_KPI_GROUPS.map((group) => (

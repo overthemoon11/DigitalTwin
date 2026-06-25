@@ -128,11 +128,11 @@ function AhuInsight({ state, simulation }) {
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">
           <MetricRow label="SA / RA CFM" value={headers ? `${headers.saCfm} / ${headers.raCfm}` : null} />
-          <MetricRow label="RA temp / RH" value={headers ? `${headers.ratC}°C / ${headers.raRhPct}%` : null} warn={headers?.ratC > 24.5} />
+          <MetricRow label="RA temp / RH" value={headers ? `${headers.ratC}°C / ${headers.raRhPct}%` : null} warn={headers?.ratC > 25.5} />
           <MetricRow label="SAT / MAT" value={headers ? `${headers.satC} / ${headers.matC}°C` : null} />
           <MetricRow label="Cooling duty" value={headers?.coolingKw} unit="kW" />
           <MetricRow label="Fan power" value={headers?.fanPowerKw} unit="kW" />
-          <MetricRow label="kW per 1000 CFM" value={headers?.kwPerCfm} unit="kW/1000CFM" />
+          <MetricRow label="Fan kW/CFM" value={headers?.kwPerCfm} unit="kW/CFM" />
           <MetricRow label="Static pressure" value={headers?.staticPressurePa} unit="Pa" />
           <MetricRow label="OA fraction" value={headers ? `${(headers.oaFraction * 100).toFixed(0)}` : null} unit="%" />
         </div>
