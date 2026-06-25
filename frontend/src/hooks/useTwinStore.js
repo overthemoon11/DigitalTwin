@@ -17,6 +17,16 @@ import {
 } from '../services/plantCopilotActions';
 
 import {
+  parseEtsCopilotIntents,
+  formatEtsControlConfirmation,
+  formatEtsScenarioConfirmation,
+  formatEtsCustomScenarioConfirmation,
+  buildEtsControlsSummary,
+  buildEtsContextForCopilot,
+  analyzeEtsQuery,
+} from '../services/etsCopilotActions';
+
+import {
   startDistrictCoolingSimulator,
   updateDistrictControl as setDistrictControlValue,
   resetDistrictCooling,
@@ -31,6 +41,7 @@ import {
   stepEts,
   advanceEts as advanceEtsEngine,
   applyEtsScenario as applyEtsScenarioEngine,
+  applyEtsScenarioPayload as applyEtsScenarioPayloadEngine,
 } from '../services/etsHeatExchangeEngine';
 
 const API_BASE = '/api';
@@ -303,29 +314,73 @@ export const useTwinStore = create((set, get) => ({
   },
 
   sendCopilotMessage: async (message) => {
-    const { conversationHistory, plantState, updatePlantControl } = get();
-    const plantContext = buildPlantContextForCopilot(plantState);
-    const controls = getPlantControls();
-    const plantControls = buildPlantControlsSummary(controls);
+    const { conversationHistory, plantState, etsState, activePlantScenario, updatePlantControl, updateEtsControl } = get();
+    const isEts = activePlantScenario === 'ets';
 
-    const { applied, errors } = parsePlantControlIntents(message, controls);
-    for (const action of applied) {
-      updatePlantControl(action.controlId, action.newValue);
+    let prependHeader = '';
+    let parseErrors = [];
+    let controlsApplied = false;
+    let plantContext = '';
+    let plantControls = [];
+    let appliedControls = [];
+
+    if (isEts) {
+      const controls = etsState?.controls ?? [];
+      const parsed = parseEtsCopilotIntents(message, controls);
+      parseErrors = parsed.errors;
+
+      if (parsed.scenarioId) {
+        set({ etsState: applyEtsScenarioEngine(parsed.scenarioId) });
+        prependHeader = formatEtsScenarioConfirmation(parsed.scenarioId);
+        controlsApplied = true;
+      } else if (parsed.scenarioPayload) {
+        set({ etsState: applyEtsScenarioPayloadEngine(parsed.scenarioPayload) });
+        prependHeader = formatEtsCustomScenarioConfirmation(parsed.scenarioPayload);
+        controlsApplied = true;
+      } else if (parsed.applied.length) {
+        for (const action of parsed.applied) {
+          updateEtsControl(action.controlId, action.newValue);
+        }
+        prependHeader = formatEtsControlConfirmation(parsed.applied);
+        controlsApplied = true;
+        appliedControls = parsed.applied.map((a) => ({
+          controlId: a.controlId,
+          label: a.label,
+          oldValue: a.oldValue,
+          newValue: a.newValue,
+          unit: a.unit,
+        }));
+      }
+
+      plantContext = buildEtsContextForCopilot(get().etsState);
+      plantControls = buildEtsControlsSummary(get().etsState?.controls ?? []);
+    } else {
+      plantContext = buildPlantContextForCopilot(plantState);
+      const controls = getPlantControls();
+      plantControls = buildPlantControlsSummary(controls);
+
+      const { applied, errors } = parsePlantControlIntents(message, controls);
+      parseErrors = errors;
+      for (const action of applied) {
+        updatePlantControl(action.controlId, action.newValue);
+      }
+      if (applied.length) {
+        prependHeader = formatPlantControlConfirmation(applied);
+        controlsApplied = true;
+      }
+      appliedControls = applied.map((a) => ({
+        controlId: a.controlId,
+        label: a.label,
+        oldValue: a.oldValue,
+        newValue: a.newValue,
+        unit: a.unit,
+      }));
     }
 
-    const appliedControls = applied.map((a) => ({
-      controlId: a.controlId,
-      label: a.label,
-      oldValue: a.oldValue,
-      newValue: a.newValue,
-      unit: a.unit,
-    }));
-
     const prependConfirmation = (text) => {
-      if (!applied.length) return text;
-      const header = formatPlantControlConfirmation(applied);
-      const errNote = errors.length ? `\n\n⚠️ ${errors.join(' ')}` : '';
-      return text ? `${header}${errNote}\n\n${text}` : `${header}${errNote}`;
+      const errNote = parseErrors.length ? `\n\n⚠️ ${parseErrors.join(' ')}` : '';
+      if (!prependHeader) return text ? `${text}${errNote}` : errNote.trim();
+      return text ? `${prependHeader}${errNote}\n\n${text}` : `${prependHeader}${errNote}`;
     };
 
     try {
@@ -338,6 +393,7 @@ export const useTwinStore = create((set, get) => ({
           plantControls,
           appliedControls,
           conversationHistory,
+          simulatorMode: isEts ? 'ets' : 'chiller_plant',
         }),
       });
       if (!response.ok) throw new Error('Chatbot API error');
@@ -353,13 +409,16 @@ export const useTwinStore = create((set, get) => ({
         ],
       });
 
-      return { ...result, response: responseText, controlsApplied: applied.length > 0 };
+      return { ...result, response: responseText, controlsApplied };
     } catch (err) {
-      const local = analyzePlantQuery(message, get().plantState);
-      const responseText = prependConfirmation(
-        local ||
-          '## Plant Chatbot (Local LLM)\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.'
-      );
+      const local = isEts
+        ? analyzeEtsQuery(message, get().etsState)
+        : analyzePlantQuery(message, get().plantState);
+      const fallback = local ||
+        (isEts
+          ? '## ETS Chatbot\n\nTry **"run peak summer scenario"**, paste scenario JSON, or **"set building load to 950 RT"**.'
+          : '## Plant Chatbot (Local LLM)\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.');
+      const responseText = prependConfirmation(fallback);
 
       set({
         conversationHistory: [
@@ -369,7 +428,7 @@ export const useTwinStore = create((set, get) => ({
         ],
       });
 
-      return { response: responseText, source: 'local-analysis', controlsApplied: applied.length > 0 };
+      return { response: responseText, source: 'local-analysis', controlsApplied };
     }
   },
 

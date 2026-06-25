@@ -444,10 +444,13 @@ function snapLoadLag(): void {
 }
 
 /** Apply a preset scenario: set controls, snap load lag, then fast-forward virtual time. */
-export function applyEtsScenario(scenarioId: string): EtsState {
-  const scenario = getEtsScenarioById(scenarioId);
-  if (!scenario) return stepEts();
-
+function applyEtsScenarioInternal(scenario: {
+  id: string;
+  label: string;
+  reset?: boolean;
+  controls?: Record<string, number>;
+  advanceSec?: number;
+}): EtsState {
   if (scenario.reset) {
     resetEts();
   } else if (scenario.controls) {
@@ -459,7 +462,6 @@ export function applyEtsScenario(scenarioId: string): EtsState {
   }
 
   lastControlId = `scenario:${scenario.id}`;
-
   snapLoadLag();
 
   const advanceSec = scenario.advanceSec ?? 0;
@@ -478,6 +480,35 @@ export function applyEtsScenario(scenarioId: string): EtsState {
       scenarioId: scenario.id,
     },
   };
+}
+
+export function applyEtsScenario(scenarioId: string): EtsState {
+  const scenario = getEtsScenarioById(scenarioId);
+  if (!scenario) return stepEts();
+  return applyEtsScenarioInternal({
+    id: scenario.id,
+    label: scenario.label,
+    reset: scenario.reset,
+    controls: scenario.controls,
+    advanceSec: scenario.advanceSec,
+  });
+}
+
+/** Apply scenario from chatbot JSON or ad-hoc payload. */
+export function applyEtsScenarioPayload(payload: {
+  id?: string;
+  label?: string;
+  reset?: boolean;
+  controls?: Record<string, number>;
+  advanceSec?: number;
+}): EtsState {
+  return applyEtsScenarioInternal({
+    id: payload.id ?? 'chatbot-custom',
+    label: payload.label ?? 'Custom scenario (chatbot)',
+    reset: payload.reset,
+    controls: payload.controls,
+    advanceSec: payload.advanceSec,
+  });
 }
 
 export function resetEts(): void {
