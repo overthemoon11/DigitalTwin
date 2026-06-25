@@ -36,6 +36,16 @@ function PlantScenarioSwitcher({ activeScenario, onSelect, horizontal = false })
           <span className="plant-scenario-label">ETS Station (MBS)</span>
         </div>
       </button>
+      <button
+        type="button"
+        className={`plant-scenario-btn plant-scenario-btn--ahu ${activeScenario === 'ahu' ? 'active' : ''}`}
+        onClick={() => onSelect('ahu')}
+      >
+        <div className="plant-scenario-head">
+          <span className="plant-scenario-icon">🌬️</span>
+          <span className="plant-scenario-label">AHU01 (1F)</span>
+        </div>
+      </button>
     </div>
   );
 }

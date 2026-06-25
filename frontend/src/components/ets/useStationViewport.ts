@@ -3,8 +3,22 @@ import { boundsForEtsAsset, focusEtsViewport } from './etsStationTopology';
 
 export interface ViewBox { x: number; y: number; w: number; h: number }
 
+type Bounds = { x: number; y: number; w: number; h: number };
+
+export interface ViewportAssetBounds {
+  getBounds: (id: string) => Bounds | null;
+  focus: (b: Bounds, padding?: number) => ViewBox;
+}
+
 /** Generic pan/zoom viewport for an SVG schematic of fixed canvas size. */
-export function useStationViewport(canvasW: number, canvasH: number, selectedId: string | null = null) {
+export function useStationViewport(
+  canvasW: number,
+  canvasH: number,
+  selectedId: string | null = null,
+  assetBounds?: ViewportAssetBounds,
+) {
+  const getBounds = assetBounds?.getBounds ?? boundsForEtsAsset;
+  const focus = assetBounds?.focus ?? focusEtsViewport;
   const full: ViewBox = { x: 0, y: 0, w: canvasW, h: canvasH };
   const [view, setView] = useState<ViewBox>(full);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -19,9 +33,9 @@ export function useStationViewport(canvasW: number, canvasH: number, selectedId:
       setView({ x: 0, y: 0, w: canvasW, h: canvasH });
       return;
     }
-    const bounds = boundsForEtsAsset(selectedId);
-    if (bounds) setView(focusEtsViewport(bounds));
-  }, [selectedId, canvasW, canvasH]);
+    const bounds = getBounds(selectedId);
+    if (bounds) setView(focus(bounds));
+  }, [selectedId, canvasW, canvasH, getBounds, focus]);
 
   const clamp = useCallback((v: ViewBox): ViewBox => {
     const w = Math.max(220, Math.min(canvasW, v.w));

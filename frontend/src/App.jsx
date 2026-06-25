@@ -9,6 +9,10 @@ import EtsStationView from './components/ets/EtsStationView';
 import EtsAssetTree from './components/ets/EtsAssetTree';
 import EtsKPIPanel from './components/ets/EtsKPIPanel';
 import EtsControlPanel from './components/ets/EtsControlPanel';
+import Ahu01StationView from './components/ahu/Ahu01StationView';
+import AhuAssetTree from './components/ahu/AhuAssetTree';
+import AhuKPIPanel from './components/ahu/AhuKPIPanel';
+import AhuControlPanel from './components/ahu/AhuControlPanel';
 import PlantScenarioSwitcher from './components/PlantScenarioSwitcher';
 import LeftSidebarModeTabs from './components/leftSidebar/LeftSidebarModeTabs';
 import VirtualSimulatorPanel from './components/leftSidebar/VirtualSimulatorPanel';
@@ -27,6 +31,7 @@ function App() {
     plantState,
     districtCoolingState,
     etsState,
+    ahuState,
     activeAppTab,
     activePlantScenario,
     selectedAsset,
@@ -42,6 +47,10 @@ function App() {
     advanceEts,
     applyEtsScenario,
     resetEts,
+    updateAhuControl,
+    advanceAhu,
+    applyAhuScenario,
+    resetAhu,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
   const [leftSidebarMode, setLeftSidebarMode] = useState('assets');
@@ -78,7 +87,14 @@ function App() {
 
   const isChillerScenario = activePlantScenario === 'chiller';
   const isEtsScenario = activePlantScenario === 'ets';
-  const scenarioState = isChillerScenario ? plantState : isEtsScenario ? etsState : districtCoolingState;
+  const isAhuScenario = activePlantScenario === 'ahu';
+  const scenarioState = isChillerScenario
+    ? plantState
+    : isEtsScenario
+      ? etsState
+      : isAhuScenario
+        ? ahuState
+        : districtCoolingState;
   const scenarioAlerts = scenarioState?.alerts || twinState.alerts;
   const scenarioKpis = scenarioState?.kpis || twinState.kpis;
   const activeAlertCount = scenarioAlerts.filter((a) => !a.resolved).length;
@@ -94,7 +110,9 @@ function App() {
                 ? '❄️ Chiller Plant Virtual Simulator'
                 : isEtsScenario
                   ? '🏢 ETS Heat-Exchange Station — MBS A-B03-01'
-                  : '🔄 Heat Exchange Plant Simulator'}
+                  : isAhuScenario
+                    ? '🌬️ AHU01 — Air Handling Unit (1F)'
+                    : '🔄 Heat Exchange Plant Simulator'}
           </h1>
           <div className="app-view-tabs">
             <button
@@ -121,9 +139,13 @@ function App() {
           <span className="sim-time">
             {activeAppTab === 'district_cooling' && districtCoolingState?.simulation
               ? `Virtual t=${districtCoolingState.simulation.simTimeSec}s`
-              : plantState?.simulation
-                ? `Virtual t=${plantState.simulation.simTimeSec}s`
-                : `Wall: ${new Date(twinState.metadata.simulationTime).toLocaleTimeString()}`}
+              : isAhuScenario && ahuState?.simulation
+                ? `Virtual t=${ahuState.simulation.simTimeSec}s`
+                : isEtsScenario && etsState?.simulation
+                  ? `Virtual t=${etsState.simulation.simTimeSec}s`
+                  : plantState?.simulation
+                    ? `Virtual t=${plantState.simulation.simTimeSec}s`
+                    : `Wall: ${new Date(twinState.metadata.simulationTime).toLocaleTimeString()}`}
           </span>
         </div>
       </header>
@@ -151,7 +173,7 @@ function App() {
                   activeScenario={activePlantScenario}
                   onSelect={setActivePlantScenario}
                 />
-                <h3>{isChillerScenario ? 'Chiller Plant Assets' : isEtsScenario ? 'ETS Station Assets' : 'Heat Exchange Assets'}</h3>
+                <h3>{isChillerScenario ? 'Chiller Plant Assets' : isEtsScenario ? 'ETS Station Assets' : isAhuScenario ? 'AHU01 Assets' : 'Heat Exchange Assets'}</h3>
                 <div className="left-panel-assets">
                   {isChillerScenario ? (
                     <PlantAssetTree
@@ -162,6 +184,12 @@ function App() {
                   ) : isEtsScenario ? (
                     <EtsAssetTree
                       equipment={etsState?.equipment || {}}
+                      selectedAsset={selectedAsset}
+                      onSelectAsset={selectAsset}
+                    />
+                  ) : isAhuScenario ? (
+                    <AhuAssetTree
+                      equipment={ahuState?.equipment || {}}
                       selectedAsset={selectedAsset}
                       onSelectAsset={selectAsset}
                     />
@@ -182,7 +210,7 @@ function App() {
             )}
           </aside>
 
-          <main className={`viewer ${isChillerScenario ? 'chiller-plant-viewer' : 'hx-plant-viewer'}`}>
+          <main className={`viewer ${isChillerScenario || isEtsScenario || isAhuScenario ? 'chiller-plant-viewer' : 'hx-plant-viewer'}`}>
             {isChillerScenario ? (
               plantState ? (
                 <ChillerPlant2DView
@@ -206,6 +234,18 @@ function App() {
               ) : (
                 <div className="loading" style={{ height: '100%' }}>
                   <h2>Initializing ETS station…</h2>
+                </div>
+              )
+            ) : isAhuScenario ? (
+              ahuState ? (
+                <Ahu01StationView
+                  state={ahuState}
+                  selectedId={selectedAsset}
+                  onSelect={selectAsset}
+                />
+              ) : (
+                <div className="loading" style={{ height: '100%' }}>
+                  <h2>Initializing AHU01…</h2>
                 </div>
               )
             ) : districtCoolingState ? (
@@ -279,7 +319,18 @@ function App() {
                   onReset={resetEts}
                 />
               )}
-              {activePanel === 'controls' && !isChillerScenario && !isEtsScenario && (
+              {activePanel === 'controls' && isAhuScenario && (
+                <AhuControlPanel
+                  controls={ahuState?.controls || []}
+                  headers={ahuState?.headers}
+                  simulation={ahuState?.simulation}
+                  onUpdate={updateAhuControl}
+                  onRunSimulation={() => advanceAhu(30)}
+                  onApplyScenario={applyAhuScenario}
+                  onReset={resetAhu}
+                />
+              )}
+              {activePanel === 'controls' && !isChillerScenario && !isEtsScenario && !isAhuScenario && (
                 <DistrictCoolingControlPanel
                   controls={districtCoolingState?.controls || []}
                   headers={districtCoolingState?.headers}
@@ -292,6 +343,8 @@ function App() {
               )}
               {activePanel === 'kpis' && (isEtsScenario ? (
                 <EtsKPIPanel kpis={scenarioKpis} />
+              ) : isAhuScenario ? (
+                <AhuKPIPanel kpis={scenarioKpis} />
               ) : (
                 <KPIPanel kpis={scenarioKpis} />
               ))}
@@ -299,7 +352,15 @@ function App() {
                 <AlertPanel
                   alerts={scenarioAlerts}
                   assets={twinState.assets}
-                  plantEquipment={isChillerScenario ? plantState?.equipment : isEtsScenario ? etsState?.equipment : districtCoolingState?.equipment}
+                  plantEquipment={
+                    isChillerScenario
+                      ? plantState?.equipment
+                      : isEtsScenario
+                        ? etsState?.equipment
+                        : isAhuScenario
+                          ? ahuState?.equipment
+                          : districtCoolingState?.equipment
+                  }
                   plantMode
                 />
               )}

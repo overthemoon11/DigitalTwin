@@ -44,6 +44,15 @@ import {
   applyEtsScenarioPayload as applyEtsScenarioPayloadEngine,
 } from '../services/etsHeatExchangeEngine';
 
+import {
+  startAhuSimulator,
+  updateAhuControl as setAhuControlValue,
+  resetAhu as resetAhuEngine,
+  stepAhu,
+  advanceAhu as advanceAhuEngine,
+  applyAhuScenario as applyAhuScenarioEngine,
+} from '../services/ahuEngine';
+
 const API_BASE = '/api';
 
 export const useTwinStore = create((set, get) => ({
@@ -51,6 +60,7 @@ export const useTwinStore = create((set, get) => ({
   plantState: null,
   districtCoolingState: null,
   etsState: null,
+  ahuState: null,
   activeAppTab: 'chiller_plant',
   activePlantScenario: 'chiller',
   selectedAsset: null,
@@ -61,6 +71,7 @@ export const useTwinStore = create((set, get) => ({
   _plantStop: null,
   _districtStop: null,
   _etsStop: null,
+  _ahuStop: null,
 
   setActiveAppTab: (tab) => set({ activeAppTab: tab }),
 
@@ -75,6 +86,8 @@ export const useTwinStore = create((set, get) => ({
     if (existingDc) existingDc();
     const existingEts = get()._etsStop;
     if (existingEts) existingEts();
+    const existingAhu = get()._ahuStop;
+    if (existingAhu) existingAhu();
 
     const plantStop = startPlantSimulator((plantState) => {
       set({ plantState });
@@ -100,11 +113,16 @@ export const useTwinStore = create((set, get) => ({
       set({ etsState });
     });
 
-    set({ _plantStop: plantStop, _districtStop: districtStop, _etsStop: etsStop });
+    const ahuStop = startAhuSimulator((ahuState) => {
+      set({ ahuState });
+    });
+
+    set({ _plantStop: plantStop, _districtStop: districtStop, _etsStop: etsStop, _ahuStop: ahuStop });
     return () => {
       plantStop();
       districtStop();
       etsStop();
+      ahuStop();
     };
   },
 
@@ -125,6 +143,25 @@ export const useTwinStore = create((set, get) => ({
   resetEts: () => {
     resetEtsEngine();
     set({ etsState: stepEts() });
+  },
+
+  updateAhuControl: (controlId, value) => {
+    setAhuControlValue(controlId, value);
+    set({ ahuState: stepAhu() });
+  },
+
+  advanceAhu: (seconds = 30) => {
+    const steps = Math.max(1, Math.floor(seconds / 2));
+    set({ ahuState: advanceAhuEngine(steps) });
+  },
+
+  applyAhuScenario: (scenarioId) => {
+    set({ ahuState: applyAhuScenarioEngine(scenarioId) });
+  },
+
+  resetAhu: () => {
+    resetAhuEngine();
+    set({ ahuState: stepAhu() });
   },
 
   updateDistrictControl: (controlId, value) => {
