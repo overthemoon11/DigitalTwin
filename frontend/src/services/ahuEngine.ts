@@ -11,6 +11,7 @@ import type {
   AhuCoil,
   AhuHeaders,
   AhuState,
+  EquipStatus,
 } from '../types/ahu';
 import { clamp, round, solveAhu01Airside } from './ahuPhysics.js';
 import { buildAhuCascadeTrace } from './ahuCascade.js';
@@ -164,16 +165,20 @@ function runStep(): AhuState {
   };
 
   const dampers: AhuDamper[] = [
-    { id: 'ahu01-oa-damper', name: 'OA Damper', positionPct: s.oaDamperPct, status: 'running' },
+    { id: 'ahu01-fa-damper-01', name: 'FA Damper-01', positionPct: s.oaDamperPct, status: 'running' },
+    { id: 'ahu01-fa-damper-02', name: 'FA Damper-02', positionPct: s.oaDamperPct, status: 'running' },
     { id: 'ahu01-ra-damper', name: 'RA Damper', positionPct: s.raDamperPct, status: 'running' },
-    { id: 'ahu01-ea-damper', name: 'EA Damper', positionPct: clamp(s.eaCfm / Math.max(s.saCfm, 1) * 100, 0, 100), status: 'running' },
+    { id: 'ahu01-ea-damper-01', name: 'EA Damper-01', positionPct: clamp(s.eaCfm / Math.max(s.saCfm, 1) * 100, 0, 100), status: 'running' },
+    { id: 'ahu01-ea-damper-02', name: 'EA Damper-02', positionPct: clamp(s.eaCfm / Math.max(s.saCfm, 1) * 100, 0, 100), status: 'running' },
+    { id: 'ahu01-ra-fire', name: 'Fire Damper-01', positionPct: 100, status: headers.fireStatus === 'NORMAL' ? 'running' : 'alarm' },
+    { id: 'ahu01-sa-fire', name: 'Fire Damper-02', positionPct: 100, status: headers.fireStatus === 'NORMAL' ? 'running' : 'alarm' },
   ];
 
   const filters: AhuFilter[] = [
     { id: 'ahu01-sa-eu4', name: 'SA EU-4', dpPa: s.filterDpPa * 0.3, status: filterLoad > 70 ? 'DIRTY' : 'CLEAN' },
-    { id: 'ahu01-sa-eu7', name: 'SA EU-7', dpPa: s.filterDpPa * 0.35, status: filterLoad > 70 ? 'DIRTY' : 'CLEAN' },
+    { id: 'ahu01-sa-eu7', name: 'EU-7 Filter-02', dpPa: s.filterDpPa * 0.35, status: filterLoad > 70 ? 'DIRTY' : 'CLEAN' },
     { id: 'ahu01-sa-eu13', name: 'SA EU-13', dpPa: s.filterDpPa * 0.35, status: filterLoad > 80 ? 'alarm' : filterLoad > 60 ? 'DIRTY' : 'CLEAN' },
-    { id: 'ahu01-ra-eu7', name: 'RA EU-7', dpPa: s.filterDpPa * 0.25, status: filterLoad > 70 ? 'DIRTY' : 'CLEAN' },
+    { id: 'ahu01-ra-eu7', name: 'EU-7 Filter-01', dpPa: s.filterDpPa * 0.25, status: filterLoad > 70 ? 'DIRTY' : 'CLEAN' },
   ];
 
   const ts = new Date().toISOString();
@@ -261,6 +266,17 @@ function runStep(): AhuState {
   };
   filters.forEach((f) => {
     equipment[f.id] = { id: f.id, name: f.name, type: 'filter', category: 'Filters', status: f.status === 'alarm' ? 'alarm' : 'running' };
+  });
+  dampers.forEach((d) => {
+    equipment[d.id] = { id: d.id, name: d.name, type: 'damper', category: 'Dampers', status: d.status };
+  });
+  const sensorStatus: EquipStatus = headers.fireStatus === 'NORMAL' ? 'running' : 'alarm';
+  Object.assign(equipment, {
+    'ahu01-smoke-sensor': { id: 'ahu01-smoke-sensor', name: 'Smoke Sensor', type: 'sensor', category: 'Sensors', status: sensorStatus },
+    'ahu01-ra-cfm': { id: 'ahu01-ra-cfm', name: 'RA CFM', type: 'sensor', category: 'Sensors', status: 'running' },
+    'ahu01-sa-cfm': { id: 'ahu01-sa-cfm', name: 'SA CFM', type: 'sensor', category: 'Sensors', status: 'running' },
+    'ahu01-ra-trh': { id: 'ahu01-ra-trh', name: 'T & RH', type: 'sensor', category: 'Sensors', status: 'running' },
+    'ahu01-ambient-trh': { id: 'ahu01-ambient-trh', name: 'Ambient T & RH', type: 'sensor', category: 'Sensors', status: 'running' },
   });
 
   const recommendedActions = alerts.map((a) => a.recommendedAction).filter(Boolean) as string[];
