@@ -6,7 +6,7 @@ interface Props {
   y: number;
   label: string;
   temp: number;
-  loop: 'chws' | 'chwr' | 'cws' | 'cwr';
+  loop: keyof typeof LOOP;
   tagId?: string;
   /** SVG Y of the pipe centerline */
   pipeY: number;

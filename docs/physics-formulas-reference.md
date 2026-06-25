@@ -100,6 +100,16 @@ documented with references but cannot be numerically checked here.
 - **Source:** ASHRAE *Fundamentals* Ch. 1 (Psychrometrics — wet-bulb/adiabatic saturation); ASHRAE *Systems & Equipment* Ch. 40 (Cooling Towers).
 - **Validation [G]:** using the per-tower sensors (`CT_*_CWST` leaving, `WST_*_WetBulbTemp`): mean wet-bulb 24.83 °C → tower-leaving 28.55 °C = **approach 3.72 °C** (p5 2.78), tower range 3.45 °C, and **100 % of rows respect the wet-bulb limit** (approach ≥ 0). ✅
 
+### 2.7 Plate heat exchanger (ETS) — LMTD, effectiveness-NTU, approach
+- **Code:** [`etsPhysics.js`](../frontend/src/services/etsPhysics.js) (`lmtdCounterflow`, `hxEffectiveness`, `ntuFromEffectivenessCounterflow`, `solveEtsThermoHydraulics`), used by [`etsHeatExchangeEngine.ts`](../frontend/src/services/etsHeatExchangeEngine.ts). Models the Marina Bay Sands ETS A-B03-01 (2 × 600 tR plate HX, primary from DCS, secondary to building).
+- **Equations:**
+  - Heat duty (both sides, steady state): `Q = ṁ_primary·cₚ·(T_dcr − T_dcs) = ṁ_secondary·cₚ·(T_chwr − T_chws)` (energy balance across the HX).
+  - **LMTD** (counter-flow): `ΔT_lm = (ΔT₁ − ΔT₂) / ln(ΔT₁/ΔT₂)`, with `Q = U·A·ΔT_lm`.
+  - **Effectiveness-NTU**: `ε = Q / Q_max`, `Q_max = C_min·(T_hot,in − T_cold,in)`; counter-flow `ε = [1 − e^(−NTU(1−Cr))] / [1 − Cr·e^(−NTU(1−Cr))]`, `NTU = UA/C_min`, `Cr = C_min/C_max`.
+  - **Approach** (cold-end, the key ETS commissioning metric): `T_approach = T_chws − T_dcs` (secondary supply minus primary supply). The MBS screen shows 7.5 − 6.0 = **1.5 °C**.
+- **Source:** ASHRAE *Fundamentals* Ch. 4 (Heat Transfer — LMTD & effectiveness-NTU); Kays & London, *Compact Heat Exchangers*; ASHRAE *Systems & Equipment* Ch. 13 (Hydronic) & Ch. 48 (district/ETS interfaces). The `ε`-NTU relations are the standard Kays & London counter-flow forms.
+- **Validation:** the **energy-balance** form is the same `Q=ṁcₚΔT` confirmed in §2.1/§2.3 against the M&V data; LMTD/effectiveness-NTU are the recognized *design method* (not a free parameter to fit). The engine's baseline (466 RT → 1638 kW, approach 1.5 °C, primary flow ≈ 157 m³/h) reproduces the screenshot and is asserted by [tests/validation/ets/ets-physics.test.mjs](../tests/validation/ets/ets-physics.test.mjs).
+
 ---
 
 ## 3. Formulas referenced but NOT validatable from this dataset

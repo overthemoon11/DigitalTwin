@@ -26,9 +26,13 @@ export const LOOP = {
   cwr: { stroke: '#15803d', strokeBright: '#166534', fill: 'rgba(21,128,61,0.1)', label: 'CWR' },
   chws: { stroke: '#2563eb', fill: 'rgba(37,99,235,0.08)', label: 'CHWS' },
   chwr: { stroke: '#1d4ed8', fill: 'rgba(29,78,216,0.1)', label: 'CHWR' },
-  /** District cooling primary supply / return (header network) */
-  dcs: { stroke: '#0891b2', fill: 'rgba(8,145,178,0.1)', label: 'DCS' },
-  dcr: { stroke: '#0e7490', fill: 'rgba(14,116,144,0.12)', label: 'DCR' },
+  /** ETS / district primary supply — same light blue as CHWS → ASM */
+  dcs: { stroke: '#38bdf8', fill: 'rgba(56,189,248,0.12)', label: 'DCS' },
+  /** ETS / district primary return — same deep blue as CHWR ← ASM */
+  dcr: { stroke: '#1e3a8a', fill: 'rgba(30,58,138,0.12)', label: 'DCR' },
+  /** ETS secondary loop — light blue to ASM (supply), deep blue from ASM (return) */
+  chwsAsm: { stroke: '#38bdf8', fill: 'rgba(56,189,248,0.12)', label: 'CHWS → ASM' },
+  chwrAsm: { stroke: '#1e3a8a', fill: 'rgba(30,58,138,0.12)', label: 'CHWR ← ASM' },
 } as const;
 
 export function statusFill(status: string): string {

@@ -24,12 +24,21 @@ import {
   advanceDistrictCooling,
 } from '../services/districtCoolingSimulator';
 
+import {
+  startEtsSimulator,
+  updateEtsControl as setEtsControlValue,
+  resetEts as resetEtsEngine,
+  stepEts,
+  advanceEts as advanceEtsEngine,
+} from '../services/etsHeatExchangeEngine';
+
 const API_BASE = '/api';
 
 export const useTwinStore = create((set, get) => ({
   twinState: null,
   plantState: null,
   districtCoolingState: null,
+  etsState: null,
   activeAppTab: 'chiller_plant',
   activePlantScenario: 'chiller',
   selectedAsset: null,
@@ -39,6 +48,7 @@ export const useTwinStore = create((set, get) => ({
   modelStatus: null,
   _plantStop: null,
   _districtStop: null,
+  _etsStop: null,
 
   setActiveAppTab: (tab) => set({ activeAppTab: tab }),
 
@@ -51,6 +61,8 @@ export const useTwinStore = create((set, get) => ({
     if (existingPlant) existingPlant();
     const existingDc = get()._districtStop;
     if (existingDc) existingDc();
+    const existingEts = get()._etsStop;
+    if (existingEts) existingEts();
 
     const plantStop = startPlantSimulator((plantState) => {
       set({ plantState });
@@ -72,11 +84,31 @@ export const useTwinStore = create((set, get) => ({
       set({ districtCoolingState });
     });
 
-    set({ _plantStop: plantStop, _districtStop: districtStop });
+    const etsStop = startEtsSimulator((etsState) => {
+      set({ etsState });
+    });
+
+    set({ _plantStop: plantStop, _districtStop: districtStop, _etsStop: etsStop });
     return () => {
       plantStop();
       districtStop();
+      etsStop();
     };
+  },
+
+  updateEtsControl: (controlId, value) => {
+    setEtsControlValue(controlId, value);
+    set({ etsState: stepEts() });
+  },
+
+  advanceEts: (seconds = 30) => {
+    const steps = Math.max(1, Math.floor(seconds / 2));
+    set({ etsState: advanceEtsEngine(steps) });
+  },
+
+  resetEts: () => {
+    resetEtsEngine();
+    set({ etsState: stepEts() });
   },
 
   updateDistrictControl: (controlId, value) => {

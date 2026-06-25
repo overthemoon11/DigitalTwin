@@ -5,6 +5,8 @@ import ChillerPlant2DView from './components/chiller/ChillerPlant2DView';
 import PlantAssetTree from './components/PlantAssetTree';
 import HeatExchangeAssetTree from './components/heatexchange/HeatExchangeAssetTree';
 import HeatExchangeViewer from './components/heatexchange/HeatExchangeViewer';
+import EtsStationView from './components/ets/EtsStationView';
+import EtsControlPanel from './components/ets/EtsControlPanel';
 import PlantScenarioSwitcher from './components/PlantScenarioSwitcher';
 import ControlPanel from './components/ControlPanel';
 import DistrictCoolingControlPanel from './components/districtcooling/DistrictCoolingControlPanel';
@@ -21,6 +23,7 @@ function App() {
     twinState,
     plantState,
     districtCoolingState,
+    etsState,
     activeAppTab,
     activePlantScenario,
     selectedAsset,
@@ -32,6 +35,9 @@ function App() {
     updateDistrictControl,
     advanceDistrictCooling,
     resetDistrictCooling,
+    updateEtsControl,
+    advanceEts,
+    resetEts,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
   const [hxEtsBuildingId, setHxEtsBuildingId] = useState(null);
@@ -66,7 +72,8 @@ function App() {
   }
 
   const isChillerScenario = activePlantScenario === 'chiller';
-  const scenarioState = isChillerScenario ? plantState : districtCoolingState;
+  const isEtsScenario = activePlantScenario === 'ets';
+  const scenarioState = isChillerScenario ? plantState : isEtsScenario ? etsState : districtCoolingState;
   const scenarioAlerts = scenarioState?.alerts || twinState.alerts;
   const scenarioKpis = scenarioState?.kpis || twinState.kpis;
   const activeAlertCount = scenarioAlerts.filter((a) => !a.resolved).length;
@@ -80,7 +87,9 @@ function App() {
               ? '🏙️ District Cooling Digital Twin'
               : isChillerScenario
                 ? '❄️ Chiller Plant Virtual Simulator'
-                : '🔄 Heat Exchange Plant Simulator'}
+                : isEtsScenario
+                  ? '🏢 ETS Heat-Exchange Station — MBS A-B03-01'
+                  : '🔄 Heat Exchange Plant Simulator'}
           </h1>
           <div className="app-view-tabs">
             <button
@@ -133,10 +142,16 @@ function App() {
               activeScenario={activePlantScenario}
               onSelect={setActivePlantScenario}
             />
-            <h3>{isChillerScenario ? 'Chiller Plant Assets' : 'Heat Exchange Assets'}</h3>
+            <h3>{isChillerScenario ? 'Chiller Plant Assets' : isEtsScenario ? 'ETS Station Assets' : 'Heat Exchange Assets'}</h3>
             {isChillerScenario ? (
               <PlantAssetTree
                 equipment={plantState?.equipment || {}}
+                selectedAsset={selectedAsset}
+                onSelectAsset={selectAsset}
+              />
+            ) : isEtsScenario ? (
+              <HeatExchangeAssetTree
+                equipment={etsState?.equipment || {}}
                 selectedAsset={selectedAsset}
                 onSelectAsset={selectAsset}
               />
@@ -161,6 +176,18 @@ function App() {
               ) : (
                 <div className="loading" style={{ height: '100%' }}>
                   <h2>Initializing chiller plant…</h2>
+                </div>
+              )
+            ) : isEtsScenario ? (
+              etsState ? (
+                <EtsStationView
+                  state={etsState}
+                  selectedId={selectedAsset}
+                  onSelect={selectAsset}
+                />
+              ) : (
+                <div className="loading" style={{ height: '100%' }}>
+                  <h2>Initializing ETS station…</h2>
                 </div>
               )
             ) : districtCoolingState ? (
@@ -221,7 +248,16 @@ function App() {
                   plantMode
                 />
               )}
-              {activePanel === 'controls' && !isChillerScenario && (
+              {activePanel === 'controls' && isEtsScenario && (
+                <EtsControlPanel
+                  controls={etsState?.controls || []}
+                  headers={etsState?.headers}
+                  onUpdate={updateEtsControl}
+                  onRunSimulation={() => advanceEts(30)}
+                  onReset={resetEts}
+                />
+              )}
+              {activePanel === 'controls' && !isChillerScenario && !isEtsScenario && (
                 <DistrictCoolingControlPanel
                   controls={districtCoolingState?.controls || []}
                   headers={districtCoolingState?.headers}
@@ -237,7 +273,7 @@ function App() {
                 <AlertPanel
                   alerts={scenarioAlerts}
                   assets={twinState.assets}
-                  plantEquipment={isChillerScenario ? plantState?.equipment : districtCoolingState?.equipment}
+                  plantEquipment={isChillerScenario ? plantState?.equipment : isEtsScenario ? etsState?.equipment : districtCoolingState?.equipment}
                   plantMode
                 />
               )}

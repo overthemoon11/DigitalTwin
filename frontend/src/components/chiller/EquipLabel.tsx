@@ -14,8 +14,8 @@ interface Props {
   lines: LabelLine[];
   /** Extra width for long names */
   plateW?: number;
-  /** Default right; use left when symbol is on the right edge */
-  side?: 'left' | 'right';
+  /** Default right; use left when symbol is on the right edge; below for vertical inline symbols */
+  side?: 'left' | 'right' | 'below';
 }
 
 const VARIANT_STYLE = {
@@ -24,16 +24,24 @@ const VARIANT_STYLE = {
   muted: { fill: SCADA.textMuted, size: 7, weight: '400' },
 } as const;
 
-/** SCADA tag block — always to the right of the symbol */
+/** SCADA tag block beside or below the equipment symbol */
 export function EquipLabel({ iconX, iconY, iconW, iconH, lines, plateW = 108, side = 'right' }: Props) {
   if (!lines.length) return null;
 
   const lineH = 12;
   const padY = 6;
   const plateH = lines.length * lineH + padY * 2;
-  const plateY = iconY + Math.max(4, (iconH - plateH) / 2);
-  const plateX = side === 'right' ? iconX + iconW + 4 : iconX - plateW - 4;
-  const lx = side === 'right' ? plateX + 4 : plateX + 4;
+  const labelOnly = iconW <= 0 && iconH <= 0;
+  const plateY = labelOnly ? iconY : side === 'below' ? iconY + iconH + 4 : iconY + Math.max(4, (iconH - plateH) / 2);
+  const plateX = labelOnly
+    ? iconX
+    : side === 'right'
+      ? iconX + iconW + 4
+      : side === 'below'
+        ? iconX + (iconW - plateW) / 2
+        : iconX - plateW - 4;
+  const textAnchor = side === 'below' ? 'middle' : 'start';
+  const lx = side === 'below' ? plateX + plateW / 2 : plateX + 4;
 
   return (
     <g className="scada-equip-label" pointerEvents="none">
@@ -55,7 +63,7 @@ export function EquipLabel({ iconX, iconY, iconW, iconH, lines, plateW = 108, si
             key={i}
             x={lx}
             y={plateY + padY + 9 + i * lineH}
-            textAnchor="start"
+            textAnchor={textAnchor}
             fill={v.fill}
             fontSize={v.size}
             fontWeight={v.weight}
