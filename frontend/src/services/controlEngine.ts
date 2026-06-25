@@ -197,6 +197,7 @@ function defaultControls(): PlantControl[] {
 
 let controls: PlantControl[] = defaultControls();
 let lastCascadeTrigger = 'Virtual plant at steady state (physics initialised)';
+let lastControlId: string | null = null;
 
 let internals: SimInternals = {
   tick: 0,
@@ -615,6 +616,7 @@ function runControlStep(): PlantState {
       dtSeconds: SIM_DT_SEC,
       simTimeSec: internals.tick * SIM_DT_SEC,
       lastTrigger: lastCascadeTrigger,
+      lastControlId: lastControlId ?? undefined,
       cascadeTrace,
       lastOutput: {
         buildingLoadRt,
@@ -639,6 +641,7 @@ export function updatePlantControl(controlId: string, value: number): void {
   const prev = ctrl?.value;
   controls = controls.map((c) => (c.id === controlId ? { ...c, value } : c));
   const label = ctrl?.label || controlId;
+  lastControlId = controlId;
   lastCascadeTrigger = `Operator set ${label}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
 }
 
@@ -661,6 +664,7 @@ export function advancePlantSimulation(steps = 1): PlantState {
 export function resetPlantControls(): void {
   controls = defaultControls();
   lastCascadeTrigger = 'Plant reset to baseline setpoints';
+  lastControlId = null;
   internals = {
     tick: 0,
     chwsActual: 7,

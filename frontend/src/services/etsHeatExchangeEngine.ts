@@ -24,6 +24,14 @@ import type {
 } from '../types/ets';
 import { MBS, clamp, round, solveEtsThermoHydraulics } from './etsPhysics.js';
 import { getEtsScenarioById } from './etsScenarios.js';
+import { buildEtsCascadeTrace } from './etsCascade.js';
+import {
+  recommendForHxApproach,
+  recommendForLowSecondaryDt,
+  recommendForOverCapacity,
+  recommendForHighPumpKwRt,
+  recommendForHighLtBypass,
+} from './etsAlertRecommendations.js';
 
 const SIM_DT_SEC = 2;
 
@@ -32,6 +40,7 @@ let tick = 0;
 let lagLoadRt = 466;
 let kwhCumulative = MBS.METER_BASELINE_KWH as number;
 let lastTrigger = 'ETS A-B03-01 initialized (serves ASM)';
+let lastControlId: string | null = null;
 
 function getControl(id: string): number {
   return controls.find((c) => c.id === id)?.value ?? 0;
@@ -216,28 +225,69 @@ function runStep(): EtsState {
   // --- Alerts -----------------------------------------------------------
   const alerts: PlantAlert[] = [];
   const ts = new Date().toISOString();
+  const alertCtx = {
+    baseLoadRt,
+    occupied,
+    chwsSp,
+    dpSp,
+    chwrtSp,
+    dcsTemp,
+    hxInService,
+    pumpMax,
+    capacityTons: s.capacityTons,
+    chwrC: s.chwrC,
+    secDeltaT: s.secDeltaT,
+    ltBypassPct: s.ltBypassPct,
+  };
+
   if (s.approachC > 3.2) {
+    const rec = recommendForHxApproach(alertCtx);
     alerts.push({
       id: 'ets-alert-approach', severity: 'warning',
-      message: `HX approach elevated (${s.approachC}°C) — transfer degraded`,
+      message: `HX approach elevated (${s.approachC}°C) — transfer degraded (limit 3.2°C)`,
       assetId: 'hx-a-b03-01', resolved: false, acknowledged: false, timestamp: ts,
-      recommendedAction: 'Bring second HX into service or check primary valve / DCS supply temp',
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
   if (s.secDeltaT < 5) {
+    const rec = recommendForLowSecondaryDt(alertCtx);
     alerts.push({
       id: 'ets-alert-lowdt', severity: 'warning',
-      message: `Low secondary ΔT (${s.secDeltaT}°C) — possible low-ΔT syndrome`,
+      message: `Low secondary ΔT (${s.secDeltaT}°C) — possible low-ΔT syndrome (target ≥ 5°C)`,
       assetId: 'chwp-a-b03-01', resolved: false, acknowledged: false, timestamp: ts,
-      recommendedAction: 'Check building 2-way valves and LT bypass position',
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
   if (s.loadFrac > 1.0) {
+    const rec = recommendForOverCapacity(alertCtx);
     alerts.push({
       id: 'ets-alert-capacity', severity: 'critical',
-      message: `Load ${s.demandRt} RT exceeds installed HX capacity ${s.capacityTons} tR`,
+      message: `Load ${s.demandRt} RT exceeds installed HX capacity ${s.capacityTons} RT`,
       assetId: 'hx-a-b03-02', resolved: false, acknowledged: false, timestamp: ts,
-      recommendedAction: 'Reduce building load or commission additional capacity',
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (s.pumpKwPerRt > 0.12) {
+    const rec = recommendForHighPumpKwRt({ ...alertCtx, pumpMax });
+    alerts.push({
+      id: 'ets-alert-pump-eff', severity: 'warning',
+      message: `Secondary pumping high (${s.pumpKwPerRt.toFixed(3)} kW/RT) — target ≤ 0.07 kW/RT`,
+      assetId: 'chwp-a-b03-02', resolved: false, acknowledged: false, timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
+    });
+  }
+  if (s.ltBypassPct > 60) {
+    const rec = recommendForHighLtBypass(alertCtx);
+    alerts.push({
+      id: 'ets-alert-lt-bypass', severity: 'warning',
+      message: `LT bypass valve high (${s.ltBypassPct.toFixed(0)}%) — return mixing excessive`,
+      assetId: 'lt-bypass', resolved: false, acknowledged: false, timestamp: ts,
+      recommendedAction: rec.text,
+      recommendedAdjustments: rec.adjustments,
     });
   }
 
@@ -269,12 +319,59 @@ function runStep(): EtsState {
   });
   equipment['meter-cws-a-b03-01'] = { id: 'meter-cws-a-b03-01', name: 'CWS-A-B03-01 Energy Meter', type: 'meter', category: 'Metering', status: 'running' };
 
-  // --- Recommended actions ---------------------------------------------
+  // --- Recommended actions (summary — mirrors active alert logic) -------
   const recommendedActions: string[] = [];
-  if (s.approachC > 2.5) recommendedActions.push('Approach rising — verify both HX in service and primary control valve fully strokes');
-  if (s.pumpKwPerRt > 0.1) recommendedActions.push('Secondary pumping high — lower header DP setpoint if building valves are satisfied');
-  if (chwsSp < 7) recommendedActions.push(`Raise CHWS setpoint toward 7.5°C to reduce primary demand`);
-  if (!recommendedActions.length) recommendedActions.push('ETS operating within design — approach, ΔT and pumping nominal');
+  for (const alert of alerts) {
+    if (alert.recommendedAction) recommendedActions.push(alert.recommendedAction);
+  }
+  if (s.approachC > 2.5 && s.approachC <= 3.2) {
+    const rec = recommendForHxApproach(alertCtx);
+    recommendedActions.push(rec.text);
+  }
+  if (s.pumpKwPerRt > 0.1 && s.pumpKwPerRt <= 0.12) {
+    const rec = recommendForHighPumpKwRt({ ...alertCtx, pumpMax });
+    recommendedActions.push(rec.text);
+  }
+  if (chwsSp < 7) {
+    recommendedActions.push(`Adjust: CHWS Setpoint → 7.5°C (now ${chwsSp}°C) — eases primary demand`);
+  }
+  if (!recommendedActions.length) {
+    recommendedActions.push('ETS operating within design — approach, ΔT and pumping nominal');
+  }
+
+  const cascadeTrace = buildEtsCascadeTrace({
+    trigger: lastTrigger,
+    baseLoadRt,
+    ambient,
+    occupied,
+    targetLoadRt,
+    demandRt: s.demandRt,
+    coolingKw: s.coolingKw,
+    chwsSp,
+    chwsC: s.chwsC,
+    chwrC: s.chwrC,
+    secDeltaT: s.secDeltaT,
+    secFlowM3h: s.secFlowM3h,
+    dpSp,
+    headerDpKpa: s.headerDpKpa,
+    pumpsRunning: s.pumpsRunning,
+    pumpSpeedPct: s.pumpSpeedPct,
+    pumpPowerKwTotal: s.pumpPowerKwTotal,
+    pumpKwPerRt: s.pumpKwPerRt,
+    hxInService,
+    loadFrac: s.loadFrac,
+    approachC: s.approachC,
+    effectiveness: s.effectiveness,
+    lmtdC: s.lmtdC,
+    dcsSupplyC: s.dcsSupplyC,
+    dcrC: s.dcrC,
+    priDeltaT: s.priDeltaT,
+    priFlowM3h: s.priFlowM3h,
+    chwrtSp,
+    ltBypassPct: s.ltBypassPct,
+    ltBypassFlowM3h: s.ltBypassFlowM3h,
+    alertCount: alerts.length,
+  });
 
   return {
     station: 'A-B03-01',
@@ -296,6 +393,16 @@ function runStep(): EtsState {
       controlMode: 'FLOW-VSD',
       timeProgram: occupied ? 'Occupied' : 'Unoccupied',
       lastTrigger,
+      lastControlId: lastControlId ?? undefined,
+      cascadeTrace,
+      lastOutput: {
+        buildingLoadRt: s.demandRt,
+        primaryDeltaT: s.priDeltaT,
+        secondaryDeltaT: s.secDeltaT,
+        approachC: s.approachC,
+        effectiveness: s.effectiveness,
+        pumpKwPerRt: s.pumpKwPerRt,
+      },
     },
     recommendedActions,
     simulationTime: ts,
@@ -316,6 +423,7 @@ export function updateEtsControl(controlId: string, value: number): void {
   const ctrl = controls.find((c) => c.id === controlId);
   const prev = ctrl?.value;
   controls = controls.map((c) => (c.id === controlId ? { ...c, value } : c));
+  lastControlId = controlId;
   lastTrigger = `Operator set ${ctrl?.label || controlId}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
 }
 
@@ -350,6 +458,8 @@ export function applyEtsScenario(scenarioId: string): EtsState {
     }
   }
 
+  lastControlId = `scenario:${scenario.id}`;
+
   snapLoadLag();
 
   const advanceSec = scenario.advanceSec ?? 0;
@@ -375,6 +485,7 @@ export function resetEts(): void {
   tick = 0;
   lagLoadRt = 466;
   kwhCumulative = MBS.METER_BASELINE_KWH as number;
+  lastControlId = null;
   lastTrigger = 'ETS A-B03-01 reset to baseline';
 }
 

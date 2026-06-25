@@ -10,6 +10,8 @@ import EtsAssetTree from './components/ets/EtsAssetTree';
 import EtsKPIPanel from './components/ets/EtsKPIPanel';
 import EtsControlPanel from './components/ets/EtsControlPanel';
 import PlantScenarioSwitcher from './components/PlantScenarioSwitcher';
+import LeftSidebarModeTabs from './components/leftSidebar/LeftSidebarModeTabs';
+import VirtualSimulatorPanel from './components/leftSidebar/VirtualSimulatorPanel';
 import ControlPanel from './components/ControlPanel';
 import DistrictCoolingControlPanel from './components/districtcooling/DistrictCoolingControlPanel';
 import DistrictCoolingTwinTab from './components/districtcooling/DistrictCoolingTwinTab';
@@ -17,7 +19,6 @@ import KPIPanel from './components/KPIPanel';
 import AlertPanel from './components/AlertPanel';
 import CopilotChat from './components/CopilotChat';
 import ModelStatusBanner from './components/ModelStatusBanner';
-import VirtualSimulatorBanner from './components/VirtualSimulatorBanner';
 import './App.css';
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
     resetEts,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
+  const [leftSidebarMode, setLeftSidebarMode] = useState('assets');
   const [hxEtsBuildingId, setHxEtsBuildingId] = useState(null);
 
   useEffect(() => {
@@ -140,29 +142,42 @@ function App() {
       ) : (
         <div className="main-content">
           <aside className="left-panel">
-            <VirtualSimulatorBanner simulation={scenarioState?.simulation} />
-            <PlantScenarioSwitcher
-              activeScenario={activePlantScenario}
-              onSelect={setActivePlantScenario}
-            />
-            <h3>{isChillerScenario ? 'Chiller Plant Assets' : isEtsScenario ? 'ETS Station Assets' : 'Heat Exchange Assets'}</h3>
-            {isChillerScenario ? (
-              <PlantAssetTree
-                equipment={plantState?.equipment || {}}
-                selectedAsset={selectedAsset}
-                onSelectAsset={selectAsset}
-              />
-            ) : isEtsScenario ? (
-              <EtsAssetTree
-                equipment={etsState?.equipment || {}}
-                selectedAsset={selectedAsset}
-                onSelectAsset={selectAsset}
-              />
+            <LeftSidebarModeTabs mode={leftSidebarMode} onModeChange={setLeftSidebarMode} />
+
+            {leftSidebarMode === 'assets' ? (
+              <>
+                <PlantScenarioSwitcher
+                  horizontal
+                  activeScenario={activePlantScenario}
+                  onSelect={setActivePlantScenario}
+                />
+                <h3>{isChillerScenario ? 'Chiller Plant Assets' : isEtsScenario ? 'ETS Station Assets' : 'Heat Exchange Assets'}</h3>
+                <div className="left-panel-assets">
+                  {isChillerScenario ? (
+                    <PlantAssetTree
+                      equipment={plantState?.equipment || {}}
+                      selectedAsset={selectedAsset}
+                      onSelectAsset={selectAsset}
+                    />
+                  ) : isEtsScenario ? (
+                    <EtsAssetTree
+                      equipment={etsState?.equipment || {}}
+                      selectedAsset={selectedAsset}
+                      onSelectAsset={selectAsset}
+                    />
+                  ) : (
+                    <HeatExchangeAssetTree
+                      equipment={districtCoolingState?.equipment || {}}
+                      selectedAsset={selectedAsset}
+                      onSelectAsset={selectHxSidebarAsset}
+                    />
+                  )}
+                </div>
+              </>
             ) : (
-              <HeatExchangeAssetTree
-                equipment={districtCoolingState?.equipment || {}}
-                selectedAsset={selectedAsset}
-                onSelectAsset={selectHxSidebarAsset}
+              <VirtualSimulatorPanel
+                plantScenario={activePlantScenario}
+                state={scenarioState}
               />
             )}
           </aside>

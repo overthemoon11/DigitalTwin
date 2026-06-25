@@ -19,6 +19,11 @@ export interface AlarmContext {
   pumpCommandedOn: Record<string, boolean>;
 }
 
+function round(v: number, d = 1): number {
+  const f = 10 ** d;
+  return Math.round(v * f) / f;
+}
+
 export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
   const alerts: PlantAlert[] = [];
   const ts = new Date().toISOString();
@@ -27,12 +32,16 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
     alerts.push({
       id: 'alm-chws-high',
       severity: 'warning',
-      message: 'High CHWS Temperature',
+      message: `High CHWS Temperature (${ctx.headers.chws.toFixed(1)}°C vs SP ${ctx.chwsSetpoint}°C)`,
       assetId: 'ch-29-1',
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: 'Verify chiller staging and CHWP flow',
+      recommendedAction: `Adjust: CHWS Setpoint → ${(ctx.headers.chws - 0.5).toFixed(1)}°C (now ${ctx.chwsSetpoint}°C); enable additional chiller if load > 80%`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-chws-sp', label: 'CHWS Setpoint', currentValue: ctx.chwsSetpoint, suggestedValue: round(ctx.headers.chws - 0.5, 1), unit: '°C' },
+        { controlId: 'ctrl-ch-enable', label: 'Chillers Enabled', currentValue: 'check staging', suggestedValue: '+1 chiller' },
+      ],
     });
   }
 
@@ -40,38 +49,52 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
     alerts.push({
       id: 'alm-chwr-high',
       severity: 'warning',
-      message: 'High CHWR Temperature',
+      message: `High CHWR Temperature (${ctx.headers.chwr.toFixed(1)}°C vs SP ${ctx.chwrSetpoint}°C)`,
       assetId: 'chwp-29-1',
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: 'Check building load and CHWS setpoint',
+      recommendedAction: `Adjust: Building Cooling Load → ${Math.round(ctx.headers.buildingLoadRt * 0.9)} RT (now ${Math.round(ctx.headers.buildingLoadRt)} RT); CHWS Setpoint → ${(ctx.chwsSetpoint - 0.5).toFixed(1)}°C`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-building-load', label: 'Building Cooling Load', currentValue: Math.round(ctx.headers.buildingLoadRt), suggestedValue: Math.round(ctx.headers.buildingLoadRt * 0.9), unit: 'RT' },
+        { controlId: 'ctrl-chws-sp', label: 'CHWS Setpoint', currentValue: ctx.chwsSetpoint, suggestedValue: round(ctx.chwsSetpoint - 0.5, 1), unit: '°C' },
+      ],
     });
   }
 
   if (ctx.headers.cws > ctx.cwsSetpoint + 3) {
+    const suggestedCws = round(ctx.cwsSetpoint - 1, 1);
     alerts.push({
       id: 'alm-cws-high',
       severity: 'warning',
-      message: 'High Condenser Temperature',
+      message: `High Condenser Temperature (${ctx.headers.cws.toFixed(1)}°C vs SP ${ctx.cwsSetpoint}°C)`,
       assetId: 'ct-41-1',
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: 'Increase cooling tower fan speed or lower CWS setpoint',
+      recommendedAction: `Adjust: Cooling Tower Fan → 100% (max); CWS Setpoint → ${suggestedCws}°C (now ${ctx.cwsSetpoint}°C)`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-ct-fan', label: 'Cooling Tower Fan', currentValue: 'raise', suggestedValue: 100, unit: '%' },
+        { controlId: 'ctrl-cws-sp', label: 'CWS Setpoint', currentValue: ctx.cwsSetpoint, suggestedValue: suggestedCws, unit: '°C' },
+      ],
     });
   }
 
   if (ctx.deltaT < 4) {
+    const suggestedDp = Math.max(10, round(ctx.dpSetpoint - 5, 0));
     alerts.push({
       id: 'alm-low-dt',
       severity: 'warning',
-      message: 'Low Delta-T Detected',
+      message: `Low Delta-T Detected (${ctx.deltaT.toFixed(1)}°C — target ≥ 4°C)`,
       assetId: 'bv-1',
       resolved: false,
       acknowledged: false,
       timestamp: ts,
-      recommendedAction: 'Check bypass valve position and CHWP speed',
+      recommendedAction: `Adjust: Header DP Setpoint → ${suggestedDp} psi (now ${ctx.dpSetpoint} psi); reduce bypass via pump speed`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-dp-sp', label: 'Header DP Setpoint', currentValue: ctx.dpSetpoint, suggestedValue: suggestedDp, unit: 'psi' },
+        { controlId: 'ctrl-pump-spd', label: 'Pump Speed', currentValue: 'reduce', suggestedValue: '-10%', unit: '' },
+      ],
     });
   }
 

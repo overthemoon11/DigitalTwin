@@ -220,13 +220,183 @@
   overflow: hidden;
 }
 
+.left-sidebar-mode-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.left-sidebar-mode-tabs button {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.left-sidebar-mode-tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--bg-card);
+}
+
+.left-panel-assets {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-panel-assets .asset-tree {
+  flex: 1;
+  min-height: 0;
+}
+
 .left-panel h3 {
-  padding: 1rem;
-  font-size: 0.875rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.virtual-simulator-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.vsp-empty,
+.vsp-footnote {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.vsp-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.vsp-badge {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--accent-light);
+}
+
+.vsp-meta,
+.vsp-time {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.vsp-section {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.vsp-section:last-of-type {
+  border-bottom: none;
+}
+
+.vsp-section h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+}
+
+.vsp-section--trigger .vsp-trigger {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.vsp-formula {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  color: #475569;
+  font-family: Consolas, "Cascadia Mono", monospace;
+}
+
+.vsp-affects,
+.vsp-actions,
+.vsp-cascade {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.vsp-desc {
+  margin: 0.4rem 0 0;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.vsp-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.vsp-metric {
+  padding: 6px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+
+.vsp-metric.warn {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.vsp-metric-label {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.vsp-metric-value {
+  font-size: 0.78rem;
+  font-family: Consolas, "Cascadia Mono", monospace;
+}
+
+.vsp-metric-unit {
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.virtual-simulator-panel .sim-output-summary {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.virtual-simulator-panel .sim-output-summary__title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: #64748b;
 }
 
 /* Center viewer — 2D chiller plant SCADA */
@@ -1013,6 +1183,38 @@
   color: var(--accent-light);
 }
 
+.alert-adjustment-list {
+  margin: 0;
+  padding: 0 0 0 1rem;
+  list-style: none;
+}
+
+.alert-adjustment-list li {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin-bottom: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(3, 105, 161, 0.06);
+  border-radius: 4px;
+  border-left: 2px solid var(--accent);
+}
+
+.alert-adjustment-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.alert-adjustment-values {
+  color: var(--accent-light);
+  font-family: Consolas, "Cascadia Mono", monospace;
+}
+
+.alert-adjustment-now {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
 /* Chatbot (Local LLM) */
 .copilot-container {
   display: flex;
@@ -1124,6 +1326,19 @@
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.plant-scenario-switcher--scroll {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.plant-scenario-switcher--scroll .plant-scenario-btn {
+  flex: 0 0 auto;
+  min-width: 7.25rem;
 }
 
 .plant-scenario-btn {

@@ -29,12 +29,30 @@ function AlertItem({ alert, assets, plantEquipment, onAcknowledge }) {
           Equipment: {assetLabel}
         </div>
       )}
-      {alert.recommendedAction && (
+      {alert.recommendedAdjustments?.length > 0 ? (
+        <div className="alert-adjustments">
+          <div className="action" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem' }}>
+            <LightbulbIcon size={14} />
+            <strong>Recommended adjustments</strong>
+          </div>
+          <ul className="alert-adjustment-list">
+            {alert.recommendedAdjustments.map((adj) => (
+              <li key={adj.controlId}>
+                <span className="alert-adjustment-label">{adj.label}</span>
+                <span className="alert-adjustment-values">
+                  {adj.suggestedValue}{adj.unit ? ` ${adj.unit}` : ''}
+                  <span className="alert-adjustment-now"> (now {adj.currentValue}{adj.unit ? ` ${adj.unit}` : ''})</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : alert.recommendedAction ? (
         <div className="action" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <LightbulbIcon size={14} />
           {alert.recommendedAction}
         </div>
-      )}
+      ) : null}
       {!alert.acknowledged && (
         <button
           onClick={() => onAcknowledge(alert.id)}

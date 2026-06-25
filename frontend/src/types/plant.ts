@@ -99,6 +99,14 @@ export interface PlantAlert {
   acknowledged: boolean;
   timestamp: string;
   recommendedAction?: string;
+  /** Specific control slider targets for the operator */
+  recommendedAdjustments?: {
+    controlId: string;
+    label: string;
+    currentValue: number | string;
+    suggestedValue: number | string;
+    unit?: string;
+  }[];
 }
 
 export interface PlantKpi {
@@ -122,6 +130,7 @@ export interface PlantSimulationMeta {
   simTimeSec: number;
   /** Last operator input that drove the cascade */
   lastTrigger: string;
+  lastControlId?: string;
   /** Ordered domino-effect steps from last calculation */
   cascadeTrace: string[];
   /** Latest calculated load and delta-T after each physics step */

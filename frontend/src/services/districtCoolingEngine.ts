@@ -12,6 +12,7 @@ const SIM_DT_SEC = 2;
 let controls: DistrictCoolingControl[] = defaultControls();
 let tick = 0;
 let lastTrigger = 'District cooling plant initialized';
+let lastControlId: string | null = null;
 let lagChws = 7.0;
 let lagDp = 210;
 
@@ -153,7 +154,9 @@ function runStep(): DistrictCoolingState {
   const buildings = buildBuildingBranches(coolingDemandRt, lagChws, chwr, hxApproach, primaryValve);
 
   const alerts: PlantAlert[] = [];
+  const alertTs = new Date().toISOString();
   if (coolingDemandRt > contractRt * 0.95) {
+    const targetLoad = Math.round(contractRt * 0.88);
     alerts.push({
       id: 'dc-alert-contract',
       severity: 'warning',
@@ -161,11 +164,16 @@ function runStep(): DistrictCoolingState {
       assetId: 'dcv-mbs',
       resolved: false,
       acknowledged: false,
-      timestamp: new Date().toISOString(),
-      recommendedAction: 'Reduce load scenario or raise CHWS setpoint within comfort limits',
+      timestamp: alertTs,
+      recommendedAction: `Adjust: Building Cooling Load → ${targetLoad} RT (now ${round(baseLoadRt, 0)} RT); or CHWS Setpoint → ${round(chwsSp + 0.5, 1)}°C (now ${chwsSp}°C)`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-dc-load', label: 'Building Cooling Load', currentValue: round(baseLoadRt, 0), suggestedValue: targetLoad, unit: 'RT' },
+        { controlId: 'ctrl-dc-chws-sp', label: 'CHWS Setpoint', currentValue: chwsSp, suggestedValue: round(Math.min(8, chwsSp + 0.5), 1), unit: '°C' },
+      ],
     });
   }
   if (condensationRisk) {
+    const suggestedChws = round(Math.min(9, chwsSp + 1), 1);
     alerts.push({
       id: 'dc-alert-condensation',
       severity: 'critical',
@@ -173,20 +181,29 @@ function runStep(): DistrictCoolingState {
       assetId: 'ahu-mbs',
       resolved: false,
       acknowledged: false,
-      timestamp: new Date().toISOString(),
-      recommendedAction: 'Increase CHWS or reduce RH limit margin',
+      timestamp: alertTs,
+      recommendedAction: `Adjust: CHWS Setpoint → ${suggestedChws}°C (now ${chwsSp}°C); RH Limit → ${Math.max(45, rhLimit - 5)}% (now ${rhLimit}%)`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-dc-chws-sp', label: 'CHWS Setpoint', currentValue: chwsSp, suggestedValue: suggestedChws, unit: '°C' },
+        { controlId: 'ctrl-dc-rh-limit', label: 'RH Limit', currentValue: rhLimit, suggestedValue: Math.max(45, rhLimit - 5), unit: '%' },
+      ],
     });
   }
   if (hxApproach > 2.8) {
+    const suggestedValve = Math.min(100, primaryValve + 15);
     alerts.push({
       id: 'dc-alert-hx',
       severity: 'warning',
-      message: `HX approach temperature elevated (${hxApproach}°C)`,
+      message: `HX approach temperature elevated (${hxApproach}°C) — target ≤ 2.5°C`,
       assetId: 'hx-mbs',
       resolved: false,
       acknowledged: false,
-      timestamp: new Date().toISOString(),
-      recommendedAction: 'Check primary valve position and district supply temperature',
+      timestamp: alertTs,
+      recommendedAction: `Adjust: Primary Control Valve → ${suggestedValve}% (now ${primaryValve}%); Building Cooling Load → ${Math.round(baseLoadRt * 0.9)} RT if load-driven`,
+      recommendedAdjustments: [
+        { controlId: 'ctrl-dc-primary-valve', label: 'Primary Control Valve', currentValue: primaryValve, suggestedValue: suggestedValve, unit: '%' },
+        { controlId: 'ctrl-dc-load', label: 'Building Cooling Load', currentValue: round(baseLoadRt, 0), suggestedValue: Math.round(baseLoadRt * 0.9), unit: 'RT' },
+      ],
     });
   }
 
@@ -252,6 +269,7 @@ function runStep(): DistrictCoolingState {
       simTimeSec: tick * SIM_DT_SEC,
       mode: 'live',
       lastTrigger,
+      lastControlId: lastControlId ?? undefined,
       lastOutput: {
         buildingLoadRt: headers.buildingLoadRt,
         primaryDeltaT: headers.primaryDeltaT,
@@ -277,6 +295,7 @@ export function updateDistrictControl(controlId: string, value: number): void {
   const ctrl = controls.find((c) => c.id === controlId);
   const prev = ctrl?.value;
   controls = controls.map((c) => (c.id === controlId ? { ...c, value } : c));
+  lastControlId = controlId;
   lastTrigger = `Operator set ${ctrl?.label || controlId}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
 }
 
@@ -293,6 +312,7 @@ export function resetDistrictCooling(): void {
   tick = 0;
   lagChws = 7.0;
   lagDp = 210;
+  lastControlId = null;
   lastTrigger = 'District cooling plant reset to baseline';
 }
 

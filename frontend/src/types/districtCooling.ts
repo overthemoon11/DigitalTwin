@@ -66,6 +66,7 @@ export interface DistrictCoolingSimulation {
   simTimeSec: number;
   mode: 'live' | 'fast_forward';
   lastTrigger: string;
+  lastControlId?: string;
   /** Latest physics snapshot shown after each simulation step */
   lastOutput?: SimulationOutputSnapshot;
 }

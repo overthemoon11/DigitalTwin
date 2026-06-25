@@ -1,11 +1,11 @@
 import React from 'react';
 
 /**
- * Top-level plant asset buttons — switch middle viewer and right-panel controls.
+ * Plant scenario buttons — horizontal scroll row in the left sidebar.
  */
-function PlantScenarioSwitcher({ activeScenario, onSelect }) {
+function PlantScenarioSwitcher({ activeScenario, onSelect, horizontal = false }) {
   return (
-    <div className="plant-scenario-switcher">
+    <div className={`plant-scenario-switcher${horizontal ? ' plant-scenario-switcher--scroll' : ''}`}>
       <button
         type="button"
         className={`plant-scenario-btn plant-scenario-btn--chiller ${activeScenario === 'chiller' ? 'active' : ''}`}

@@ -96,6 +96,17 @@ export interface EtsSimulation {
   timeProgram: 'Occupied' | 'Unoccupied';
   lastTrigger: string;
   scenarioId?: string;
+  lastControlId?: string;
+  cascadeTrace?: string[];
+  lastOutput?: {
+    buildingLoadRt?: number;
+    primaryDeltaT?: number;
+    secondaryDeltaT?: number;
+    approachC?: number;
+    effectiveness?: number;
+    pumpKwPerRt?: number;
+    deltaT?: number;
+  };
 }
 
 export interface EtsEquipment {

@@ -24,6 +24,7 @@ import {
   pumpHeadFromSpeed,
   solveEtsThermoHydraulics,
 } from '../../../frontend/src/services/etsPhysics.js';
+import { buildEtsCascadeTrace } from '../../../frontend/src/services/etsCascade.js';
 
 const approx = (a, b, tol, msg) =>
   assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} (tol ${tol})`);
@@ -101,4 +102,45 @@ test('higher load stages more pumps and widens approach', () => {
   assert.ok(high.pumpsRunning >= low.pumpsRunning, 'more pumps at higher load');
   assert.ok(high.approachC >= low.approachC, 'wider approach at higher load');
   assert.ok(high.pumpPowerKwTotal > low.pumpPowerKwTotal, 'more pump power at higher load');
+});
+
+test('ETS cascade trace documents the causal chain', () => {
+  const s = solveEtsThermoHydraulics({ demandRt: 466 });
+  const trace = buildEtsCascadeTrace({
+    trigger: 'Operator set Building Cooling Load: 400 → 466 RT',
+    baseLoadRt: 466,
+    ambient: 35.4,
+    occupied: true,
+    targetLoadRt: 466,
+    demandRt: s.demandRt,
+    coolingKw: s.coolingKw,
+    chwsSp: 7.5,
+    chwsC: s.chwsC,
+    chwrC: s.chwrC,
+    secDeltaT: s.secDeltaT,
+    secFlowM3h: s.secFlowM3h,
+    dpSp: 100,
+    headerDpKpa: s.headerDpKpa,
+    pumpsRunning: s.pumpsRunning,
+    pumpSpeedPct: s.pumpSpeedPct,
+    pumpPowerKwTotal: s.pumpPowerKwTotal,
+    pumpKwPerRt: s.pumpKwPerRt,
+    hxInService: 2,
+    loadFrac: s.loadFrac,
+    approachC: s.approachC,
+    effectiveness: s.effectiveness,
+    lmtdC: s.lmtdC,
+    dcsSupplyC: s.dcsSupplyC,
+    dcrC: s.dcrC,
+    priDeltaT: s.priDeltaT,
+    priFlowM3h: s.priFlowM3h,
+    chwrtSp: 15,
+    ltBypassPct: s.ltBypassPct,
+    ltBypassFlowM3h: s.ltBypassFlowM3h,
+    alertCount: 0,
+  });
+  assert.ok(trace.length >= 7, 'cascade has load → secondary → pumps → HX → primary steps');
+  assert.ok(trace[0].startsWith('▶'), 'first step is the trigger');
+  assert.ok(trace.some((l) => l.includes('FLOW-VSD')), 'includes pump staging');
+  assert.ok(trace.some((l) => l.includes('Plate HX')), 'includes heat exchanger');
 });
