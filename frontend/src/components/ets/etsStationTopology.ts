@@ -258,9 +258,20 @@ export function etsPipes(): EtsPipePath[] {
   return p;
 }
 
+export function focusEtsViewport(
+  b: { x: number; y: number; w: number; h: number },
+  padding = 48
+): { x: number; y: number; w: number; h: number } {
+  const x = Math.max(0, b.x - padding);
+  const y = Math.max(0, b.y - padding);
+  const w = Math.min(STATION_W - x, b.w + padding * 2);
+  const h = Math.min(STATION_H - y, b.h + padding * 2);
+  return { x, y, w, h };
+}
+
 export function boundsForEtsAsset(id: string): { x: number; y: number; w: number; h: number } | null {
   const hx = POS.hx.find((h) => h.id === id);
-  if (hx) return { x: hx.x, y: hx.y, w: hx.w, h: hx.h };
+  if (hx) return { x: hx.x - 8, y: hx.y, w: hx.w + 16, h: hx.h + 52 };
   const pIdx = POS.pumps.findIndex((pp) => pp.id === id);
   if (pIdx >= 0) {
     const iconW = 60;
@@ -274,9 +285,33 @@ export function boundsForEtsAsset(id: string): { x: number; y: number; w: number
     };
   }
   const hxv = POS.hxValves.find((v) => v.id === id);
-  if (hxv) return { x: hxv.x - 16, y: hxv.y - 14, w: 32, h: 28 };
+  if (hxv) return { x: hxv.x - 44, y: hxv.y - 16, w: 88, h: 56 };
+  if (id === 'lt-bypass') {
+    const v = POS.ltBypassValveIcon;
+    return { x: v.x - 40, y: v.y - 16, w: 80, h: 56 };
+  }
+  if (id === 'minflow-bypass') {
+    const v = POS.minFlowBypass;
+    return { x: v.x - 40, y: v.y - 16, w: 80, h: 56 };
+  }
+  if (id === 'lt-bypass-flow') {
+    const f = POS.ltBypassFlowMeter;
+    return { x: f.x - 36, y: f.y - 40, w: 72, h: 88 };
+  }
+  if (id === 'flow-chwr') {
+    const f = POS.returnFlowMeter;
+    return { x: f.x - 40, y: f.y - 36, w: 120, h: 52 };
+  }
+  if (id === 'fetnk-a-04-01') {
+    const t = POS.fetnk;
+    return { x: t.x, y: t.y, w: t.w + 96, h: t.h + 36 };
+  }
+  if (id === 'side-stream-vessel') {
+    const ss = POS.sideStreamVessel;
+    return { x: ss.x - 30, y: ss.y, w: ss.w + 140, h: ss.h + 36 };
+  }
   const cyc = POS.cycSpPumps.find((c) => c.id === id);
-  if (cyc) return { x: cyc.x - 16, y: cyc.y - 16, w: 32, h: 32 };
+  if (cyc) return { x: cyc.x - 30, y: cyc.y - 26, w: 60, h: 78 };
   if (id === 'meter-cws-a-b03-01') return POS.tables.energy;
   if (id === 'asm') return POS.asm;
   return null;

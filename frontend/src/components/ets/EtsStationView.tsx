@@ -145,17 +145,43 @@ function ScadaInlineFlowMeter({
   );
 }
 
-function LtBypassFlowMeter({ x, y, m3h }: { x: number; y: number; m3h: string }) {
-  return <ScadaInlineFlowMeter x={x} y={y} tag="LT Bypass Flow" m3h={m3h} orient="vertical" tagWidth={62} />;
+function LtBypassFlowMeter({ x, y, m3h, onSelect }: { x: number; y: number; m3h: string; onSelect: (id: string) => void }) {
+  return (
+    <ScadaInlineFlowMeter
+      x={x}
+      y={y}
+      tag="LT Bypass Flow"
+      m3h={m3h}
+      orient="vertical"
+      tagWidth={62}
+      onClick={() => onSelect('lt-bypass-flow')}
+    />
+  );
 }
 
-function CycSpPump({ x, y, label, on }: { x: number; y: number; label: string; on: boolean }) {
+function CycSpPump({
+  id,
+  x,
+  y,
+  name,
+  on,
+  selected,
+  onSelect,
+}: {
+  id: string;
+  x: number;
+  y: number;
+  name: string;
+  on: boolean;
+  selected: boolean;
+  onSelect: (id: string) => void;
+}) {
   const col = on ? SCADA.running : SCADA.stopped;
   const px = x - 30;
   const py = y - 26;
   return (
-    <g className="plant-equip scada-pump" pointerEvents="none">
-      <rect x={px} y={py} width={60} height={52} fill={SCADA.faceplate} stroke={SCADA.faceplateBorder} rx={3} />
+    <g className="plant-equip scada-pump" onClick={() => onSelect(id)} style={{ cursor: 'pointer' }}>
+      <rect x={px} y={py} width={60} height={52} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1} rx={3} />
       <circle cx={x} cy={y} r={14} fill="#f1f5f9" stroke={col} strokeWidth={2} />
       <g transform={`translate(${x}, ${y})`}>
         <g>
@@ -164,7 +190,7 @@ function CycSpPump({ x, y, label, on }: { x: number; y: number; label: string; o
         </g>
       </g>
       <EquipLabel iconX={px} iconY={py} iconW={60} iconH={52} plateW={88} lines={[
-        { text: label, variant: 'tag' },
+        { text: name, variant: 'tag' },
         { text: on ? 'On' : 'Off', variant: 'pv' },
       ]} />
     </g>
@@ -173,7 +199,7 @@ function CycSpPump({ x, y, label, on }: { x: number; y: number; label: string; o
 
 export default function EtsStationView({ state, selectedId, onSelect }: Props) {
   const { svgRef, viewBox, fitAll, handleWheel, handlePointerDown, handlePointerMove, handlePointerUp, zoomStep } =
-    useStationViewport(STATION_W, STATION_H);
+    useStationViewport(STATION_W, STATION_H, selectedId);
   const [showPanels, setShowPanels] = useState(false);
 
   const h = state.headers;
@@ -237,7 +263,7 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
         <button type="button" onClick={clearSelection} title="Fit full schematic">⊡</button>
       </div>
       <p className="scada-viewport-hint">
-        Scroll to zoom · drag background to pan · click equipment to focus · ETS {state.station} · {state.simulation.controlMode}
+        Scroll to zoom · drag background to pan · click equipment to focus · click again to unfocus · ETS {state.station}
       </p>
 
       <svg
@@ -324,6 +350,10 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
             width={SENSOR_TAG_W}
           />
         ))}
+        <g className="scada-header-dp-tap" pointerEvents="none">
+          <line x1={POS.dpGauge.x - 11} y1={POS.dpGauge.y - 6} x2={POS.dpGauge.x - 11} y2={BOT_SUPPLY_Y} stroke="#94a3b8" strokeWidth={1.25} />
+          <line x1={POS.dpGauge.x + 11} y1={POS.dpGauge.y + 6} x2={POS.dpGauge.x + 11} y2={RETURN_Y} stroke="#94a3b8" strokeWidth={1.25} />
+        </g>
         <ScadaTag x={POS.dpGauge.x - 40} y={POS.dpGauge.y - 22} tag="DP" pv={h.headerDpKpa.toFixed(1)} unit="kPa" width={72} />
         <text x={POS.dpGauge.x} y={POS.dpGauge.y + 20} textAnchor="middle" fill={SCADA.textMuted} fontSize={6.5} pointerEvents="none">Header DP</text>
 
@@ -341,7 +371,7 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
         {/* LT bypass risers */}
         <EtsScadaValve id="lt-bypass" name="LT Bypass Valve" x={POS.ltBypassValveIcon.x} y={POS.ltBypassValveIcon.y}
           pct={ltv?.positionPct ?? 0} status={ltv?.status ?? 'running'} selected={selectedId === 'lt-bypass'} onSelect={onSelect} orient="vertical" labelSide="below" plateW={75} />
-        <LtBypassFlowMeter x={POS.ltBypassFlowMeter.x} y={POS.ltBypassFlowMeter.y} m3h={h.ltBypassFlowM3h.toFixed(1)} />
+        <LtBypassFlowMeter x={POS.ltBypassFlowMeter.x} y={POS.ltBypassFlowMeter.y} m3h={h.ltBypassFlowM3h.toFixed(1)} onSelect={onSelect} />
 
         <ExpansionTank equipment={fetnk} x={POS.fetnk.x} y={POS.fetnk.y} selected={selectedId === fetnk.id} onSelect={onSelect} />
 
@@ -361,7 +391,25 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
         />
 
         {/* Side-stream vessel — vertical 2.5D separator */}
-        <SideStreamVessel
+        <g
+          className="plant-equip"
+          onClick={() => onSelect('side-stream-vessel')}
+          style={{ cursor: 'pointer' }}
+        >
+          {selectedId === 'side-stream-vessel' && (
+            <rect
+              x={POS.sideStreamVessel.x - 4}
+              y={POS.sideStreamVessel.y - 4}
+              width={POS.sideStreamVessel.w + 8}
+              height={POS.sideStreamVessel.h + 28}
+              fill="none"
+              stroke={SCADA.selected}
+              strokeWidth={2}
+              rx={4}
+              pointerEvents="none"
+            />
+          )}
+          <SideStreamVessel
           x={POS.sideStreamVessel.x}
           y={POS.sideStreamVessel.y}
           w={POS.sideStreamVessel.w}
@@ -369,9 +417,19 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
           topPortY={POS.cycSpPumps[0].y}
           bottomPortY={POS.cycSpPumps[1].y}
           returnPortY={Math.round((POS.cycSpPumps[0].y + POS.cycSpPumps[1].y) / 2)}
-        />
+          />
+        </g>
         {POS.cycSpPumps.map((c, i) => (
-          <CycSpPump key={c.id} x={c.x} y={c.y} label={`CycSP-0${i + 1}`} on={i === 1} />
+          <CycSpPump
+            key={c.id}
+            id={c.id}
+            x={c.x}
+            y={c.y}
+            name={`CycSP-A-B03-0${i + 1}`}
+            on={i === 1}
+            selected={selectedId === c.id}
+            onSelect={onSelect}
+          />
         ))}
 
         {/* Primary spine labels */}

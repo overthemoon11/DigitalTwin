@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { boundsForEtsAsset, focusEtsViewport } from './etsStationTopology';
 
 export interface ViewBox { x: number; y: number; w: number; h: number }
 
 /** Generic pan/zoom viewport for an SVG schematic of fixed canvas size. */
-export function useStationViewport(canvasW: number, canvasH: number) {
+export function useStationViewport(canvasW: number, canvasH: number, selectedId: string | null = null) {
   const full: ViewBox = { x: 0, y: 0, w: canvasW, h: canvasH };
   const [view, setView] = useState<ViewBox>(full);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -12,6 +13,15 @@ export function useStationViewport(canvasW: number, canvasH: number) {
   useEffect(() => {
     setView({ x: 0, y: 0, w: canvasW, h: canvasH });
   }, [canvasW, canvasH]);
+
+  useEffect(() => {
+    if (!selectedId) {
+      setView({ x: 0, y: 0, w: canvasW, h: canvasH });
+      return;
+    }
+    const bounds = boundsForEtsAsset(selectedId);
+    if (bounds) setView(focusEtsViewport(bounds));
+  }, [selectedId, canvasW, canvasH]);
 
   const clamp = useCallback((v: ViewBox): ViewBox => {
     const w = Math.max(220, Math.min(canvasW, v.w));

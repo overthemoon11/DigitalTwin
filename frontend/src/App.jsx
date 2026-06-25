@@ -6,6 +6,7 @@ import PlantAssetTree from './components/PlantAssetTree';
 import HeatExchangeAssetTree from './components/heatexchange/HeatExchangeAssetTree';
 import HeatExchangeViewer from './components/heatexchange/HeatExchangeViewer';
 import EtsStationView from './components/ets/EtsStationView';
+import EtsAssetTree from './components/ets/EtsAssetTree';
 import EtsControlPanel from './components/ets/EtsControlPanel';
 import PlantScenarioSwitcher from './components/PlantScenarioSwitcher';
 import ControlPanel from './components/ControlPanel';
@@ -150,7 +151,7 @@ function App() {
                 onSelectAsset={selectAsset}
               />
             ) : isEtsScenario ? (
-              <HeatExchangeAssetTree
+              <EtsAssetTree
                 equipment={etsState?.equipment || {}}
                 selectedAsset={selectedAsset}
                 onSelectAsset={selectAsset}

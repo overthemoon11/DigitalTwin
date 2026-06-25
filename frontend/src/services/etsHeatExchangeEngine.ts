@@ -237,6 +237,21 @@ function runStep(): EtsState {
   valves.forEach((v) => {
     equipment[v.id] = { id: v.id, name: v.name, type: 'valve', category: 'Valves', status: v.status };
   });
+  equipment.asm = { id: 'asm', name: 'ASM Building Load', type: 'building', category: 'Building', status: 'running' };
+  equipment['fetnk-a-04-01'] = { id: 'fetnk-a-04-01', name: 'FETnk-A-04-01', type: 'expansion_tank', category: 'Hydronic', status: 'running' };
+  equipment['lt-bypass-flow'] = { id: 'lt-bypass-flow', name: 'LT Bypass Flow', type: 'flow_meter', category: 'Instrumentation', status: 'running' };
+  equipment['flow-chwr'] = { id: 'flow-chwr', name: 'CHWR Flow', type: 'flow_meter', category: 'Instrumentation', status: 'running' };
+  equipment['side-stream-vessel'] = { id: 'side-stream-vessel', name: 'Side-Stream Vessel', type: 'vessel', category: 'Side-Stream / CycSP', status: 'running' };
+  [1, 2].forEach((n) => {
+    const id = `cycsp-a-b03-0${n}`;
+    equipment[id] = {
+      id,
+      name: `CycSP-A-B03-0${n}`,
+      type: 'pump',
+      category: 'Side-Stream / CycSP',
+      status: n === 2 ? 'running' : 'stopped',
+    };
+  });
   equipment['meter-cws-a-b03-01'] = { id: 'meter-cws-a-b03-01', name: 'CWS-A-B03-01 Energy Meter', type: 'meter', category: 'Metering', status: 'running' };
 
   // --- Recommended actions ---------------------------------------------
