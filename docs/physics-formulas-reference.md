@@ -109,6 +109,7 @@ documented with references but cannot be numerically checked here.
   - **Approach** (cold-end, the key ETS commissioning metric): `T_approach = T_chws − T_dcs` (secondary supply minus primary supply). The MBS screen shows 7.5 − 6.0 = **1.5 °C**.
 - **Source:** ASHRAE *Fundamentals* Ch. 4 (Heat Transfer — LMTD & effectiveness-NTU); Kays & London, *Compact Heat Exchangers*; ASHRAE *Systems & Equipment* Ch. 13 (Hydronic) & Ch. 48 (district/ETS interfaces). The `ε`-NTU relations are the standard Kays & London counter-flow forms.
 - **Validation:** the **energy-balance** form is the same `Q=ṁcₚΔT` confirmed in §2.1/§2.3 against the M&V data; LMTD/effectiveness-NTU are the recognized *design method* (not a free parameter to fit). The engine's baseline (466 RT → 1638 kW, approach 1.5 °C, primary flow ≈ 157 m³/h) reproduces the screenshot and is asserted by [tests/validation/ets/ets-physics.test.mjs](../tests/validation/ets/ets-physics.test.mjs).
+- **Operator guide:** controllable parameters, causality tables, and schematic tag mapping — [ets-controls-and-physics.md](ets-controls-and-physics.md).
 
 ---
 

@@ -30,6 +30,7 @@ import {
   resetEts as resetEtsEngine,
   stepEts,
   advanceEts as advanceEtsEngine,
+  applyEtsScenario as applyEtsScenarioEngine,
 } from '../services/etsHeatExchangeEngine';
 
 const API_BASE = '/api';
@@ -104,6 +105,10 @@ export const useTwinStore = create((set, get) => ({
   advanceEts: (seconds = 30) => {
     const steps = Math.max(1, Math.floor(seconds / 2));
     set({ etsState: advanceEtsEngine(steps) });
+  },
+
+  applyEtsScenario: (scenarioId) => {
+    set({ etsState: applyEtsScenarioEngine(scenarioId) });
   },
 
   resetEts: () => {

@@ -7,6 +7,7 @@ import HeatExchangeAssetTree from './components/heatexchange/HeatExchangeAssetTr
 import HeatExchangeViewer from './components/heatexchange/HeatExchangeViewer';
 import EtsStationView from './components/ets/EtsStationView';
 import EtsAssetTree from './components/ets/EtsAssetTree';
+import EtsKPIPanel from './components/ets/EtsKPIPanel';
 import EtsControlPanel from './components/ets/EtsControlPanel';
 import PlantScenarioSwitcher from './components/PlantScenarioSwitcher';
 import ControlPanel from './components/ControlPanel';
@@ -38,6 +39,7 @@ function App() {
     resetDistrictCooling,
     updateEtsControl,
     advanceEts,
+    applyEtsScenario,
     resetEts,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
@@ -253,8 +255,12 @@ function App() {
                 <EtsControlPanel
                   controls={etsState?.controls || []}
                   headers={etsState?.headers}
+                  valves={etsState?.valves}
+                  meter={etsState?.meter}
+                  simulation={etsState?.simulation}
                   onUpdate={updateEtsControl}
                   onRunSimulation={() => advanceEts(30)}
+                  onApplyScenario={applyEtsScenario}
                   onReset={resetEts}
                 />
               )}
@@ -269,7 +275,11 @@ function App() {
                   compact
                 />
               )}
-              {activePanel === 'kpis' && <KPIPanel kpis={scenarioKpis} />}
+              {activePanel === 'kpis' && (isEtsScenario ? (
+                <EtsKPIPanel kpis={scenarioKpis} />
+              ) : (
+                <KPIPanel kpis={scenarioKpis} />
+              ))}
               {activePanel === 'alerts' && (
                 <AlertPanel
                   alerts={scenarioAlerts}

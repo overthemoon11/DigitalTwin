@@ -95,6 +95,7 @@ export interface EtsSimulation {
   controlMode: string;
   timeProgram: 'Occupied' | 'Unoccupied';
   lastTrigger: string;
+  scenarioId?: string;
 }
 
 export interface EtsEquipment {

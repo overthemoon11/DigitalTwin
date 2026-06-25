@@ -23,6 +23,7 @@ import type {
   EtsValve,
 } from '../types/ets';
 import { MBS, clamp, round, solveEtsThermoHydraulics } from './etsPhysics.js';
+import { getEtsScenarioById } from './etsScenarios.js';
 
 const SIM_DT_SEC = 2;
 
@@ -182,20 +183,34 @@ function runStep(): EtsState {
     kwhCumulative: round(kwhCumulative, 0),
   };
 
-  // --- KPIs -------------------------------------------------------------
+  // --- KPIs (on-prem ETS — Jangsten et al. 2022 DC substation PI set) ----
+  const returnApproachC = round(s.chwrC - s.dcrC, 2); // Dt2
+  const hxCopDc = s.chwrC > 0 ? round(s.dcrC / s.chwrC, 2) : 0; // HXCOPDC
+  const flowRatio = s.secFlowM3h > 0 ? round(s.priFlowM3h / s.secFlowM3h, 2) : 0;
+  const totalInstalledRt = MBS.HX_RATED_TONS.reduce((a, b) => a + b, 0);
+  const capacityUtilPct = round(s.loadFrac * 100, 0);
+
   const kpis: PlantKpi[] = [
-    { id: 'ets-kpi-load', name: 'Cooling Load', value: s.demandRt, unit: 'RT', category: 'operational', status: 'normal', target: baseLoadRt, trend: 'stable' },
-    { id: 'ets-kpi-kw', name: 'Thermal Power', value: s.coolingKw, unit: 'kW', category: 'energy', status: 'normal', target: 1638, trend: 'stable' },
-    { id: 'ets-kpi-approach', name: 'HX Approach', value: s.approachC, unit: '°C', category: 'operational', status: s.approachC > 2.5 ? 'warning' : 'normal', target: 1.5, trend: 'stable' },
-    { id: 'ets-kpi-eff', name: 'HX Effectiveness', value: round(s.effectiveness * 100, 1), unit: '%', category: 'operational', status: s.effectiveness < 0.85 ? 'warning' : 'normal', target: 95, trend: 'stable' },
+    { id: 'ets-kpi-load', name: 'Cooling load', value: s.demandRt, unit: 'RT', category: 'operational', status: 'normal', target: baseLoadRt, trend: 'stable' },
+    { id: 'ets-kpi-capacity', name: 'Capacity', value: capacityUtilPct, unit: '%', category: 'operational', status: s.loadFrac > 1 ? 'warning' : 'normal', target: round((MBS.REF_LOAD_RT / totalInstalledRt) * 100, 0), trend: 'stable' },
+    { id: 'ets-kpi-kw', name: 'Thermal duty', value: s.coolingKw, unit: 'kW', category: 'energy', status: 'normal', target: 1638, trend: 'stable' },
+    { id: 'ets-kpi-approach', name: 'Dt1 approach', value: s.approachC, unit: '°C', category: 'operational', status: s.approachC > 2.5 ? 'warning' : 'normal', target: 1.5, trend: 'stable' },
+    { id: 'ets-kpi-return-approach', name: 'Dt2 approach', value: returnApproachC, unit: '°C', category: 'operational', status: returnApproachC > 2 ? 'warning' : 'normal', target: MBS.DESIGN_HOT_PINCH_C, trend: 'stable' },
+    { id: 'ets-kpi-eff', name: 'Effectiveness ε', value: round(s.effectiveness * 100, 1), unit: '%', category: 'operational', status: s.effectiveness < 0.85 ? 'warning' : 'normal', target: 95, trend: 'stable' },
+    { id: 'ets-kpi-hxcop', name: 'HXCOPDC', value: hxCopDc, unit: '', category: 'operational', status: hxCopDc > 0 && hxCopDc < 0.78 ? 'warning' : 'normal', target: 0.83, trend: 'stable' },
     { id: 'ets-kpi-chws', name: 'CHWS / CHWR', value: `${s.chwsC}/${s.chwrC}`, unit: '°C', category: 'comfort', status: 'normal', target: '7.5/15.1', trend: 'stable' },
-    { id: 'ets-kpi-pri-dt', name: 'Primary ΔT', value: s.priDeltaT, unit: '°C', category: 'operational', status: 'normal', target: 9, trend: 'stable' },
+    { id: 'ets-kpi-dcs', name: 'DCS / DCR', value: `${s.dcsSupplyC}/${s.dcrC}`, unit: '°C', category: 'comfort', status: 'normal', target: '6.0/14.8', trend: 'stable' },
+    { id: 'ets-kpi-pri-dt', name: 'Primary ΔT', value: s.priDeltaT, unit: '°C', category: 'operational', status: s.priDeltaT < 7 ? 'warning' : 'normal', target: 9, trend: 'stable' },
     { id: 'ets-kpi-sec-dt', name: 'Secondary ΔT', value: s.secDeltaT, unit: '°C', category: 'operational', status: s.secDeltaT < 5 ? 'warning' : 'normal', target: 7.6, trend: 'stable' },
-    { id: 'ets-kpi-flow', name: 'CHWR Flow', value: s.priFlowM3h, unit: 'm³/h', category: 'operational', status: 'normal', target: 157, trend: 'stable' },
+    { id: 'ets-kpi-pri-flow', name: 'Primary flow', value: s.priFlowM3h, unit: 'm³/h', category: 'operational', status: 'normal', target: 157.5, trend: 'stable' },
+    { id: 'ets-kpi-sec-flow', name: 'Secondary flow', value: s.secFlowM3h, unit: 'm³/h', category: 'operational', status: 'normal', target: 185, trend: 'stable' },
+    { id: 'ets-kpi-flow-ratio', name: 'Flow ratio', value: flowRatio, unit: '', category: 'operational', status: flowRatio > 1.1 || (flowRatio > 0 && flowRatio < 0.9) ? 'warning' : 'normal', target: 1.0, trend: 'stable' },
+    { id: 'ets-kpi-lt-bypass', name: 'LT bypass', value: s.ltBypassPct, unit: '%', category: 'operational', status: s.ltBypassPct > 60 ? 'warning' : 'normal', target: 40, trend: 'stable' },
+    { id: 'ets-kpi-lt-flow', name: 'LT bypass flow', value: s.ltBypassFlowM3h, unit: 'm³/h', category: 'operational', status: 'normal', target: 27, trend: 'stable' },
     { id: 'ets-kpi-dp', name: 'Header DP', value: s.headerDpKpa, unit: 'kPa', category: 'operational', status: 'normal', target: dpSp, trend: 'stable' },
-    { id: 'ets-kpi-pumpkw', name: 'Pump Power', value: s.pumpPowerKwTotal, unit: 'kW', category: 'energy', status: 'normal', target: 32, trend: 'stable' },
-    { id: 'ets-kpi-pumpeff', name: 'Pump Efficiency', value: s.pumpKwPerRt, unit: 'kW/RT', category: 'energy', status: s.pumpKwPerRt > 0.12 ? 'warning' : 'normal', target: 0.07, trend: 'stable' },
-    { id: 'ets-kpi-stage', name: 'Pumps Running', value: `${s.pumpsRunning}/${MBS.PUMP_COUNT}`, unit: '', category: 'operational', status: 'normal', target: '2/3', trend: 'stable' },
+    { id: 'ets-kpi-pumpkw', name: 'Pump power', value: s.pumpPowerKwTotal, unit: 'kW', category: 'energy', status: 'normal', target: 32, trend: 'stable' },
+    { id: 'ets-kpi-pumpeff', name: 'Pump kW/RT', value: s.pumpKwPerRt, unit: 'kW/RT', category: 'energy', status: s.pumpKwPerRt > 0.12 ? 'warning' : 'normal', target: 0.07, trend: 'stable' },
+    { id: 'ets-kpi-stage', name: 'Pumps online', value: `${s.pumpsRunning}/${MBS.PUMP_COUNT}`, unit: '', category: 'operational', status: 'normal', target: '2/3', trend: 'stable' },
   ];
 
   // --- Alerts -----------------------------------------------------------
@@ -308,7 +323,51 @@ export function advanceEts(steps = 15): EtsState {
   let state = runStep();
   for (let i = 1; i < steps; i++) state = runStep();
   lastTrigger = `Simulation output — ${state.headers.coolingDemandRt} RT · approach ${state.headers.approachC}°C · ${state.simulation.stage} pump(s) (${steps * SIM_DT_SEC}s virtual)`;
-  return { ...state, simulation: { ...state.simulation, lastTrigger } };
+  return { ...state, simulation: { ...state.simulation, lastTrigger, mode: 'fast_forward' } };
+}
+
+function snapLoadLag(): void {
+  const baseLoadRt = getControl('ets-load');
+  const occupied = getControl('ets-occupied') >= 1;
+  const ambient = getControl('ets-ambient');
+  const weatherFactor = 1 + (ambient - 32) * 0.012;
+  const occFactor = occupied ? 1 : 0.55;
+  lagLoadRt = clamp(baseLoadRt * weatherFactor * occFactor, 80, 1150);
+}
+
+/** Apply a preset scenario: set controls, snap load lag, then fast-forward virtual time. */
+export function applyEtsScenario(scenarioId: string): EtsState {
+  const scenario = getEtsScenarioById(scenarioId);
+  if (!scenario) return stepEts();
+
+  if (scenario.reset) {
+    resetEts();
+  } else if (scenario.controls) {
+    for (const [id, value] of Object.entries(scenario.controls)) {
+      if (controls.some((c) => c.id === id)) {
+        controls = controls.map((c) => (c.id === id ? { ...c, value } : c));
+      }
+    }
+  }
+
+  snapLoadLag();
+
+  const advanceSec = scenario.advanceSec ?? 0;
+  const steps = advanceSec > 0 ? Math.max(1, Math.floor(advanceSec / SIM_DT_SEC)) : 1;
+
+  let state = runStep();
+  for (let i = 1; i < steps; i++) state = runStep();
+
+  lastTrigger = `Scenario «${scenario.label}» — ${state.headers.coolingDemandRt} RT · approach ${state.headers.approachC}°C · ${state.simulation.stage} pump(s)`;
+  return {
+    ...state,
+    simulation: {
+      ...state.simulation,
+      mode: advanceSec > 0 ? 'fast_forward' : 'live',
+      lastTrigger,
+      scenarioId: scenario.id,
+    },
+  };
 }
 
 export function resetEts(): void {
