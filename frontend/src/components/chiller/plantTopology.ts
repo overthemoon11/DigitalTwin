@@ -38,8 +38,8 @@ export const PIPE = {
 } as const;
 
 export const ZONE = {
-  TOWERS: { x: 8, y: 34, w: 632, h: 128, titleY: 50 },
-  MAKEUP: { x: 648, y: 34, w: 404, h: 128, titleY: 50 },
+  TOWERS: { x: 8, y: 34, w: 580, h: 128, titleY: 50 },
+  MAKEUP: { x: 620, y: 34, w: 435, h: 128, titleY: 50 },
   CHILLERS: { x: 8, y: 245, w: 1044, h: 240, titleY: 263 },
   CHW_LOOP: { y: 495, h: 342, titleY: 560 },
 } as const;

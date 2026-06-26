@@ -4,7 +4,6 @@ import { CoolingTower } from './CoolingTower';
 import { Pump } from './Pump';
 import { Valve } from './Valve';
 import { ExpansionTank } from './ExpansionTank';
-import { HeaderPipe } from './HeaderPipe';
 import { ScadaPipe } from './ScadaPipe';
 import { ScadaLegend } from './ScadaLegend';
 import { ScadaZonePanel, ScadaZoneTitle } from './ScadaZone';
@@ -20,8 +19,6 @@ import {
   CHWP_Y,
   STANDBY_CHWP_X,
   STANDBY_CWP_X,
-  CHWS_TAG,
-  CHWR_TAG,
   CH_X,
   CH_Y,
   CT_X,
@@ -216,10 +213,10 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
         })}
 
         {get('cwmup-1') && (
-          <Pump equipment={get('cwmup-1')!} x={MAKEUP_PUMP_X[0]} y={MAKEUP_PUMP_Y} compact labelW={58} labelSide="below" selected={selectedId === 'cwmup-1'} onSelect={(id) => onSelect(id)} />
+          <Pump equipment={get('cwmup-1')!} x={MAKEUP_PUMP_X[0]} y={MAKEUP_PUMP_Y} compact labelW={58} labelSide="right" selected={selectedId === 'cwmup-1'} onSelect={(id) => onSelect(id)} />
         )}
         {get('cwmup-2') && (
-          <Pump equipment={get('cwmup-2')!} x={MAKEUP_PUMP_X[1]} y={MAKEUP_PUMP_Y} compact labelW={58} labelSide="below" selected={selectedId === 'cwmup-2'} onSelect={(id) => onSelect(id)} />
+          <Pump equipment={get('cwmup-2')!} x={MAKEUP_PUMP_X[1]} y={MAKEUP_PUMP_Y} compact labelW={58} labelSide="right" selected={selectedId === 'cwmup-2'} onSelect={(id) => onSelect(id)} />
         )}
 
         {tank && (
@@ -240,7 +237,7 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
               iconW={MAKEUP_TANK.w}
               iconH={MAKEUP_TANK.h}
               plateW={74}
-              side="below"
+              side="right"
               lines={[
                 { text: tank.name, variant: 'tag' },
                 { text: `${tank.levelPercent.toFixed(0)} %`, variant: 'pv' },
@@ -277,9 +274,6 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
         {get('cwp-29-4') && (
           <Pump equipment={get('cwp-29-4')!} x={STANDBY_CWP_X} y={CWP_Y} mini labelW={54} labelSide="below" selected={selectedId === 'cwp-29-4'} onSelect={onSelect} />
         )}
-
-        <HeaderPipe x={CHWS_TAG.x} y={CHWS_TAG.y} label="CHWS Header" tagId="CHWS_HDR" temp={h.chws} loop="chws" pipeY={PIPE.CHWS} />
-        <HeaderPipe x={CHWR_TAG.x} y={CHWR_TAG.y} label="CHWR Header" tagId="CHWR_HDR" temp={h.chwr} loop="chwr" pipeY={PIPE.CHWR} />
 
         <RiseBox
           id="m-rise"
