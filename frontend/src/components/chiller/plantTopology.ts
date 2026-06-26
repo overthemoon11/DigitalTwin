@@ -41,7 +41,7 @@ export const ZONE = {
   TOWERS: { x: 8, y: 34, w: 580, h: 128, titleY: 50 },
   MAKEUP: { x: 620, y: 34, w: 435, h: 128, titleY: 50 },
   CHILLERS: { x: 8, y: 245, w: 1044, h: 240, titleY: 263 },
-  CHW_LOOP: { y: 495, h: 342, titleY: 560 },
+  CHW_LOOP: { y: 495, h: 300, titleY: 560 },
 } as const;
 
 export const pumpCx = (x: number, w = PUMP_DIM.CHWP.w) => x + w / 2;
