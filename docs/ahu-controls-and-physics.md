@@ -94,86 +94,107 @@ These are **expert-standard** relations implemented in code.
 
 **Imperial (ASHRAE standard air):**
 
-\[
-\dot{Q}_\text{sensible}\;[\text{Btu/h}] = \dot{V}\;[\text{CFM}] \times 1.08 \times \Delta T\;[°F]
-\]
 
-Constant **1.08** = \(\rho \times c_p \times 60 = 0.075\;\text{lb/ft³} \times 0.24\;\text{Btu/(lb·°F)} \times 60\;\text{min/h}\).
+```text
+Q̇_sensible [Btu/h] = V̇ [CFM] × 1.08 × ΔT [°F]
+```
+
+
+Constant **1.08** = `ρ × c_p × 60 = 0.075 lb/ft³ × 0.24 Btu/(lb·°F) × 60 min/h`.
 
 **Metric (code: `coolingKwFromCfm`):**
 
-\[
-\dot{Q}\;[\text{kW}] = 0.0167 \times \text{CFM} \times \Delta T\;[°C]
-\]
 
-where \(\Delta T = T_\text{MAT} - T_\text{SAT}\).
+```text
+Q̇ [kW] = 0.0167 × CFM × ΔT [°C]
+```
+
+
+where `ΔT = T_MAT - T_SAT`.
 
 **Source:** ASHRAE *Fundamentals* (2021) Ch. 1 — Psychrometrics.
 
 ### 3.2 Fan affinity laws
 
-\[
-\frac{Q_2}{Q_1} = \frac{N_2}{N_1}, \qquad
-\frac{H_2}{H_1} = \left(\frac{N_2}{N_1}\right)^2, \qquad
-\frac{P_2}{P_1} = \left(\frac{N_2}{N_1}\right)^3
-\]
 
-Code uses \(P_\text{fan} = P_\text{ref} \times (N/N_\text{ref})^3\) (`fanKwFromSpeed`).
+```text
+(Q_2)/(Q_1) = (N_2)/(N_1); (H_2)/(H_1) = ((N_2)/(N_1))^2; (P_2)/(P_1) = ((N_2)/(N_1))^3
+```
+
+
+Code uses `P_fan = P_ref × (N/N_ref)^3` (`fanKwFromSpeed`).
 
 **Source:** ASHRAE *Fundamentals* Ch. 21 (Fans); Hydraulic Institute affinity laws.
 
 ### 3.3 Mixed air (mixing box)
 
-\[
-T_\text{MAT} = f_\text{OA} \cdot T_\text{OA} + (1 - f_\text{OA}) \cdot T_\text{RA}
-\]
 
-\[
-RH_\text{MAT} \approx f_\text{OA} \cdot RH_\text{OA} + (1 - f_\text{OA}) \cdot RH_\text{RA}
-\]
+```text
+T_MAT = f_OA · T_OA + (1 - f_OA) · T_RA
+```
 
-(Linear RH blend is a simplified surrogate; exact psychrometrics uses humidity ratio \(W\).)
+
+
+```text
+RH_MAT ≈ f_OA · RH_OA + (1 - f_OA) · RH_RA
+```
+
+
+(Linear RH blend is a simplified surrogate; exact psychrometrics uses humidity ratio `W`.)
 
 **Source:** ASHRAE *Fundamentals* Ch. 1 — adiabatic mixing.
 
 ### 3.4 Airflow mass balance
 
-\[
-\dot{V}_\text{OA} = \dot{V}_\text{SA} \times f_\text{OA}
-\]
 
-\[
-\dot{V}_\text{EA} = \max\left(0,\; \dot{V}_\text{SA} - \dot{V}_\text{RA} \times (1 - f_\text{OA})\right)
-\]
+```text
+V̇_OA = V̇_SA × f_OA
+```
+
+
+
+```text
+V̇_EA = max(0, V̇_SA - V̇_RA × (1 - f_OA))
+```
+
 
 **Source:** Steady-state continuity; ASHRAE 62.1 ventilation principles.
 
 ### 3.5 CHW side energy balance
 
-\[
-\dot{Q} = \dot{m}_w \cdot c_p \cdot \Delta T_w
-\]
 
-\[
-T_\text{CHW,leave} = T_\text{CHW,enter} + \frac{\dot{Q}}{\dot{m}_w \cdot c_p}
-\]
+```text
+Q̇ = ṁ_w · c_p · ΔT_w
+```
+
+
+
+```text
+T_CHW,leave = T_CHW,enter + (Q̇)/(ṁ_w · c_p)
+```
+
 
 **Source:** ASHRAE *Fundamentals* Ch. 4 — heat transfer.
 
 ### 3.6 Zone thermal lag (dynamic, 2 s ticks)
 
-\[
-T_\text{RA}(k+1) = T_\text{RA}(k) + \bigl(T_\text{target} - T_\text{RA}(k)\bigr) \times 0.12
-\]
 
-\[
-RH_\text{RA}(k+1) = RH_\text{RA}(k) + \bigl(RH_\text{target} - RH_\text{RA}(k)\bigr) \times 0.10
-\]
+```text
+T_RA(k+1) = T_RA(k) + (T_target - T_RA(k)) × 0.12
+```
 
-\[
-T_\text{target} = T_\text{RA,SP} + 1.2 \times \text{zoneLoad}, \qquad
-RH_\text{target} = RH_\text{RA,SP} + 18 \times \text{zoneLoad}
-\]
+
+
+```text
+RH_RA(k+1) = RH_RA(k) + (RH_target - RH_RA(k)) × 0.10
+```
+
+
+
+```text
+T_target = T_RA,SP + 1.2 × zoneLoad; RH_target = RH_RA,SP + 18 × zoneLoad
+```
+
 
 **Source:** First-order RC model — ASHRAE *Fundamentals* Ch. 7 (Control).
 
@@ -185,15 +206,15 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 
 | Model | Expression | Purpose |
 |-------|------------|---------|
-| OA fraction by mode | Recirc 5%, Min OA 15%, Econ \(\text{clamp}(0.10 + (T_{RA}-T_{OA})/40)\), Heat 12% | Mode logic |
-| Cooling demand | \(\text{clamp}(0.4\, e_T + 0.03\, e_{RH}, 0, 1.35) \times \text{zoneLoad}\) | CHW valve |
-| CHW valve | \(\text{clamp}(18 + 72 \times \text{coolingDemand}, 0, 100)\) % | Coil control |
-| Coil approach | \((T_{MAT} - SAT_{SP}) \times (1 - valve/110)\) | SAT calculation |
+| OA fraction by mode | Recirc 5%, Min OA 15%, Econ `clamp(0.10 + (T_RA-T_OA)/40)`, Heat 12% | Mode logic |
+| Cooling demand | `clamp(0.4 e_T + 0.03 e_RH, 0, 1.35) × zoneLoad` | CHW valve |
+| CHW valve | `clamp(18 + 72 × coolingDemand, 0, 100)` % | Coil control |
+| Coil approach | `(T_MAT - SAT_SP) × (1 - valve/110)` | SAT calculation |
 | SA fan speed | f(SA CFM SP, SP SP, filter, cooling demand) | Affinity input |
-| CFM vs speed | \(CFM = CFM_\text{design} \times (speed/100)^{0.85} \times filterFactor\) | System curve |
-| Static pressure | \(SP \approx SP_{SP} \times (speed/100)^{1.8}\) | Duct pressure |
-| Filter penalty | \(filterFactor = 1 - 0.003 \times loading\%\); \(\Delta P = 50 + 4.5 \times loading\%\) | Filter DP |
-| Damper POS | OA % = \(f_{OA} \times 100 + 5\); RA % = \(100 - OA + 10\) | Faceplate tags |
+| CFM vs speed | `CFM = CFM_design × (speed/100)^(0.85) × filterFactor` | System curve |
+| Static pressure | `SP ≈ SP_SP × (speed/100)^(1.8)` | Duct pressure |
+| Filter penalty | `filterFactor = 1 - 0.003 × loading\%`; `ΔP = 50 + 4.5 × loading\%` | Filter DP |
+| Damper POS | OA % = `f_OA × 100 + 5`; RA % = `100 - OA + 10` | Faceplate tags |
 | HW valve | Heating mode or cold-OAT trim | HW coil |
 
 **BMS baseline (recirculation):** RA 25.1 °C / 74.4 %RH, SA ~2555 CFM, CHW valve ~100%, RA CFM ~1235 CFM.
@@ -208,7 +229,7 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 |------|-------------|----------------|
 | Recirculation | ~5 % | Minimal OA, max recirc, baseline BMS |
 | Minimum OA | ~15 % | More ventilation, cooler MAT in hot weather |
-| Economizer | f(\(T_{RA} - T_{OA}\)) | Free cooling when OAT < RA |
+| Economizer | f(`T_RA - T_OA`) | Free cooling when OAT < RA |
 | Heating | ~12 % OA, HW active | HW valve opens, CHW closes |
 
 **Downstream:** MAT, SAT, OA/RA damper POS, OA/EA CFM, CHW/HW valves.
@@ -219,34 +240,34 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 |----------|-----------|-----------|
 | SAT | ↓ | Approach tied to SP |
 | CHW valve % | ↑ | More cooling needed |
-| Cooling kW | ↑ | Larger \(\Delta T\) across coil |
+| Cooling kW | ↑ | Larger `ΔT` across coil |
 | Comfort | ↑ cooling | Lower supply temp |
 
 ### 5.3 RA Temp Setpoint (`ahu-ra-temp-sp`) ↓
 
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
-| \(e_T = T_{RA} - SP\) | ↑ if RA fixed | Error drives demand |
+| `e_T = T_RA - SP` | ↑ if RA fixed | Error drives demand |
 | CHW valve % | ↑ | coolingDemand term |
 | Fan speed trim | ↑ | fanDemandBoost |
-| Zone lag target | ↓ | \(T_{target} = SP + 1.2 \times load\) |
+| Zone lag target | ↓ | `T_target = SP + 1.2 × load` |
 
 ### 5.4 RA RH Setpoint (`ahu-ra-rh-sp`) ↓
 
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
-| \(e_{RH}\) | ↑ if RA RH fixed | Humidity error |
+| `e_RH` | ↑ if RA RH fixed | Humidity error |
 | CHW valve % | ↑ | Dehumidification demand |
-| Zone lag RH target | ↓ | \(RH_{target} = SP + 18 \times load\) |
+| Zone lag RH target | ↓ | `RH_target = SP + 18 × load` |
 
 ### 5.5 SA Airflow Setpoint (`ahu-sa-cfm-sp`) ↑
 
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
 | SA fan SPD % | ↑ | Speed from SP ratio |
-| SA CFM | ↑ | \(CFM \propto speed^{0.85}\) |
-| Cooling kW | ↑ | More air × same \(\Delta T\) |
-| Fan kW | ↑ | \(P \propto N^3\) |
+| SA CFM | ↑ | `CFM ∝ speed^(0.85)` |
+| Cooling kW | ↑ | More air × same `ΔT` |
+| Fan kW | ↑ | `P ∝ N^3` |
 | Static pressure | ↑ | Speed-pressure correlation |
 
 ### 5.6 RA Airflow Setpoint (`ahu-ra-cfm-sp`) ↑
@@ -263,7 +284,7 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
 | SA fan speed % | ↑ | Higher SP setpoint |
-| Static pressure Pa | ↑ | \(\Delta P \propto speed^{1.8}\) |
+| Static pressure Pa | ↑ | `Δ P ∝ speed^(1.8)` |
 | SA CFM | ↑ | Fan works harder |
 
 ### 5.8 CHW Entering Temp (`ahu-chw-enter`) ↓
@@ -278,7 +299,7 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
-| HW leaving temp | ↑ | \(T_{leave} = T_{enter} - valve \times 8°C\) |
+| HW leaving temp | ↑ | `T_leave = T_enter - valve × 8°C` |
 | SAT in heating | ↑ | HW coil duty |
 
 ### 5.10 SA Fan OFF (`ahu-sa-fan`)
@@ -302,7 +323,7 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
-| Filter ΔP | ↑ | \(50 + 4.5 \times load\) Pa |
+| Filter ΔP | ↑ | `50 + 4.5 × load` Pa |
 | SA / RA CFM | ↓ | filterFactor penalty |
 | Fan speed % | ↑ | Fans compensate for resistance |
 | Fan kW | ↑ | Higher speed for same flow |
@@ -312,8 +333,8 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 
 | Affected | Direction | Mechanism |
 |----------|-----------|-----------|
-| RA temp drift target | ↑ | \(T_{target} = SP + 1.2 \times load\) |
-| RA RH drift target | ↑ | \(RH_{target} = SP + 18 \times load\) |
+| RA temp drift target | ↑ | `T_target = SP + 1.2 × load` |
+| RA RH drift target | ↑ | `RH_target = SP + 18 × load` |
 | coolingDemand | ↑ | Multiplier on demand |
 | CHW valve % | ↑ | More cooling |
 | Fan trim | ↑ | fanDemandBoost |
@@ -324,7 +345,7 @@ These tie the model to the BMS baseline screenshot; they are **simplified BMS em
 |----------|-----------|-----------|
 | MAT | ↑ | More OA in mix (esp. economizer) |
 | SAT | ↑ | Higher coil enter condition |
-| Economizer OA fraction | ↓ | Smaller \(T_{RA} - T_{OA}\) |
+| Economizer OA fraction | ↓ | Smaller `T_RA - T_OA` |
 | HW valve | May ↑ | Cold-OAT trim in non-heating |
 
 ### 5.15 Outdoor Humidity (`ahu-oarh`) ↑
@@ -363,8 +384,8 @@ Zone load
 
 | Formula | Validated in tests | Source |
 |---------|-------------------|--------|
-| \(Q = 0.0167 \times CFM \times \Delta T\) | ✅ `ahu-physics.test.mjs` | ASHRAE Ch. 1 |
-| Fan \(P \propto N^3\) | ✅ | ASHRAE Ch. 21 |
+| `Q = 0.0167 × CFM × ΔT` | ✅ `ahu-physics.test.mjs` | ASHRAE Ch. 1 |
+| Fan `P ∝ N^3` | ✅ | ASHRAE Ch. 21 |
 | BMS baseline CFM/valve | ✅ ±150 CFM tolerance | Screenshot calibration |
 | Economizer OA > recirc | ✅ | Mode logic |
 | Dirty filter ↓ CFM | ✅ | Filter model |
@@ -377,7 +398,7 @@ Zone load
 
 - **ASHRAE Handbook—Fundamentals (2021)** — Ch. 1 (Psychrometrics), Ch. 4 (Heat transfer), Ch. 7 (Control), Ch. 21 (Fans), Ch. 34 (Ventilation).  
 - **ASHRAE Standard 62.1** — Ventilation and outdoor air requirements.  
-- **Hydraulic Institute / fan affinity laws** — \(Q \propto N\), \(P \propto N^3\).  
+- **Hydraulic Institute / fan affinity laws** — `Q ∝ N`, `P ∝ N^3`.  
 - **NIST** — Unit conversions (kW, CFM, SI).
 
 ---

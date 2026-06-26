@@ -118,13 +118,15 @@ Also shown: component kW split (chiller / CHWP / CWP / CT), condenser ΔT, stagi
 
 ### 3.1 Sensible cooling duty (water side)
 
-\[
-Q\;[\mathrm{kW}] = \dot{V}\;[\mathrm{m^3/h}] \times \Delta T\;[^\circ\mathrm{C}] \times 1.163
-\]
 
-where \(1.163 = \rho\, c_p / 3600\) with \(\rho = 1000\;\mathrm{kg/m^3}\), \(c_p = 4.1868\;\mathrm{kJ/(kg{\cdot}K)}\).
+```text
+Q [kW] = V̇ [m^3/h] × ΔT [ °C] × 1.163
+```
 
-Equivalent: \(Q = \dot{m}\, c_p\, \Delta T\).
+
+where `1.163 = ρ c_p / 3600` with `ρ = 1000 kg/m^3`, `c_p = 4.1868 kJ/(kg·K)`.
+
+Equivalent: `Q = ṁ c_p ΔT`.
 
 - **Code:** `coolingKwFromFlow()` — `plantPhysics.ts`
 - **Source:** ASHRAE *Fundamentals* Ch. 1; water properties Ch. 33 / NIST
@@ -132,73 +134,83 @@ Equivalent: \(Q = \dot{m}\, c_p\, \Delta T\).
 
 ### 3.2 Refrigeration ton conversion
 
-\[
-Q\;[\mathrm{kW}] = Q_\mathrm{RT} \times 3.517
-\]
+
+```text
+Q [kW] = Q_RT × 3.517
+```
+
 
 - **Source:** AHRI 550/590; ASHRAE standard ton (12,000 BTU/h)
 
 ### 3.3 Chilled-water temperature difference
 
-\[
-\Delta T = T_{CHWR} - T_{CHWS}
-\]
+
+```text
+ΔT = T_CHWR - T_CHWS
+```
+
 
 - **Source:** ASHRAE hydronic steady-state balance (*Systems & Equipment* Ch. 13)
 
 ### 3.4 Required chilled-water flow (staging)
 
-\[
-\dot{V}_\mathrm{required} = \frac{Q_\mathrm{demand}}{ \Delta T_\mathrm{design} \times 1.163 },
-\qquad \Delta T_\mathrm{design} = 3.4^\circ\mathrm{C}
-\]
+
+```text
+V̇_required = Q_demand / (ΔT_design × 1.163); ΔT_design = 3.4 °C
+```
+
 
 - **Code:** `controlEngine.ts` — used for CHWP staging only
 
 ### 3.5 Plant power balance
 
-\[
-P_\mathrm{plant} = \sum P_\mathrm{chiller} + \sum P_\mathrm{CHWP} + \sum P_\mathrm{CWP} + \sum P_\mathrm{CT}
-\]
+
+```text
+P_plant = Σ P_chiller + Σ P_CHWP + Σ P_CWP + Σ P_CT
+```
+
 
 - **Validated:** sub-meter sum matches total `kw` on M&V data
 
 ### 3.6 Coefficient of performance & efficiency
 
-\[
-\mathrm{COP}_\mathrm{plant} = \frac{Q_\mathrm{cooling}}{P_\mathrm{electrical}},
-\qquad
-\mathrm{kW/RT} = \frac{P_\mathrm{plant}}{Q_\mathrm{RT}}
-\]
+
+```text
+COP_plant = (Q_cooling)/(P_electrical); kW/RT = (P_plant)/(Q_RT)
+```
+
 
 - **Source:** ASHRAE *Fundamentals* Ch. 2; AHRI 550/590
 
 ### 3.7 Pump / fan affinity laws
 
-\[
-\frac{Q_2}{Q_1} = \frac{N_2}{N_1},
-\qquad
-\frac{P_2}{P_1} = \left(\frac{N_2}{N_1}\right)^3
-\]
+
+```text
+(Q_2)/(Q_1) = (N_2)/(N_1); (P_2)/(P_1) = ((N_2)/(N_1))^3
+```
+
 
 - **Code:** `pumpPowerFromSpeed()`, `pumpFlowFromSpeed()`
 - **Source:** Hydraulic Institute ANSI/HI; ASHRAE *Fundamentals* Ch. 21–22
 
 ### 3.8 Cooling-tower wet-bulb approach
 
-\[
-T_{CWS,leaving} \geq T_\mathrm{wetbulb} + T_\mathrm{approach}
-\quad (\text{typical approach } 3\text{–}5^\circ\mathrm{C})
-\]
+
+```text
+T_CWS,leaving ≥ T_wetbulb + T_approach   (typical approach 3–5 °C)
+```
+
 
 - **Principle:** condenser model uses weather offset + fan control
 - **Validated:** mean approach 3.72 °C on plant data; 100% rows respect wet-bulb limit
 
 ### 3.9 First-order thermal lag
 
-\[
-x_{k+1} = x_k + (x^* - x_k)\left(1 - e^{-\Delta t / \tau}\right)
-\]
+
+```text
+x_k+1 = x_k + (x^* - x_k)(1 - e^(-Δt / τ))
+```
+
 
 - **Code:** `lag()` — CHWS (τ≈25 s), CWS (τ≈30 s), CWR (τ≈40 s)
 - **Source:** first-order control model; ASHRAE *Fundamentals* Ch. 7
@@ -211,21 +223,21 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 
 | Model | Expression | Purpose |
 |-------|------------|---------|
-| Weather-adjusted load | \(L_\mathrm{demand} = L_\mathrm{base} \times f_\mathrm{temp}(T) \times f_\mathrm{RH}(RH)\) | Demand shaping |
-| Temp factor | \(f_\mathrm{temp} = 1 + 0.03(T-32)\) above 32 °C ref | Sensible load |
-| RH factor | \(f_\mathrm{RH} = 1 + 0.0015(RH-65)\) above 65% ref | Latent load |
-| CHWS modifiers | \(\Delta = 7 - T_{CHWS,SP}\); \(f_\mathrm{load}=1+0.08\Delta\), \(f_\mathrm{kW}=1+0.10\Delta\), \(f_\mathrm{COP}=1-0.05\Delta\) | Setpoint impact |
-| Chiller kW | \(P_\mathrm{ch} = P_\mathrm{ref} \times (\mathrm{load\%}/70) \times f_\mathrm{kW}\) | Compressor power |
+| Weather-adjusted load | `L_demand = L_base × f_temp(T) × f_RH(RH)` | Demand shaping |
+| Temp factor | `f_temp = 1 + 0.03(T-32)` above 32 °C ref | Sensible load |
+| RH factor | `f_RH = 1 + 0.0015(RH-65)` above 65% ref | Latent load |
+| CHWS modifiers | `Δ = 7 - T_CHWS,SP`; `f_load=1+0.08Δ`, `f_kW=1+0.10Δ`, `f_COP=1-0.05Δ` | Setpoint impact |
+| Chiller kW | `P_ch = P_ref × (load\%/70) × f_kW` | Compressor power |
 | CHWS actual | Lag toward SP; +0.3 °C if load > 90% | Supply tracking |
-| ΔT blend | \(\Delta T = 0.35\,\Delta T_\mathrm{physics} + 0.65\,(T_{CHWR,SP}-T_{CHWS})\) | Return temp |
-| Bypass effect | \(\Delta T_\mathrm{eff} = \Delta T \times (1 - bypass/200)\) | Low-ΔT bypass |
-| CHWP speed | \(N = \mathrm{clamp}(70 + 3(DP_{SP}-15), 30, 100)\%\) | DP control |
-| DP proxy | \(DP_\mathrm{meas} = 15 + 0.35(N-70)\) | Simulated header DP |
-| Bypass logic | Open if \(DP_\mathrm{meas} > DP_{SP}+3\) | Valve staging |
-| CWP speed | \(\mathrm{clamp}(55 + 0.35\times\mathrm{load\%}, 30, 100)\%\) | Follows chillers |
-| CWS target | \(T_{CWS}^* = SP - 0.04(N_\mathrm{fan}-70) + \Delta T_\mathrm{weather}\) | Tower control |
-| CT fan PI | \(N_\mathrm{fan} \mathrel{+}= 8(T_{CWS,act}-T_{CWS,SP})\) | Auto fan |
-| CWR target | \(\max(T_{CWR,SP},\, T_{CWS}+2)\) | Condenser range |
+| ΔT blend | `ΔT = 0.35 ΔT_physics + 0.65 (T_CHWR,SP-T_CHWS)` | Return temp |
+| Bypass effect | `ΔT_eff = ΔT × (1 - bypass/200)` | Low-ΔT bypass |
+| CHWP speed | `N = clamp(70 + 3(DP_SP-15), 30, 100)\%` | DP control |
+| DP proxy | `DP_meas = 15 + 0.35(N-70)` | Simulated header DP |
+| Bypass logic | Open if `DP_meas > DP_SP+3` | Valve staging |
+| CWP speed | `clamp(55 + 0.35×load\%, 30, 100)\%` | Follows chillers |
+| CWS target | `T_CWS^* = SP - 0.04(N_fan-70) + ΔT_weather` | Tower control |
+| CT fan PI | `N_fan += 8(T_CWS,act-T_CWS,SP)` | Auto fan |
+| CWR target | `max(T_CWR,SP, T_CWS+2)` | Condenser range |
 | Condenser COP bonus | Up to +12.7% when CWS colder than reference | COP modifier |
 
 ### Staging tables
@@ -260,7 +272,7 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 |-----------------|-----------|-----------|
 | `buildingLoadRt` | ↑ | Base demand (before weather) |
 | Running chillers | ↑ (may step) | Staging table §4 |
-| CHW flow required | ↑ | \(Q/(1.163 \times \Delta T_{design})\) |
+| CHW flow required | ↑ | `Q/(1.163 × ΔT_design)` |
 | CHWP count / speed | ↑ | More flow → more pumps / higher speed |
 | Chiller load %, kW | ↑ | Same RT spread over running machines |
 | Plant kW, kW/RT | ↑ | More compression + pumping |
@@ -272,7 +284,7 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| Effective load | ↑ | \(f_\mathrm{temp}\) multiplier |
+| Effective load | ↑ | `f_temp` multiplier |
 | CWS target offset | ↑ | `weatherCondenserOffset()` |
 | CT fan demand | ↑ | Hotter ambient → harder rejection |
 | Chiller COP | ↓ | Warmer condenser water |
@@ -282,7 +294,7 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| Effective load | ↑ | \(f_\mathrm{RH}\) latent component |
+| Effective load | ↑ | `f_RH` latent component |
 | CWS offset | ↑ | Humidity term above 70% RH |
 | Tower approach difficulty | ↑ | Higher wet-bulb conditions |
 
@@ -291,17 +303,17 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
 | `chws` header | ↓ (lags) | First-order lag toward SP |
-| Chiller kW | ↑ | \(f_\mathrm{kW}\) modifier |
-| Chiller COP | ↓ | \(f_\mathrm{COP}\) modifier |
-| Effective load factor | ↑ | \(f_\mathrm{load}\) modifier |
-| Compressor lift | ↑ | Larger \(T_{CHWR}-T_{CHWS}\) gradient to maintain |
+| Chiller kW | ↑ | `f_kW` modifier |
+| Chiller COP | ↓ | `f_COP` modifier |
+| Effective load factor | ↑ | `f_load` modifier |
+| Compressor lift | ↑ | Larger `T_CHWR-T_CHWS` gradient to maintain |
 | Low-CHWS alarms | More likely | If plant cannot meet SP |
 
 ### 5.5 CHWR Setpoint ↑
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| `chwr` header | ↑ | 65% weight on \((T_{CHWR,SP}-T_{CHWS})\) |
+| `chwr` header | ↑ | 65% weight on `(T_CHWR,SP-T_CHWS)` |
 | Loop ΔT | ↑ | Blended ΔT increases |
 | Low-ΔT alarms | ↓ | Wider design ΔT |
 
@@ -312,14 +324,14 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 | `cws` header | ↓ (lags) | Target + fan tracking |
 | CT fan speed | ↑ (auto) | PI reduces CWS error |
 | Chiller COP | ↑ | `condenserCopBonus()` |
-| CT fan kW | ↑ | \(P \propto N^3\) |
+| CT fan kW | ↑ | `P ∝ N^3` |
 | High-CWS alarms | Less likely | Better tower performance |
 
 ### 5.7 CWR Setpoint ↑
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| `cwr` header | ↑ (floor) | \(\max(SP, T_{CWS}+2)\) |
+| `cwr` header | ↑ (floor) | `max(SP, T_CWS+2)` |
 | Condenser ΔT range | ↑ | Wider tower range |
 
 ### 5.8 Differential Pressure Setpoint ↑
@@ -327,7 +339,7 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
 | CHWP speed | ↑ | +3% per psi above 15 |
-| CHWP kW | ↑ | Affinity \(P \propto N^3\) |
+| CHWP kW | ↑ | Affinity `P ∝ N^3` |
 | Measured DP proxy | ↑ | Correlated to speed |
 | Bypass valve | ↓ (may close) | Less DP excess |
 | Effective ΔT | ↑ | Less bypass mixing |
@@ -365,8 +377,8 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 
 | Schematic | Tags | Primary formulas |
 |-----------|------|------------------|
-| Chiller trains | CH-29-1/2/3, CHWP-29-1…4, CWP-29-1…4 | Staging, affinity, \(Q=\dot{V}\cdot1.163\cdot\Delta T\) |
-| Cooling towers | CT-41-1/2/3 | Fan PI, wet-bulb approach, \(P\propto N^3\) |
+| Chiller trains | CH-29-1/2/3, CHWP-29-1…4, CWP-29-1…4 | Staging, affinity, `Q=V̇·1.163·ΔT` |
+| Cooling towers | CT-41-1/2/3 | Fan PI, wet-bulb approach, `P∝ N^3` |
 | CHW headers | CHWS, CHWR (+70 offset line) | Lag, ΔT blend, energy balance |
 | M / H Rise | M (55%), H (45%) | Display split of `buildingLoadRt` |
 | Bypass | bv-1, bv-2 | DP-driven position |

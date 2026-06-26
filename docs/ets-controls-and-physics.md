@@ -78,90 +78,105 @@ These are the **expert-standard** relations implemented in code and verified by 
 
 ### 3.1 Sensible heat / duty
 
-\[
-Q\;[\text{kW}] = \dot{V}\;[\text{m}^3/\text{h}] \cdot \Delta T\;[\text{K}] \cdot 1.163
-\]
 
-where \(1.163 = \rho\, c_p / 3600\) with \(\rho = 1000\;\text{kg/m}^3\), \(c_p = 4.1868\;\text{kJ/(kg·K)}\).
+```text
+Q [kW] = V̇ [m^3/h] · ΔT [K] · 1.163
+```
 
-Equivalent mass-flow form: \(Q = \dot{m}\, c_p\, \Delta T\).
+
+where `1.163 = ρ c_p / 3600` with `ρ = 1000 kg/m^3`, `c_p = 4.1868 kJ/(kg·K)`.
+
+Equivalent mass-flow form: `Q = ṁ c_p ΔT`.
 
 **Source:** ASHRAE *Fundamentals* Ch.1 (sensible heat transfer).
 
 ### 3.2 Refrigeration ton conversion
 
-\[
-Q\;[\text{kW}] = Q_\text{RT} \times 3.517
-\]
+
+```text
+Q [kW] = Q_RT × 3.517
+```
+
 
 **Source:** AHRI / ASHRAE standard ton (3.51685 kW; code uses 3.517).
 
 ### 3.3 Steady-state HX energy balance
 
-\[
-Q = \dot{m}_\text{pri}\, c_p\,(T_\text{DCR} - T_\text{DCS})
-  = \dot{m}_\text{sec}\, c_p\,(T_\text{CHWR} - T_\text{CHWS})
-\]
+
+```text
+Q = ṁ_pri c_p (T_DCR - T_DCS) = ṁ_sec c_p (T_CHWR - T_CHWS)
+```
+
 
 **Source:** ASHRAE *Fundamentals* Ch.1; hydronic steady-state balance.
 
 ### 3.4 Heat-capacity rate (for ε–NTU)
 
-\[
-C = \dot{m}\, c_p\;[\text{kW/K}], \qquad C_r = C_\min / C_\max
-\]
+
+```text
+C = ṁ c_p [kW/K]; C_r = C_min / C_max
+```
+
 
 ### 3.5 LMTD — counter-flow plate HX
 
-\[
-\Delta T_\text{lm} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)},
-\qquad Q = U A\, \Delta T_\text{lm}
-\]
 
-Terminal differences: \(\Delta T_1 = T_\text{CHWR} - T_\text{DCR}\), \(\Delta T_2 = T_\text{CHWS} - T_\text{DCS}\).
+```text
+ΔT_lm = (ΔT_1 - ΔT_2)/(ln(ΔT_1 / ΔT_2)); Q = U A ΔT_lm
+```
+
+
+Terminal differences: `ΔT_1 = T_CHWR - T_DCR`, `ΔT_2 = T_CHWS - T_DCS`.
 
 **Source:** ASHRAE *Fundamentals* Ch.4; ASHRAE *Systems & Equipment* Ch.13.
 
 ### 3.6 Effectiveness–NTU (counter-flow)
 
-\[
-\varepsilon = \frac{Q}{Q_\max}, \qquad Q_\max = C_\min\,(T_\text{hot,in} - T_\text{cold,in})
-\]
 
-\[
-\varepsilon = \frac{1 - e^{-\text{NTU}(1-C_r)}}{1 - C_r\, e^{-\text{NTU}(1-C_r)}},
-\qquad \text{NTU} = \frac{UA}{C_\min}
-\]
+```text
+ε = (Q)/(Q_max); Q_max = C_min (T_hot,in - T_cold,in)
+```
+
+
+
+```text
+ε = (1 - e^(-NTU(1-C_r)))/(1 - C_r e^(-NTU(1-C_r))); NTU = (UA)/(C_min)
+```
+
 
 **Source:** Kays & London, *Compact Heat Exchangers*; ASHRAE Ch.4.
 
 ### 3.7 HX approach (commissioning metric)
 
-\[
-T_\text{approach} = T_\text{CHWS} - T_\text{DCS}
-\]
 
-Baseline screenshot: \(7.5 - 6.0 = 1.5\ ^\circ\text{C}\).
+```text
+T_approach = T_CHWS - T_DCS
+```
+
+
+Baseline screenshot: `7.5 - 6.0 = 1.5 °C`.
 
 **Source:** ASHRAE *Systems & Equipment* Ch.48 (district / ETS interfaces).
 
 ### 3.8 Pump affinity laws (CHWP VSD)
 
-\[
-\frac{Q_2}{Q_1} = \frac{N_2}{N_1}, \qquad
-\frac{H_2}{H_1} = \left(\frac{N_2}{N_1}\right)^2, \qquad
-\frac{P_2}{P_1} = \left(\frac{N_2}{N_1}\right)^3
-\]
 
-Staging: pumps online \(= \lceil \dot{V}_\text{sec} / (\dot{V}_\text{ref} \cdot N_\max/100) \rceil\), max 3.
+```text
+(Q_2)/(Q_1) = (N_2)/(N_1); (H_2)/(H_1) = ((N_2)/(N_1))^2; (P_2)/(P_1) = ((N_2)/(N_1))^3
+```
+
+
+Staging: pumps online `= ⌈ V̇_sec / (V̇_ref · N_max/100) ⌉`, max 3.
 
 **Source:** Hydraulic Institute; ASHRAE *Fundamentals* Ch.22.
 
 ### 3.9 Energy meter integration
 
-\[
-E_{k+1} = E_k + \frac{Q_k \cdot \Delta t}{3600}, \qquad \Delta t = 2\ \text{s per tick}
-\]
+
+```text
+E_k+1 = E_k + (Q_k · Δt)/(3600); Δt = 2 s per tick
+```
+
 
 ---
 
@@ -171,15 +186,15 @@ These tie the model to the MBS SCADA baseline; they are **not** standalone ASHRA
 
 | Model | Expression (simplified) | Purpose |
 |-------|-------------------------|---------|
-| Effective load | \(L_\text{eff} = L_\text{base} \cdot f_\text{weather} \cdot f_\text{occ}\) | Weather & occupancy |
-| Weather factor | \(f_\text{weather} = 1 + 0.012\,(T_\text{amb} - 32)\) | Ambient load shaping |
-| Occupancy | \(f_\text{occ} = 1.0\) or \(0.55\) | Time program |
-| Load lag | \(L_k = L_{k-1} + 0.18\,(L_\text{target} - L_{k-1})\) | Smooth transients |
-| Approach vs load | \(T_\text{approach} \propto \text{load fraction}\) (cal. @ 1.5 °C / 466 RT) | HX performance |
-| Hot-end pinch | \(T_\text{DCR} = T_\text{CHWR} - \text{pinch}\) | Primary return bound |
+| Effective load | `L_eff = L_base · f_weather · f_occ` | Weather & occupancy |
+| Weather factor | `f_weather = 1 + 0.012 (T_amb - 32)` | Ambient load shaping |
+| Occupancy | `f_occ = 1.0` or `0.55` | Time program |
+| Load lag | `L_k = L_k-1 + 0.18 (L_target - L_k-1)` | Smooth transients |
+| Approach vs load | `T_approach ∝ load fraction` (cal. @ 1.5 °C / 466 RT) | HX performance |
+| Hot-end pinch | `T_DCR = T_CHWR - pinch` | Primary return bound |
 | Secondary ΔT | Scales with load around design 7.6 K | CHWR from CHWS |
-| LT bypass % | \(f(T_\text{CHWR} - SP_\text{CHWRT},\ \text{load})\) | Bypass valve |
-| Header DP | \(DP \approx DP_\text{SP} + 2 \times \text{load fraction}\) | Header DP display |
+| LT bypass % | `f(T_CHWR - SP_CHWRT, load)` | Bypass valve |
+| Header DP | `DP ≈ DP_SP + 2 × load fraction` | Header DP display |
 
 ---
 
@@ -189,10 +204,10 @@ These tie the model to the MBS SCADA baseline; they are **not** standalone ASHRA
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| `coolingKw`, `coolingDemandRt` | ↑ | \(Q = RT \times 3.517\) |
+| `coolingKw`, `coolingDemandRt` | ↑ | `Q = RT × 3.517` |
 | `secFlowM3h`, `priFlowM3h` | ↑ | Flow from duty / ΔT |
 | `pumpsRunning` | ↑ (may step) | More flow → more pumps |
-| `pumpSpeedPct`, `pumpPowerKw` | ↑ | Affinity \(P \propto N^3\) |
+| `pumpSpeedPct`, `pumpPowerKw` | ↑ | Affinity `P ∝ N^3` |
 | `approachC` | ↑ | Higher load fraction widens approach |
 | `effectiveness` | ↓ slightly | Higher load reduces margin |
 | `headerDpKpa` | ↑ | DP correlation with load |
@@ -213,7 +228,7 @@ These tie the model to the MBS SCADA baseline; they are **not** standalone ASHRA
 |-----------------|-----------|-----------|
 | `chwsC` | ↑ | Tracks setpoint + small approach offset |
 | `chwrC` | ↑ | CHWR = CHWS + ΔT_sec |
-| `approachC` | ↑ if DCS fixed | \(T_\text{approach} = T_\text{CHWS} - T_\text{DCS}\) |
+| `approachC` | ↑ if DCS fixed | `T_approach = T_CHWS - T_DCS` |
 | Building comfort / ΔT | Changes | Warmer supply |
 
 ### 5.4 Header DP Setpoint (`ets-dp-sp`) ↑
@@ -227,15 +242,15 @@ These tie the model to the MBS SCADA baseline; they are **not** standalone ASHRA
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| LT bypass valve `%` | ↓ | Smaller \((T_\text{CHWR} - SP)\) error |
+| LT bypass valve `%` | ↓ | Smaller `(T_CHWR - SP)` error |
 | `ltBypassFlowM3h` | ↓ | Bypass fraction of secondary flow |
 
 ### 5.6 DCS Supply Temp (`ets-dcs-temp`) ↑ (warmer primary)
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| `approachC` | ↑ if CHWS fixed | \(T_\text{CHWS} - T_\text{DCS}\) |
-| `priDeltaT` | ↓ | \(T_\text{DCR} - T_\text{DCS}\) bounded by secondary |
+| `approachC` | ↑ if CHWS fixed | `T_CHWS - T_DCS` |
+| `priDeltaT` | ↓ | `T_DCR - T_DCS` bounded by secondary |
 | `priFlowM3h` | ↑ | More flow needed for same Q at smaller ΔT |
 | `effectiveness`, `NTU` | Changes | ε–NTU recalculated |
 
@@ -254,7 +269,7 @@ These tie the model to the MBS SCADA baseline; they are **not** standalone ASHRA
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
 | `pumpSpeedPct` | ↑ (floor) | Clamped minimum VSD |
-| `pumpPowerKw` | ↑ | \(P \propto N^3\) |
+| `pumpPowerKw` | ↑ | `P ∝ N^3` |
 | `pumpsRunning` | May ↑ | If min speed cannot meet flow on fewer pumps |
 
 ### 5.9 Pump Speed Max (`ets-pump-max`) ↓
@@ -268,7 +283,7 @@ These tie the model to the MBS SCADA baseline; they are **not** standalone ASHRA
 
 | Affected output | Direction | Mechanism |
 |-----------------|-----------|-----------|
-| Effective load | ↑ | \(f_\text{weather}\) above 32 °C |
+| Effective load | ↑ | `f_weather` above 32 °C |
 | Downstream thermal/hydraulic | ↑ | Full load chain |
 
 ### 5.11 Outdoor Humidity (`ets-humidity`)
@@ -308,7 +323,7 @@ At **466 RT** demand, **2 HX in service**, **DCS 6.0 °C**, **CHWS SP 7.5 °C**:
 |----------|----------|---------------|
 | Thermal duty | ~1638 kW | `kwFromTons(466)` |
 | CHWS / CHWR | ~7.5 / 15.1 °C | `solveEtsThermoHydraulics` |
-| Approach | ~1.5 °C | \(T_\text{CHWS} - T_\text{DCS}\) |
+| Approach | ~1.5 °C | `T_CHWS - T_DCS` |
 | Primary flow | ~157.5 m³/h | `flowM3hFromDuty` |
 | Pumps running | 2 | Staging |
 | Pump speed | ~52.7 % | Affinity |
