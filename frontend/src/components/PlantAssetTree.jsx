@@ -55,6 +55,13 @@ const TREE = [
         ],
       },
       {
+        name: 'Distribution',
+        children: [
+          { id: 'm-rise', name: 'Medium Rise (M)' },
+          { id: 'h-rise', name: 'High Rise (H)' },
+        ],
+      },
+      {
         name: 'Valves',
         children: [
           { id: 'bv-1', name: 'Bypass Valve 1' },

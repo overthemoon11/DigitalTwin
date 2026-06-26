@@ -8,12 +8,14 @@ interface Props {
   y: number;
   selected: boolean;
   onSelect: (id: string) => void;
+  labelSide?: 'left' | 'right' | 'below';
+  labelW?: number;
 }
 
 const W = 100;
 const H = 78;
 
-export function Chiller({ equipment, x, y, selected, onSelect }: Props) {
+export function Chiller({ equipment, x, y, selected, onSelect, labelSide = 'right', labelW = 120 }: Props) {
   const status = equipment.status as EquipmentStatus;
   const fill = statusFill(status);
   const alarm = status === 'alarm';
@@ -46,7 +48,8 @@ export function Chiller({ equipment, x, y, selected, onSelect }: Props) {
         iconY={y}
         iconW={W}
         iconH={H}
-        plateW={120}
+        plateW={labelW}
+        side={labelSide}
         lines={[
           { text: equipment.name, variant: 'tag' },
           { text: `${equipment.powerKw.toFixed(0)} kW · ${equipment.flowRate.toFixed(0)} m³/h`, variant: 'pv' },

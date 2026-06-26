@@ -24,8 +24,8 @@ export const LOOP = {
   makeup: { stroke: '#0284c7', fill: 'rgba(2,132,199,0.1)', label: 'MAKE-UP' },
   cws: { stroke: '#16a34a', fill: 'rgba(22,163,74,0.08)', label: 'CWS' },
   cwr: { stroke: '#15803d', strokeBright: '#166534', fill: 'rgba(21,128,61,0.1)', label: 'CWR' },
-  chws: { stroke: '#2563eb', fill: 'rgba(37,99,235,0.08)', label: 'CHWS' },
-  chwr: { stroke: '#1d4ed8', fill: 'rgba(29,78,216,0.1)', label: 'CHWR' },
+  chws: { stroke: '#1e3a8a', fill: 'rgba(30,58,138,0.1)', label: 'CHWS' },
+  chwr: { stroke: '#38bdf8', fill: 'rgba(56,189,248,0.12)', label: 'CHWR' },
   /** ETS / district primary supply — same light blue as CHWS → ASM */
   dcs: { stroke: '#38bdf8', fill: 'rgba(56,189,248,0.12)', label: 'DCS' },
   /** ETS / district primary return — same deep blue as CHWR ← ASM */
