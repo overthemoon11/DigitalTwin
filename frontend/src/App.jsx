@@ -13,10 +13,11 @@ import Ahu01StationView from './components/ahu/Ahu01StationView';
 import AhuAssetTree from './components/ahu/AhuAssetTree';
 import AhuKPIPanel from './components/ahu/AhuKPIPanel';
 import AhuControlPanel from './components/ahu/AhuControlPanel';
+import ChillerPlantControlPanel from './components/chiller/ChillerPlantControlPanel';
+import ChillerKPIPanel from './components/chiller/ChillerKPIPanel';
 import PlantScenarioSwitcher from './components/PlantScenarioSwitcher';
 import LeftSidebarModeTabs from './components/leftSidebar/LeftSidebarModeTabs';
 import VirtualSimulatorPanel from './components/leftSidebar/VirtualSimulatorPanel';
-import ControlPanel from './components/ControlPanel';
 import DistrictCoolingControlPanel from './components/districtcooling/DistrictCoolingControlPanel';
 import DistrictCoolingTwinTab from './components/districtcooling/DistrictCoolingTwinTab';
 import KPIPanel from './components/KPIPanel';
@@ -51,6 +52,11 @@ function App() {
     advanceAhu,
     applyAhuScenario,
     resetAhu,
+    resetPlant,
+    triggerPlantFault,
+    updatePlantControl,
+    advancePlantSimulation,
+    applyChillerScenario,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
   const [leftSidebarMode, setLeftSidebarMode] = useState('assets');
@@ -299,11 +305,16 @@ function App() {
 
             <div className="panel-content">
               {activePanel === 'controls' && isChillerScenario && (
-                <ControlPanel
-                  controls={plantState?.controls || twinState.controls}
-                  selectedAsset={selectedAsset}
-                  assets={twinState.assets}
-                  plantMode
+                <ChillerPlantControlPanel
+                  controls={plantState?.controls || []}
+                  headers={plantState?.headers}
+                  simulation={plantState?.simulation}
+                  equipment={plantState?.equipment}
+                  onUpdate={updatePlantControl}
+                  onRunSimulation={() => advancePlantSimulation(60)}
+                  onApplyScenario={applyChillerScenario}
+                  onReset={resetPlant}
+                  onTriggerFault={triggerPlantFault}
                 />
               )}
               {activePanel === 'controls' && isEtsScenario && (
@@ -347,7 +358,9 @@ function App() {
                   compact
                 />
               )}
-              {activePanel === 'kpis' && (isEtsScenario ? (
+              {activePanel === 'kpis' && (isChillerScenario ? (
+                <ChillerKPIPanel kpis={scenarioKpis} />
+              ) : isEtsScenario ? (
                 <EtsKPIPanel kpis={scenarioKpis} />
               ) : isAhuScenario ? (
                 <AhuKPIPanel kpis={scenarioKpis} />

@@ -111,6 +111,11 @@ documented with references but cannot be numerically checked here.
 - **Validation:** the **energy-balance** form is the same `Q=ṁcₚΔT` confirmed in §2.1/§2.3 against the M&V data; LMTD/effectiveness-NTU are the recognized *design method* (not a free parameter to fit). The engine's baseline (466 RT → 1638 kW, approach 1.5 °C, primary flow ≈ 157 m³/h) reproduces the screenshot and is asserted by [tests/validation/ets/ets-physics.test.mjs](../tests/validation/ets/ets-physics.test.mjs).
 - **Operator guide:** controllable parameters, causality tables, and schematic tag mapping — [ets-controls-and-physics.md](ets-controls-and-physics.md).
 
+### 2.8 Chiller plant (L29 virtual simulator)
+- **Code:** [`controlEngine.ts`](../frontend/src/services/controlEngine.ts), [`plantPhysics.ts`](../frontend/src/services/plantPhysics.ts), [`stagingController.ts`](../frontend/src/services/stagingController.ts).
+- **Equations:** same water-side thermodynamics as §2.1–§2.6 (Q = ṁcₚΔT, COP, affinity laws, tower approach) plus staging/heuristic control in §4 of the operator guide.
+- **Operator guide:** [chiller-plant-controls-and-physics.md](chiller-plant-controls-and-physics.md).
+
 ---
 
 ## 3. Formulas referenced but NOT validatable from this dataset

@@ -40,12 +40,17 @@ function AlertItem({ alert, assets, plantEquipment, onAcknowledge }) {
               <li key={adj.controlId}>
                 <span className="alert-adjustment-label">{adj.label}</span>
                 <span className="alert-adjustment-values">
-                  {adj.suggestedValue}{adj.unit ? ` ${adj.unit}` : ''}
+                  → <strong>{adj.suggestedValue}</strong>{adj.unit ? ` ${adj.unit}` : ''}
                   <span className="alert-adjustment-now"> (now {adj.currentValue}{adj.unit ? ` ${adj.unit}` : ''})</span>
                 </span>
               </li>
             ))}
           </ul>
+          {alert.recommendedAction && alert.recommendedAdjustments.length > 0 && alert.recommendedAction.includes('field:') ? (
+            <p className="alert-field-note" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+              {alert.recommendedAction.split('; field:').slice(1).join('; field:').trim() || null}
+            </p>
+          ) : null}
         </div>
       ) : alert.recommendedAction ? (
         <div className="action" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

@@ -88,6 +88,8 @@ export interface PlantControl {
   step: number;
   unit: string;
   assetId?: string;
+  /** Sidebar group key (chiller plant panel) */
+  group?: string;
 }
 
 export interface PlantAlert {
@@ -138,6 +140,8 @@ export interface PlantSimulationMeta {
     buildingLoadRt: number;
     deltaT: number;
   };
+  /** Active preset scenario (operator what-if) */
+  scenarioId?: string;
 }
 
 export interface PlantState {

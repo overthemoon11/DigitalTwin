@@ -6,15 +6,20 @@ import {
   triggerPlantFault as setPlantFault,
   stepPlantSimulation,
   advancePlantSimulation,
+  applyChillerScenario as applyChillerScenarioEngine,
+  applyChillerScenarioPayload as applyChillerScenarioPayloadEngine,
   acknowledgePlantAlert as ackPlantAlert,
   getPlantControls,
 } from '../services/plantSimulator';
-import { analyzePlantQuery, buildPlantContextForCopilot } from '../services/copilotAnalysis';
 import {
-  parsePlantControlIntents,
-  formatPlantControlConfirmation,
-  buildPlantControlsSummary,
-} from '../services/plantCopilotActions';
+  parseChillerCopilotIntents,
+  formatChillerControlConfirmation,
+  formatChillerScenarioConfirmation,
+  formatChillerCustomScenarioConfirmation,
+  buildChillerControlsSummary,
+  buildChillerContextForCopilot,
+  analyzeChillerQuery,
+} from '../services/chillerCopilotActions';
 
 import {
   parseEtsCopilotIntents,
@@ -214,6 +219,10 @@ export const useTwinStore = create((set, get) => ({
   advancePlantSimulation: (seconds = 60) => {
     const steps = Math.max(1, Math.floor(seconds / 2));
     set({ plantState: advancePlantSimulation(steps) });
+  },
+
+  applyChillerScenario: (scenarioId) => {
+    set({ plantState: applyChillerScenarioEngine(scenarioId) });
   },
 
   loadTwinState: async () => {
@@ -443,26 +452,35 @@ export const useTwinStore = create((set, get) => ({
       plantContext = buildAhuContextForCopilot(get().ahuState);
       plantControls = buildAhuControlsSummary(get().ahuState?.controls ?? []);
     } else {
-      plantContext = buildPlantContextForCopilot(plantState);
-      const controls = getPlantControls();
-      plantControls = buildPlantControlsSummary(controls);
+      const controls = plantState?.controls ?? getPlantControls();
+      const parsed = parseChillerCopilotIntents(message, controls);
+      parseErrors = parsed.errors;
 
-      const { applied, errors } = parsePlantControlIntents(message, controls);
-      parseErrors = errors;
-      for (const action of applied) {
-        updatePlantControl(action.controlId, action.newValue);
-      }
-      if (applied.length) {
-        prependHeader = formatPlantControlConfirmation(applied);
+      if (parsed.scenarioId) {
+        set({ plantState: applyChillerScenarioEngine(parsed.scenarioId) });
+        prependHeader = formatChillerScenarioConfirmation(parsed.scenarioId);
         controlsApplied = true;
+      } else if (parsed.scenarioPayload) {
+        set({ plantState: applyChillerScenarioPayloadEngine(parsed.scenarioPayload) });
+        prependHeader = formatChillerCustomScenarioConfirmation(parsed.scenarioPayload);
+        controlsApplied = true;
+      } else if (parsed.applied.length) {
+        for (const action of parsed.applied) {
+          updatePlantControl(action.controlId, action.newValue);
+        }
+        prependHeader = formatChillerControlConfirmation(parsed.applied);
+        controlsApplied = true;
+        appliedControls = parsed.applied.map((a) => ({
+          controlId: a.controlId,
+          label: a.label,
+          oldValue: a.oldValue,
+          newValue: a.newValue,
+          unit: a.unit,
+        }));
       }
-      appliedControls = applied.map((a) => ({
-        controlId: a.controlId,
-        label: a.label,
-        oldValue: a.oldValue,
-        newValue: a.newValue,
-        unit: a.unit,
-      }));
+
+      plantContext = buildChillerContextForCopilot(get().plantState);
+      plantControls = buildChillerControlsSummary(get().plantState?.controls ?? controls);
     }
 
     const prependConfirmation = (text) => {
@@ -477,7 +495,7 @@ export const useTwinStore = create((set, get) => ({
         ? analyzeEtsQuery(message, get().etsState)
         : isAhu
           ? analyzeAhuQuery(message, get().ahuState)
-          : null;
+          : analyzeChillerQuery(message, get().plantState);
       const responseText = prependConfirmation(local || '');
       set({
         conversationHistory: [
@@ -489,11 +507,13 @@ export const useTwinStore = create((set, get) => ({
       return { response: responseText, controlsApplied, source: 'local-action' };
     }
 
-    // AHU/ETS status & query buttons — answer locally without backend round-trip
-    if (isAhu || isEts) {
+    // Scenario / query buttons — answer locally without backend round-trip
+    if (isAhu || isEts || (!isEts && !isAhu)) {
       const localQuery = isAhu
         ? analyzeAhuQuery(message, get().ahuState)
-        : analyzeEtsQuery(message, get().etsState);
+        : isEts
+          ? analyzeEtsQuery(message, get().etsState)
+          : analyzeChillerQuery(message, get().plantState);
       if (localQuery) {
         const responseText = prependConfirmation(localQuery);
         set({
@@ -539,13 +559,13 @@ export const useTwinStore = create((set, get) => ({
         ? analyzeEtsQuery(message, get().etsState)
         : isAhu
           ? analyzeAhuQuery(message, get().ahuState)
-          : analyzePlantQuery(message, get().plantState);
+          : analyzeChillerQuery(message, get().plantState);
       const fallback = local ||
         (isEts
           ? '## ETS Chatbot\n\nTry **"run peak summer scenario"**, paste scenario JSON, or **"set building load to 950 RT"**.'
           : isAhu
             ? '## AHU01 Chatbot\n\nTry **"run high humidity scenario"**, paste scenario JSON, or **"set zone load to 1.35"**.'
-            : '## Plant Chatbot (Local LLM)\n\nI could not reach the AI backend. Try asking about **COP**, **energy savings**, **chiller staging**, **CHWS temperature**, or **alarms**.\n\nYou can also adjust controls directly, e.g. **"Set building load to 1100 RT"** or **"Set outdoor temperature to 35°C"**.');
+            : '## Chiller Plant Chatbot\n\nTry **"run peak summer scenario"**, paste scenario JSON, or **"set building load to 1300 RT"**.');
       const responseText = prependConfirmation(fallback);
 
       set({

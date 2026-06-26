@@ -17,7 +17,7 @@ const CATEGORY_EMOJI = {
   comfort: '🌡️',
   iaq: '💨',
   operational: '⚙️',
-  cost: '💵',
+  environment: '🌤️',
 };
 
 function KPICard({ kpi }) {
@@ -35,7 +35,9 @@ function KPICard({ kpi }) {
         <span className="unit">{kpi.unit}</span>
       </div>
       <div className="meta">
-        <span>Target: {kpi.target} {kpi.unit}</span>
+        <span>
+          Target: {typeof kpi.target === 'number' ? `${kpi.target} ${kpi.unit}` : kpi.target}
+        </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <TrendIcon size={14} />
           {kpi.trend}
@@ -47,7 +49,7 @@ function KPICard({ kpi }) {
 
 function KPIPanel({ kpis }) {
   // Group KPIs by category
-  const categories = ['energy', 'comfort', 'iaq', 'operational', 'cost'];
+  const categories = ['energy', 'comfort', 'iaq', 'operational', 'cost', 'environment'];
   
   return (
     <div className="kpi-grid">

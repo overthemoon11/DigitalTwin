@@ -270,6 +270,7 @@ export const CATEGORY_ICONS = {
   iaq: AirQualityIcon,
   operational: OperationalIcon,
   cost: CostIcon,
+  environment: ChartIcon,
 };
 
 // Export icon mapping for asset type icons

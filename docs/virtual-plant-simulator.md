@@ -55,7 +55,8 @@ The **Controls** panel “Show domino effect” banner lists the trace from the 
 | `frontend/src/services/stagingController.ts` | Chiller/pump/tower staging |
 | `frontend/src/services/plantCascade.ts` | Cascade order + human-readable trace |
 | `frontend/src/services/alarmEngine.ts` | Alarm rules on simulated state |
-| `frontend/src/components/chiller/joint/*` | JointJS P&ID (display only) |
+| `frontend/src/components/chiller/ChillerPlant2DView.tsx` | SCADA P&ID (display) |
+| `docs/chiller-plant-controls-and-physics.md` | Controls, formulas & parameter relationships |
 
 ## Dynamic vs static
 

@@ -35,6 +35,7 @@ import {
   clamp,
   weatherCondenserOffset,
   weatherLoadFactor,
+  estimateWetBulbC,
 } from './plantPhysics';
 import { buildCascadeTrace } from './plantCascade';
 import {
@@ -47,6 +48,7 @@ import {
   stageCwp,
   stageCoolingTowers,
 } from './stagingController';
+import { getChillerScenarioById } from './chillerScenarios.js';
 
 const SIM_DT_SEC = 2;
 /** Design ΔT used only for required flow / pump staging (hydronic design). */
@@ -81,6 +83,7 @@ function defaultControls(): PlantControl[] {
       max: 1500,
       step: 50,
       unit: 'RT',
+      group: 'load',
     },
     {
       id: 'ctrl-ambient-temp',
@@ -91,6 +94,7 @@ function defaultControls(): PlantControl[] {
       max: 40,
       step: 1,
       unit: '°C',
+      group: 'weather',
     },
     {
       id: 'ctrl-humidity',
@@ -101,6 +105,7 @@ function defaultControls(): PlantControl[] {
       max: 95,
       step: 5,
       unit: '%RH',
+      group: 'weather',
     },
     {
       id: 'ctrl-chws-sp',
@@ -111,6 +116,7 @@ function defaultControls(): PlantControl[] {
       max: 10,
       step: 0.5,
       unit: '°C',
+      group: 'chilled',
     },
     {
       id: 'ctrl-chwr-sp',
@@ -121,6 +127,7 @@ function defaultControls(): PlantControl[] {
       max: 16,
       step: 0.5,
       unit: '°C',
+      group: 'chilled',
     },
     {
       id: 'ctrl-cws-sp',
@@ -131,6 +138,7 @@ function defaultControls(): PlantControl[] {
       max: 35,
       step: 0.5,
       unit: '°C',
+      group: 'condenser',
     },
     {
       id: 'ctrl-cwr-sp',
@@ -141,6 +149,7 @@ function defaultControls(): PlantControl[] {
       max: 38,
       step: 0.5,
       unit: '°C',
+      group: 'condenser',
     },
     {
       id: 'ctrl-dp-sp',
@@ -151,6 +160,7 @@ function defaultControls(): PlantControl[] {
       max: 30,
       step: 1,
       unit: 'psi',
+      group: 'pumps',
     },
     {
       id: 'ctrl-ct-fan',
@@ -161,6 +171,7 @@ function defaultControls(): PlantControl[] {
       max: 100,
       step: 5,
       unit: '%',
+      group: 'overrides',
     },
     {
       id: 'ctrl-pump-spd',
@@ -171,6 +182,7 @@ function defaultControls(): PlantControl[] {
       max: 100,
       step: 5,
       unit: '%',
+      group: 'overrides',
     },
     {
       id: 'ctrl-ch-enable',
@@ -181,6 +193,7 @@ function defaultControls(): PlantControl[] {
       max: 1,
       step: 1,
       unit: '',
+      group: 'plant',
     },
     {
       id: 'ctrl-opt-mode',
@@ -191,6 +204,7 @@ function defaultControls(): PlantControl[] {
       max: 1,
       step: 1,
       unit: '',
+      group: 'plant',
     },
   ];
 }
@@ -222,48 +236,128 @@ function getControl(id: string): number {
   return typeof c?.value === 'number' ? c.value : 0;
 }
 
-function buildKpis(
-  headers: PlantHeaders,
-  totalKw: number,
-  cop: number,
-  runningCh: number,
-  runningPumps: number,
-  ctUtil: number,
-  waterUse: number
-): PlantKpi[] {
+type PlantKpiStatus = 'normal' | 'warning' | 'critical';
+
+interface PlantKpiInputs {
+  headers: PlantHeaders;
+  totalKw: number;
+  cop: number;
+  chwDeltaT: number;
+  condenserDeltaT: number;
+  measuredDp: number;
+  dpSetpoint: number;
+  chwsSetpoint: number;
+  bypassPercent: number;
+  runningCh: number;
+  runningChwp: number;
+  runningCwp: number;
+  runningCt: number;
+  ctFanPct: number;
+  waterUse: number;
+  totalChKw: number;
+  chwpKw: number;
+  cwpKw: number;
+  ctKw: number;
+}
+
+function buildKpis(input: PlantKpiInputs): PlantKpi[] {
+  const {
+    headers,
+    totalKw,
+    cop,
+    chwDeltaT,
+    condenserDeltaT,
+    measuredDp,
+    dpSetpoint,
+    chwsSetpoint,
+    bypassPercent,
+    runningCh,
+    runningChwp,
+    runningCwp,
+    runningCt,
+    ctFanPct,
+    waterUse,
+    chwpKw,
+    cwpKw,
+    ctKw,
+    totalChKw,
+  } = input;
+
+  const kwPerRt = plantEfficiencyKwPerRt(totalKw, headers.buildingLoadRt);
+  const wetBulb = estimateWetBulbC(headers.ambientTemp, headers.humidityRh);
+  const towerApproach = round(headers.cws - wetBulb, 1);
+  const chillerKwPerRt =
+    headers.buildingLoadRt > 0 ? round(totalChKw / headers.buildingLoadRt, 3) : 0;
+
   const card = (
     id: string,
     name: string,
     value: number | string,
     unit: string,
     category: string,
-    target: number | string
+    target: number | string,
+    status: PlantKpiStatus
   ): PlantKpi => ({
     id,
     name,
     value,
     unit,
     category,
-    status: 'normal',
+    status,
     target,
     trend: 'stable',
   });
 
+  const kwRtStatus: PlantKpiStatus =
+    kwPerRt > 1.0 ? 'critical' : kwPerRt > 0.85 ? 'warning' : 'normal';
+  const copStatus: PlantKpiStatus =
+    cop < 3.5 ? 'critical' : cop < 4.5 ? 'warning' : 'normal';
+  const chwDtStatus: PlantKpiStatus =
+    chwDeltaT < 3.5 ? 'critical' : chwDeltaT < 4.5 ? 'warning' : 'normal';
+  const chwsStatus: PlantKpiStatus =
+    Math.abs(headers.chws - chwsSetpoint) > 2 ? 'warning' : 'normal';
+  const dpStatus: PlantKpiStatus =
+    Math.abs(measuredDp - dpSetpoint) > 5 ? 'warning' : 'normal';
+  const bypassStatus: PlantKpiStatus =
+    bypassPercent > 35 ? 'critical' : bypassPercent > 15 ? 'warning' : 'normal';
+  const approachStatus: PlantKpiStatus =
+    towerApproach > 6 ? 'critical' : towerApproach > 5 ? 'warning' : 'normal';
+  const condDtStatus: PlantKpiStatus =
+    condenserDeltaT < 2 ? 'warning' : 'normal';
+
   return [
-    card('kpi-load', 'Total Plant Load', headers.buildingLoadRt, 'RT', 'operational', 900),
-    card('kpi-kw', 'Total Plant kW', round(totalKw, 1), 'kW', 'energy', 400),
-    card('kpi-cop', 'Plant COP', cop, '', 'energy', 5.5),
-    card('kpi-eff', 'Plant Efficiency', plantEfficiencyKwPerRt(totalKw, headers.buildingLoadRt), 'kW/RT', 'energy', 1.5),
-    card('kpi-rch', 'Running Chillers', runningCh, '', 'operational', 3),
-    card('kpi-rpump', 'Running Pumps', runningPumps, '', 'operational', 8),
-    card('kpi-chws', 'Average CHWS', headers.chws, '°C', 'comfort', 7),
-    card('kpi-chwr', 'Average CHWR', headers.chwr, '°C', 'comfort', 12),
-    card('kpi-cws', 'Average CWS', headers.cws, '°C', 'comfort', 29),
-    card('kpi-cwr', 'Average CWR', headers.cwr, '°C', 'comfort', 32),
-    card('kpi-water', 'Water Consumption', round(waterUse, 1), 'm³/h', 'cost', 15),
-    card('kpi-ct-util', 'Cooling Tower Utilization', round(ctUtil, 0), '%', 'operational', 85),
-    card('kpi-ambient', 'Outdoor Temperature', headers.ambientTemp, '°C', 'environment', REF_AMBIENT_TEMP),
-    card('kpi-humidity', 'Outdoor Humidity', headers.humidityRh, '%RH', 'environment', REF_HUMIDITY_RH),
+    // Energy / performance
+    card('kpi-load', 'Plant Load', round(headers.buildingLoadRt, 0), 'RT', 'operational', 900, 'normal'),
+    card('kpi-kw', 'Total Plant kW', round(totalKw, 1), 'kW', 'energy', '—', 'normal'),
+    card('kpi-eff', 'Plant kW/RT', kwPerRt, 'kW/RT', 'energy', '≤ 0.65', kwRtStatus),
+    card('kpi-cop', 'Plant COP', cop, '', 'energy', '≥ 5.5', copStatus),
+    card('kpi-ch-kwrt', 'Chiller kW/RT', chillerKwPerRt, 'kW/RT', 'energy', '≤ 0.55', chillerKwPerRt > 0.7 ? 'warning' : 'normal'),
+    card('kpi-ch-kw', 'Chiller kW', round(totalChKw, 1), 'kW', 'energy', '—', 'normal'),
+    card('kpi-chwp-kw', 'CHWP kW', round(chwpKw, 1), 'kW', 'energy', '—', 'normal'),
+    card('kpi-cwp-kw', 'CWP kW', round(cwpKw, 1), 'kW', 'energy', '—', 'normal'),
+    card('kpi-ct-kw', 'CT Fan kW', round(ctKw, 1), 'kW', 'energy', '—', 'normal'),
+    // Chilled water loop
+    card('kpi-chw-dt', 'CHW ΔT', round(chwDeltaT, 1), '°C', 'operational', '5–7', chwDtStatus),
+    card('kpi-chws', 'CHWS', headers.chws, '°C', 'operational', chwsSetpoint, chwsStatus),
+    card('kpi-chwr', 'CHWR', headers.chwr, '°C', 'operational', '—', 'normal'),
+    card('kpi-dp', 'Header DP', round(measuredDp, 1), 'psi', 'operational', dpSetpoint, dpStatus),
+    card('kpi-bypass', 'Bypass Valve', round(bypassPercent, 0), '%', 'operational', '≤ 10', bypassStatus),
+    // Condenser loop
+    card('kpi-cond-dt', 'Condenser ΔT', round(condenserDeltaT, 1), '°C', 'operational', '3–5', condDtStatus),
+    card('kpi-cws', 'CWS', headers.cws, '°C', 'operational', 29, 'normal'),
+    card('kpi-cwr', 'CWR', headers.cwr, '°C', 'operational', 32, 'normal'),
+    card('kpi-approach', 'Tower Approach', towerApproach, '°C', 'operational', '3–5', approachStatus),
+    card('kpi-ct-fan', 'CT Fan Speed', round(ctFanPct, 0), '%', 'operational', 'auto', 'normal'),
+    // Equipment staging
+    card('kpi-rch', 'Chillers Online', runningCh, '', 'operational', '—', 'normal'),
+    card('kpi-rchwp', 'CHWP Online', runningChwp, '', 'operational', '—', 'normal'),
+    card('kpi-rcwp', 'CWP Online', runningCwp, '', 'operational', '—', 'normal'),
+    card('kpi-rct', 'Towers Online', runningCt, '', 'operational', '—', 'normal'),
+    // Aux / environment
+    card('kpi-water', 'Make-up Water', round(waterUse, 1), 'm³/h', 'cost', '≤ 5', waterUse > 10 ? 'warning' : 'normal'),
+    card('kpi-ambient', 'Outdoor Temp', headers.ambientTemp, '°C', 'environment', REF_AMBIENT_TEMP, 'normal'),
+    card('kpi-humidity', 'Outdoor RH', headers.humidityRh, '%RH', 'environment', REF_HUMIDITY_RH, 'normal'),
+    card('kpi-wetbulb', 'Est. Wet Bulb', wetBulb, '°C', 'environment', '—', 'normal'),
   ];
 }
 
@@ -540,7 +634,6 @@ function runControlStep(): PlantState {
 
   const coolingKw = coolingKwFromFlow(totalChwFlow, deltaT);
   const plantCopVal = plantCop(coolingKw, totalKw);
-  const ctUtil = runningCt > 0 ? (internals.ctFanSpeed / 100) * 100 : 0;
   const waterUse = internals.makeupPumpActive ? 14 : 2;
 
   const headers: PlantHeaders = {
@@ -568,6 +661,11 @@ function runControlStep(): PlantState {
     deltaT,
     dpSetpoint: dpSp,
     measuredDp,
+    bypassPercent: internals.bypassPercent,
+    baseLoadRt,
+    chillerEnabled,
+    ctFanSpeed: internals.ctFanSpeed,
+    pumpOverride,
     faults: internals.faults,
     pumpCommandedOn,
   });
@@ -605,7 +703,27 @@ function runControlStep(): PlantState {
   return {
     equipment,
     headers,
-    kpis: buildKpis(headers, totalKw, plantCopVal, runningChCount, runningChwp + runningCwp + (internals.makeupPumpActive ? 1 : 0), ctUtil, waterUse),
+    kpis: buildKpis({
+      headers,
+      totalKw,
+      cop: plantCopVal,
+      chwDeltaT: deltaT,
+      condenserDeltaT: headers.cwr - headers.cws,
+      measuredDp,
+      dpSetpoint: dpSp,
+      chwsSetpoint: chwsSp,
+      bypassPercent: internals.bypassPercent,
+      runningCh: runningChCount,
+      runningChwp,
+      runningCwp,
+      runningCt,
+      ctFanPct: internals.ctFanSpeed,
+      waterUse,
+      chwpKw: totalChwpKw,
+      cwpKw: totalCwpKw,
+      ctKw: totalCtKw,
+      totalChKw,
+    }),
     controls: controls.map((c) => ({ ...c })),
     alerts,
     simulationTime: new Date().toISOString(),
@@ -659,6 +777,89 @@ export function advancePlantSimulation(steps = 1): PlantState {
     ...state,
     simulation: { ...state.simulation, lastTrigger: lastCascadeTrigger },
   };
+}
+
+/** Snap lagging plant state toward current setpoints after a scenario jump. */
+function snapPlantDynamics(): void {
+  internals.chwsActual = getControl('ctrl-chws-sp') || 7;
+  internals.cwsActual = getControl('ctrl-cws-sp') || 29;
+  internals.cwrActual = getControl('ctrl-cwr-sp') || REF_CWR_SP;
+  internals.ctFanSpeed = getControl('ctrl-ct-fan') > 0 ? getControl('ctrl-ct-fan') : REF_CT_FAN;
+  internals.bypassPercent = 0;
+}
+
+function applyChillerScenarioInternal(scenario: {
+  id: string;
+  label: string;
+  reset?: boolean;
+  controls?: Record<string, number>;
+  advanceSec?: number;
+}): PlantState {
+  if (scenario.reset) {
+    resetPlantControls();
+  } else if (scenario.controls) {
+    internals.faults = {
+      chillerTripId: null,
+      pumpTripId: null,
+      makeupPumpFail: false,
+      ctFanFaultId: null,
+    };
+    for (const [id, value] of Object.entries(scenario.controls)) {
+      if (controls.some((c) => c.id === id)) {
+        controls = controls.map((c) => (c.id === id ? { ...c, value } : c));
+      }
+    }
+    snapPlantDynamics();
+  }
+
+  lastControlId = `scenario:${scenario.id}`;
+
+  const advanceSec = scenario.advanceSec ?? 0;
+  const steps = advanceSec > 0 ? Math.max(1, Math.floor(advanceSec / SIM_DT_SEC)) : 1;
+
+  let state = runControlStep();
+  for (let i = 1; i < steps; i++) state = runControlStep();
+
+  const load = state.headers.buildingLoadRt;
+  const dt = round(state.headers.chwr - state.headers.chws, 1);
+  const cop = state.kpis.find((k) => k.id === 'kpi-cop')?.value ?? '—';
+  lastCascadeTrigger = `Scenario «${scenario.label}» — ${load} RT · ΔT ${dt}°C · COP ${cop}`;
+  return {
+    ...state,
+    simulation: {
+      ...state.simulation,
+      lastTrigger: lastCascadeTrigger,
+      scenarioId: scenario.id,
+    },
+  };
+}
+
+export function applyChillerScenario(scenarioId: string): PlantState {
+  const scenario = getChillerScenarioById(scenarioId);
+  if (!scenario) return stepPlantSimulation();
+  return applyChillerScenarioInternal({
+    id: scenario.id,
+    label: scenario.label,
+    reset: scenario.reset,
+    controls: scenario.controls,
+    advanceSec: scenario.advanceSec,
+  });
+}
+
+export function applyChillerScenarioPayload(payload: {
+  id?: string;
+  label?: string;
+  reset?: boolean;
+  controls?: Record<string, number>;
+  advanceSec?: number;
+}): PlantState {
+  return applyChillerScenarioInternal({
+    id: payload.id ?? 'chatbot-custom',
+    label: payload.label ?? 'Custom scenario',
+    reset: payload.reset,
+    controls: payload.controls,
+    advanceSec: payload.advanceSec,
+  });
 }
 
 export function resetPlantControls(): void {

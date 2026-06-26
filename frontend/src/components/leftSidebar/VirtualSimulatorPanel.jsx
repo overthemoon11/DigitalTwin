@@ -19,20 +19,7 @@ const DC_CONTROL_AFFECTS = {
   'ctrl-dc-rh-limit': ['comfort RH alarms'],
 };
 
-const PLANT_CONTROL_AFFECTS = {
-  'ctrl-building-load': ['chiller staging', 'CHW flow', 'plant kW', 'COP'],
-  'ctrl-ambient-temp': ['building load', 'condenser approach'],
-  'ctrl-humidity': ['load correction', 'condenser performance'],
-  'ctrl-chws-sp': ['CHWS', 'chiller lift', 'ΔT'],
-  'ctrl-chwr-sp': ['CHWR target', 'loop ΔT'],
-  'ctrl-cws-sp': ['condenser setpoint', 'COP'],
-  'ctrl-cwr-sp': ['CWR', 'tower approach'],
-  'ctrl-dp-sp': ['pump speed', 'header DP'],
-  'ctrl-ct-fan': ['condenser rejection', 'COP'],
-  'ctrl-pump-spd': ['pump power', 'flow'],
-  'ctrl-ch-enable': ['chiller count online'],
-  'ctrl-opt-mode': ['control strategy outputs'],
-};
+import { CHILLER_CONTROL_META } from '../chiller/chillerControlMeta';
 
 function MetricRow({ label, value, unit, warn }) {
   if (value == null || value === '') return null;
@@ -177,17 +164,19 @@ function ChillerInsight({ state, simulation }) {
   const headers = state?.headers;
   const kpis = state?.kpis || [];
   const kpi = (id) => kpis.find((k) => k.id === id)?.value;
-  const affects = simulation?.lastControlId ? PLANT_CONTROL_AFFECTS[simulation.lastControlId] : null;
+  const meta = simulation?.lastControlId ? CHILLER_CONTROL_META[simulation.lastControlId] : null;
   const deltaT = headers ? round(headers.chwr - headers.chws, 1) : null;
 
   return (
     <>
-      {affects && (
+      {meta && (
         <section className="vsp-section">
           <h4>Parameters affected</h4>
+          {meta.formula && <p className="vsp-formula">ƒ {meta.formula}</p>}
           <ul className="vsp-affects">
-            {affects.map((a) => <li key={a}>{a}</li>)}
+            {meta.affects.map((a) => <li key={a}>{a}</li>)}
           </ul>
+          {meta.description && <p className="vsp-desc">{meta.description}</p>}
         </section>
       )}
       {simulation?.cascadeTrace?.length > 0 && (
@@ -202,11 +191,13 @@ function ChillerInsight({ state, simulation }) {
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">
           <MetricRow label="Building load" value={headers?.buildingLoadRt} unit="RT" />
-          <MetricRow label="CHW ΔT" value={deltaT} unit="°C" />
-          <MetricRow label="CHWS / CHWR" value={headers ? `${headers.chws} / ${headers.chwr}` : null} unit="°C" />
-          <MetricRow label="Plant COP" value={typeof kpi('kpi-cop') === 'number' ? kpi('kpi-cop').toFixed(2) : kpi('kpi-cop')} />
+          <MetricRow label="Plant COP" value={typeof kpi('kpi-cop') === 'number' ? kpi('kpi-cop').toFixed(2) : kpi('kpi-cop')} warn={Number(kpi('kpi-cop')) < 4.5} />
           <MetricRow label="Total plant kW" value={kpi('kpi-kw')} unit="kW" />
-          <MetricRow label="Plant efficiency" value={kpi('kpi-eff')} unit="kW/RT" />
+          <MetricRow label="Plant kW/RT" value={kpi('kpi-eff')} unit="kW/RT" warn={Number(kpi('kpi-eff')) > 0.85} />
+          <MetricRow label="CHW ΔT" value={kpi('kpi-chw-dt') ?? deltaT} unit="°C" warn={Number(kpi('kpi-chw-dt') ?? deltaT) < 4.5} />
+          <MetricRow label="Tower approach" value={kpi('kpi-approach')} unit="°C" warn={Number(kpi('kpi-approach')) > 5} />
+          <MetricRow label="Header DP" value={kpi('kpi-dp')} unit="psi" />
+          <MetricRow label="Bypass" value={kpi('kpi-bypass')} unit="%" warn={Number(kpi('kpi-bypass')) > 15} />
           <MetricRow label="Chillers online" value={kpi('kpi-rch')} />
         </div>
       </section>

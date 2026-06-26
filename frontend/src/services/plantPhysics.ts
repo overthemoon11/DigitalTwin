@@ -146,3 +146,15 @@ export function weatherCondenserOffset(ambientTempC: number, humidityRh: number)
   const humidOffset = Math.max(0, humidityRh - 70) * 0.04;
   return tempOffset + humidOffset;
 }
+
+/** Stull (2011) wet-bulb estimate from dry-bulb (°C) and RH (%). */
+export function estimateWetBulbC(dryBulbC: number, rhPercent: number): number {
+  const rh = clamp(rhPercent, 1, 100);
+  const twb =
+    dryBulbC * Math.atan(0.151977 * Math.sqrt(rh + 8.313659)) +
+    Math.atan(dryBulbC + rh) -
+    Math.atan(rh - 1.676331) +
+    0.00391838 * rh ** 1.5 * Math.atan(0.023101 * rh) -
+    4.686035;
+  return round(twb, 1);
+}

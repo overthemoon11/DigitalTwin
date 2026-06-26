@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useTwinStore } from "../hooks/useTwinStore";
 import { buildAhuChatSuggestions } from "../services/ahuCopilotActions";
 import { buildEtsChatSuggestions } from "../services/etsCopilotActions";
+import { buildChillerChatSuggestions } from "../services/chillerCopilotActions";
 
 // Simple Markdown-like renderer for chat messages
 function renderMarkdown(text) {
@@ -184,22 +185,24 @@ function CopilotChat() {
     activePlantScenario,
     ahuState,
     etsState,
+    plantState,
   } = useTwinStore();
 
   const isEts = activePlantScenario === 'ets';
   const isAhu = activePlantScenario === 'ahu';
+  const isChiller = !isEts && !isAhu;
 
   const chatTitle = isAhu
     ? 'AHU01 Chatbot · Local LLM'
     : isEts
       ? 'ETS Chatbot · Local LLM'
-      : 'Plant Chatbot · Local LLM';
+      : 'Chiller Plant Chatbot · Local LLM';
 
   const loadingLabel = isAhu
     ? 'Applying AHU01 scenario…'
     : isEts
       ? 'Analyzing ETS station data…'
-      : 'Analyzing chiller plant data…';
+      : 'Applying chiller plant scenario…';
 
   const defaultPrompts = isAhu
     ? [
@@ -218,36 +221,37 @@ function CopilotChat() {
           { label: 'HX approach', prompt: 'what is the HX approach?', icon: '🔄' },
         ]
       : [
-          { label: 'Set Load 1100', prompt: 'Set building load to 1100 RT', icon: '🏢' },
-          { label: 'Hot Day 36°C', prompt: 'Set outdoor temperature to 36°C', icon: '☀️' },
-          { label: 'Why COP low?', prompt: 'Why is plant COP low?', icon: '📉' },
-          { label: 'Plant Alarms', prompt: 'Show active alarms', icon: '🔔' },
-          { label: 'Save Energy', prompt: 'How can we save energy?', icon: '⚡' },
+          { label: 'Peak summer', prompt: 'run peak summer scenario', icon: '☀️' },
+          { label: 'Condenser stress', prompt: 'run condenser stress scenario', icon: '🔥' },
+          { label: 'Set load 1300', prompt: 'set building load to 1300 RT', icon: '🏢' },
+          { label: 'Plant alarms', prompt: 'show active alarms', icon: '🔔' },
+          { label: 'Why COP low?', prompt: 'why is plant COP low?', icon: '📉' },
         ];
 
   const introText = isAhu
     ? 'Ask about AHU01 airflow, SAT, alarms, or run scenarios — e.g. "run high humidity scenario", paste scenario JSON, or "set zone load to 1.35".'
     : isEts
       ? 'Ask about ETS load, approach, pumping, or run scenarios — e.g. "run peak summer scenario" or "set building load to 950 RT".'
-      : 'Ask about plant status, alarms, COP optimization, or adjust controls directly — e.g. "Set building load to 1100 RT" or "Set outdoor temperature to 36°C".';
+      : 'Ask about plant load, COP, alarms, or run scenarios — e.g. "run peak summer scenario", paste scenario JSON, or "set building load to 1300 RT".';
 
   const inputPlaceholder = isAhu
     ? 'run high humidity scenario · set SAT to 13°C'
     : isEts
       ? 'run peak summer scenario · set building load to 950 RT'
-      : 'Why is plant COP low? Which chiller to stop?';
+      : 'run peak summer scenario · set building load to 1300 RT';
 
   const hintText = isAhu
     ? 'Try: "run high humidity scenario" · paste scenario JSON · "set zone load to 1.35"'
     : isEts
       ? 'Try: "run peak summer scenario" · "set building load to 950 RT" · "show active alarms"'
-      : 'Try: "Set building load to 1100 RT" · "Set outdoor temperature to 35°C" · "Why is COP low?"';
+      : 'Try: "run peak summer scenario" · paste scenario JSON · "set building load to 1300 RT"';
 
   const localSuggestions = useMemo(() => {
     if (isAhu) return buildAhuChatSuggestions(ahuState);
     if (isEts) return buildEtsChatSuggestions(etsState);
+    if (isChiller) return buildChillerChatSuggestions(plantState);
     return [];
-  }, [isAhu, isEts, ahuState, etsState]);
+  }, [isAhu, isEts, isChiller, ahuState, etsState, plantState]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
