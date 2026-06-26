@@ -6,6 +6,7 @@ import { Valve } from './Valve';
 import { ExpansionTank } from './ExpansionTank';
 import { ScadaPipe } from './ScadaPipe';
 import { ScadaLegend } from './ScadaLegend';
+import { PipeLoopLabel } from './PipeLoopLabel';
 import { ScadaZonePanel, ScadaZoneTitle } from './ScadaZone';
 import { EquipLabel } from './EquipLabel';
 import { LOOP, SCADA } from './scadaTheme';
@@ -28,12 +29,11 @@ import {
   EXPTNK_X,
   EXPTNK_Y,
   H_RISE,
-  HR_EXPORT_X,
   MAKEUP_PUMP_X,
   MAKEUP_PUMP_Y,
   MAKEUP_TANK,
   M_RISE,
-  PIPE,
+  PIPE_LOOP_LABELS,
   ZONE,
   chilledPipes,
   condenserPipes,
@@ -195,13 +195,17 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
           />
         ))}
 
-        {/* Pipe labels */}
-        <text x={CT_X[0] - 4} y={PIPE.CWS_CT_TOP - 6} fill={LOOP.cws.stroke} fontSize={8} fontWeight="600" fontFamily={SCADA.mono}>CWS</text>
-        <text x={HR_EXPORT_X + 48} y={PIPE.CWR_HDR - 6} fill={LOOP.cwr.stroke} fontSize={8} fontWeight="600" fontFamily={SCADA.mono}>CWR</text>
-        <text x={HR_EXPORT_X + 48} y={PIPE.CWS_HDR - 6} fill={LOOP.cws.stroke} fontSize={8} fontWeight="600" fontFamily={SCADA.mono}>CWS</text>
-        <text x={HR_EXPORT_X + 48} y={PIPE.CHWS - 6} fill={LOOP.chws.stroke} fontSize={8} fontWeight="600" fontFamily={SCADA.mono}>CHWS</text>
-        <text x={HR_EXPORT_X + 48} y={PIPE.CHWR + 14} fill={LOOP.chwr.stroke} fontSize={8} fontWeight="600" fontFamily={SCADA.mono}>CHWR</text>
-        <text x={HR_EXPORT_X + 8} y={PIPE.CHWS + 22} fill={LOOP.chws.stroke} fontSize={8} fontWeight="600" fontFamily={SCADA.mono}>→ High Rise</text>
+        {/* Pipe loop labels — beside headers, not on risers */}
+        {Object.entries(PIPE_LOOP_LABELS).map(([id, lbl]) => (
+          <PipeLoopLabel
+            key={id}
+            x={lbl.x}
+            y={lbl.y}
+            text={lbl.text}
+            loop={lbl.loop}
+            anchor={'anchor' in lbl ? lbl.anchor : 'start'}
+          />
+        ))}
 
         {/* —— EQUIPMENT —— */}
         {CT_X.map((tx, i) => {

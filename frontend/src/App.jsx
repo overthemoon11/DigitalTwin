@@ -140,7 +140,7 @@ function App() {
         <div className="header-info">
           <span className="plant-mode-badge">Physics · offline</span>
           <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-            {isConnected ? '● Chatbot API' : '○ API offline'}
+            {isConnected ? 'Chatbot API' : 'API offline'}
           </span>
           <span className="sim-time">
             {activeAppTab === 'district_cooling' && districtCoolingState?.simulation

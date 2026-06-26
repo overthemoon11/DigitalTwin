@@ -101,6 +101,24 @@ export const RISE_CHWR_Y = M_RISE.y + 14;
 export const RISE_CHWS_Y = M_RISE.y + M_RISE.h - 6;
 export const HR_EXPORT_X = 920;
 
+/** Loop name tags — offset from pipe centerlines (SCADA: label beside header, not on pipe) */
+export const PIPE_LOOP_LABELS = {
+  /** CT supply header (top) */
+  cwsTower: { x: CT_X[0] - 8, y: PIPE.CWS_CT_TOP + 6, text: 'CWS', loop: 'cws' as const, anchor: 'end' as const },
+  /** Condenser return header — left of east–west run */
+  cwrMain: { x: TRAIN.LEFT + 48, y: PIPE.CWR_HDR - 10, text: 'CWR', loop: 'cwr' as const, anchor: 'start' as const },
+  /** Condenser supply (upper header) */
+  cwsUpper: { x: TRAIN.LEFT + 4, y: PIPE.CWS_HDR - 40 - 10, text: 'CWS', loop: 'cws' as const, anchor: 'start' as const },
+  /** Condenser supply (lower / chiller tie-in header) */
+  cwsLower: { x: TRAIN.LEFT + 142, y: PIPE.CWS_HDR + 55 - 10, text: 'CWS', loop: 'cws' as const, anchor: 'start' as const },
+  /** Primary CHWS header */
+  chwsPrimary: { x: TRAIN.LEFT + 68, y: PIPE.CHWS + 5 - 10, text: 'CHWS', loop: 'chws' as const, anchor: 'start' as const },
+  /** CHWR header */
+  chwrMain: { x: TRAIN.LEFT + 135, y: PIPE.CHWR + 70 - 10, text: 'CHWR', loop: 'chwr' as const, anchor: 'start' as const },
+  /** Secondary CHWS header (CHWP discharge) */
+  chwsSecondary: { x: TRAIN.LEFT + 18, y: PIPE.CHWS + 55 - 10, text: 'CHWS', loop: 'chws' as const, anchor: 'start' as const },
+} as const;
+
 /** @deprecated use M_RISE / H_RISE */
 export const BUILDING = M_RISE;
 
@@ -291,12 +309,6 @@ export function chilledPipes() {
   paths.push({
     d: `M ${right-10} ${chwsHdrY} L ${right-10} ${chwsLinkY} L ${pcx4} ${chwsLinkY}`,
     loop: 'chws',
-  });
-  paths.push({ d: `M ${pcx4} ${PIPE.CHWR} L ${pcx4} ${CHWP_Y + chwpH}`, loop: 'chwr' });
-  // CHWR header → CHWP-4: down at right end, then left along pump row
-  paths.push({
-    d: `M ${right} ${PIPE.CHWR} L ${right} ${CHWP_Y + chwpH} L ${pcx4} ${CHWP_Y + chwpH}`,
-    loop: 'chwr',
   });
 
   // Expansion tanks — vertical drops to CHWR header
