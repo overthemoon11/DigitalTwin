@@ -207,10 +207,10 @@ export function etsPipes(): EtsPipePath[] {
     // dashed: true,
   });
 
-  // HX secondary return (chwrAsm) — bottom-left IN → merge riser → CHWR header
-  p.push({ d: `M ${hx1.x} ${hx1Ret} L ${HX_VALVE_X+50} ${hx1Ret}`, loop: 'chwrAsm' });//hx1out
-  p.push({ d: `M ${hx2.x} ${hx2Ret} L ${HX_VALVE_X+50} ${hx2Ret}`, loop: 'chwrAsm' });//hx2out
-  p.push({ d: `M ${HX_VALVE_X+50} ${hx1Ret} L ${HX_VALVE_X+50} ${RETURN_Y}`, loop: 'chwrAsm' });//hx1in
+  // HX secondary return (chwrAsm) — trunk → RIGHT into each HX bottom-left port
+  p.push({ d: `M ${HX_VALVE_X + 50} ${hx1Ret} L ${hx1.x} ${hx1Ret}`, loop: 'chwrAsm' });
+  p.push({ d: `M ${HX_VALVE_X + 50} ${hx2Ret} L ${hx2.x} ${hx2Ret}`, loop: 'chwrAsm' });
+  p.push({ d: `M ${HX_VALVE_X + 50} ${RETURN_Y} L ${HX_VALVE_X + 50} ${hx1Ret}`, loop: 'chwrAsm' });
   // p.push({ d: `M ${hxMergeX} ${RETURN_Y} L ${retRight}`, loop: 'chwrAsm' });
   // From DCS Plant — primary return rise (teal) onto ETS CHWR header
   const fromDcsCx = POS.fromDcs.x + POS.fromDcs.w / 2;
