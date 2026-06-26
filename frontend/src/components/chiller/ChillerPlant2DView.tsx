@@ -301,10 +301,10 @@ export default function ChillerPlant2DView({ equipment, headers, selectedId, onS
         />
 
         {get('exptnk-01') && (
-          <ExpansionTank equipment={get('exptnk-01')!} x={EXPTNK_X} y={EXPTNK_Y[0]} selected={selectedId === 'exptnk-01'} onSelect={(id) => onSelect(id)} />
+          <ExpansionTank equipment={get('exptnk-01')!} x={EXPTNK_X[0]} y={EXPTNK_Y} selected={selectedId === 'exptnk-01'} onSelect={(id) => onSelect(id)} />
         )}
         {get('exptnk-02') && (
-          <ExpansionTank equipment={get('exptnk-02')!} x={EXPTNK_X} y={EXPTNK_Y[1]} selected={selectedId === 'exptnk-02'} onSelect={(id) => onSelect(id)} />
+          <ExpansionTank equipment={get('exptnk-02')!} x={EXPTNK_X[1]} y={EXPTNK_Y} selected={selectedId === 'exptnk-02'} onSelect={(id) => onSelect(id)} />
         )}
         {get('bv-1') && <Valve equipment={get('bv-1')!} x={BYPASS_X} y={BYPASS_Y[0]} selected={selectedId === 'bv-1'} onSelect={(id) => onSelect(id)} />}
         {get('bv-2') && <Valve equipment={get('bv-2')!} x={BYPASS_X} y={BYPASS_Y[1]} selected={selectedId === 'bv-2'} onSelect={(id) => onSelect(id)} />}

@@ -30,7 +30,7 @@ const CHILLER_W = 120;
 const CHILLER_H = 88;
 const TOWER_W = 180;
 const TOWER_H = 88;
-const EXPTNK_W = 140;
+const EXPTNK_W = 100;
 const EXPTNK_H = 60;
 const VALVE_W = 148;
 const VALVE_H = 40;
@@ -55,8 +55,8 @@ export function boundsForEquipment(id: string): { x: number; y: number; w: numbe
     'cwmutnk-41-1': box(MAKEUP_TANK.x, MAKEUP_TANK.y, MAKEUP_TANK.w + 78, MAKEUP_TANK.h),
     'cwmup-1': box(MAKEUP_PUMP_X[0], MAKEUP_PUMP_Y, 60 + 62, PUMP_DIM.CHWP.h),
     'cwmup-2': box(MAKEUP_PUMP_X[1], MAKEUP_PUMP_Y, 60 + 62, PUMP_DIM.CHWP.h),
-    'exptnk-01': box(EXPTNK_X, EXPTNK_Y[0], EXPTNK_W, EXPTNK_H + 36),
-    'exptnk-02': box(EXPTNK_X, EXPTNK_Y[1], EXPTNK_W, EXPTNK_H + 36),
+    'exptnk-01': box(EXPTNK_X[0], EXPTNK_Y, EXPTNK_W, EXPTNK_H + 36),
+    'exptnk-02': box(EXPTNK_X[1], EXPTNK_Y, EXPTNK_W, EXPTNK_H + 36),
     'bv-1': box(BYPASS_X, BYPASS_Y[0], VALVE_W + 20, VALVE_H),
     'bv-2': box(BYPASS_X, BYPASS_Y[1], VALVE_W + 20, VALVE_H),
     'm-rise': box(M_RISE.x, M_RISE.y, M_RISE.w, M_RISE.h),

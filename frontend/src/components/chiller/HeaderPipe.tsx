@@ -31,7 +31,6 @@ export function HeaderPipe({
 
   return (
     <g className="scada-header">
-      <line x1={pipeX1} y1={pipeY} x2={pipeX2} y2={pipeY} stroke={color} strokeWidth={10} strokeLinecap="round" opacity={0.4} />
       <ScadaTag x={x} y={y} tag={tag} pv={temp.toFixed(1)} unit="°C" width={92} />
       <text x={x + 46} y={y + 48} textAnchor="middle" fill={color} fontSize={8} fontWeight="600">
         {label}

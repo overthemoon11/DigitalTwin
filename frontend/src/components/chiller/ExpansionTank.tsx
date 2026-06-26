@@ -28,7 +28,7 @@ export function ExpansionTank({ equipment, x, y, selected, onSelect }: Props) {
         iconY={y}
         iconW={W}
         iconH={iconH}
-        plateW={72}
+        plateW={35}
         lines={[
           { text: equipment.name, variant: 'tag' },
           { text: `${equipment.levelPercent.toFixed(0)} %`, variant: 'pv' },

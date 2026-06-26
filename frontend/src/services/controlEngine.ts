@@ -488,7 +488,7 @@ function runControlStep(): PlantState {
 
   equipment['exptnk-01'] = {
     id: 'exptnk-01',
-    name: 'ExpTnk-01',
+    name: 'ET-01',
     category: 'expansion',
     type: 'expansion_tank',
     status: 'running',
@@ -499,7 +499,7 @@ function runControlStep(): PlantState {
   };
   equipment['exptnk-02'] = {
     id: 'exptnk-02',
-    name: 'ExpTnk-02',
+    name: 'ET-02',
     category: 'expansion',
     type: 'expansion_tank',
     status: 'running',

@@ -50,8 +50,8 @@ const TREE = [
       {
         name: 'Expansion Tanks',
         children: [
-          { id: 'exptnk-01', name: 'ExpTnk-01' },
-          { id: 'exptnk-02', name: 'ExpTnk-02' },
+          { id: 'exptnk-01', name: 'ET-01' },
+          { id: 'exptnk-02', name: 'ET-02' },
         ],
       },
       {
