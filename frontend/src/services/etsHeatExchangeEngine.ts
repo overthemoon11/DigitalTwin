@@ -24,7 +24,7 @@ import type {
 } from '../types/ets';
 import { MBS, clamp, round, solveEtsThermoHydraulics } from './etsPhysics.js';
 import { getEtsScenarioById } from './etsScenarios.js';
-import { buildEtsCascadeTrace } from './etsCascade.js';
+import { buildEtsCascadeTrace, buildEtsCascadeRows } from './etsCascade.js';
 import {
   recommendForHxApproach,
   recommendForLowSecondaryDt,
@@ -41,9 +41,78 @@ let lagLoadRt = 466;
 let kwhCumulative = MBS.METER_BASELINE_KWH as number;
 let lastTrigger = 'ETS A-B03-01 initialized (serves ASM)';
 let lastControlId: string | null = null;
+// Before-snapshot for the before→after domino cascade (persisted across live ticks).
+let lastBeforeCtx: Record<string, number | string | boolean> | null = null;
+let lastChanges: Array<{ label: string; oldValue: number; newValue: number; unit?: string }> | null = null;
 
 function getControl(id: string): number {
   return controls.find((c) => c.id === id)?.value ?? 0;
+}
+
+/** Map a solved thermo-hydraulic result + control inputs to the flat cascade context. */
+function etsCtxFrom(
+  s: ReturnType<typeof solveEtsThermoHydraulics>,
+  ex: { baseLoadRt: number; occupied: boolean; ambient: number; chwsSp: number; dpSp: number; chwrtSp: number; hxInService: number; targetLoadRt: number }
+): Record<string, number | string | boolean> {
+  return {
+    baseLoadRt: ex.baseLoadRt,
+    ambient: ex.ambient,
+    occupied: ex.occupied,
+    targetLoadRt: ex.targetLoadRt,
+    demandRt: s.demandRt,
+    coolingKw: s.coolingKw,
+    chwsSp: ex.chwsSp,
+    chwsC: s.chwsC,
+    chwrC: s.chwrC,
+    secDeltaT: s.secDeltaT,
+    secFlowM3h: s.secFlowM3h,
+    dpSp: ex.dpSp,
+    headerDpKpa: s.headerDpKpa,
+    pumpsRunning: s.pumpsRunning,
+    pumpSpeedPct: s.pumpSpeedPct,
+    pumpPowerKwTotal: s.pumpPowerKwTotal,
+    pumpKwPerRt: s.pumpKwPerRt,
+    hxInService: ex.hxInService,
+    loadFrac: s.loadFrac,
+    approachC: s.approachC,
+    effectiveness: s.effectiveness,
+    lmtdC: s.lmtdC,
+    dcsSupplyC: s.dcsSupplyC,
+    dcrC: s.dcrC,
+    priDeltaT: s.priDeltaT,
+    priFlowM3h: s.priFlowM3h,
+    chwrtSp: ex.chwrtSp,
+    ltBypassPct: s.ltBypassPct,
+    ltBypassFlowM3h: s.ltBypassFlowM3h,
+  };
+}
+
+/** Pure solve of the *current* controls (no lag/tick/meter mutation) → cascade ctx. */
+function solveEtsCtx(): Record<string, number | string | boolean> {
+  const baseLoadRt = getControl('ets-load');
+  const occupied = getControl('ets-occupied') >= 1;
+  const chwsSp = getControl('ets-chws-sp');
+  const dpSp = getControl('ets-dp-sp');
+  const chwrtSp = getControl('ets-chwrt-sp');
+  const dcsTemp = getControl('ets-dcs-temp');
+  const hxInService = Math.round(getControl('ets-hx-service'));
+  const pumpMin = getControl('ets-pump-min');
+  const pumpMax = getControl('ets-pump-max');
+  const ambient = getControl('ets-ambient');
+  const weatherFactor = 1 + (ambient - 32) * 0.012;
+  const occFactor = occupied ? 1 : 0.55;
+  const targetLoadRt = clamp(baseLoadRt * weatherFactor * occFactor, 80, 1150);
+  const s = solveEtsThermoHydraulics({
+    demandRt: lagLoadRt,
+    dcsSupplyC: dcsTemp,
+    chwsSpC: chwsSp,
+    dpSpKpa: dpSp,
+    chwrtSpC: chwrtSp,
+    hxInService,
+    pumpMinPct: pumpMin,
+    pumpMaxPct: pumpMax,
+  });
+  return etsCtxFrom(s, { baseLoadRt, occupied, ambient, chwsSp, dpSp, chwrtSp, hxInService, targetLoadRt });
 }
 
 function defaultControls(): EtsControl[] {
@@ -339,39 +408,13 @@ function runStep(): EtsState {
     recommendedActions.push('ETS operating within design — approach, ΔT and pumping nominal');
   }
 
-  const cascadeTrace = buildEtsCascadeTrace({
+  const afterCtx = {
+    ...etsCtxFrom(s, { baseLoadRt, occupied, ambient, chwsSp, dpSp, chwrtSp, hxInService, targetLoadRt }),
     trigger: lastTrigger,
-    baseLoadRt,
-    ambient,
-    occupied,
-    targetLoadRt,
-    demandRt: s.demandRt,
-    coolingKw: s.coolingKw,
-    chwsSp,
-    chwsC: s.chwsC,
-    chwrC: s.chwrC,
-    secDeltaT: s.secDeltaT,
-    secFlowM3h: s.secFlowM3h,
-    dpSp,
-    headerDpKpa: s.headerDpKpa,
-    pumpsRunning: s.pumpsRunning,
-    pumpSpeedPct: s.pumpSpeedPct,
-    pumpPowerKwTotal: s.pumpPowerKwTotal,
-    pumpKwPerRt: s.pumpKwPerRt,
-    hxInService,
-    loadFrac: s.loadFrac,
-    approachC: s.approachC,
-    effectiveness: s.effectiveness,
-    lmtdC: s.lmtdC,
-    dcsSupplyC: s.dcsSupplyC,
-    dcrC: s.dcrC,
-    priDeltaT: s.priDeltaT,
-    priFlowM3h: s.priFlowM3h,
-    chwrtSp,
-    ltBypassPct: s.ltBypassPct,
-    ltBypassFlowM3h: s.ltBypassFlowM3h,
     alertCount: alerts.length,
-  });
+  };
+  const cascadeTrace = buildEtsCascadeTrace(afterCtx, lastBeforeCtx, lastChanges);
+  const cascadeRows = buildEtsCascadeRows(afterCtx, lastBeforeCtx);
 
   return {
     station: 'A-B03-01',
@@ -395,6 +438,7 @@ function runStep(): EtsState {
       lastTrigger,
       lastControlId: lastControlId ?? undefined,
       cascadeTrace,
+      cascadeRows,
       lastOutput: {
         buildingLoadRt: s.demandRt,
         primaryDeltaT: s.priDeltaT,
@@ -425,6 +469,33 @@ export function updateEtsControl(controlId: string, value: number): void {
   controls = controls.map((c) => (c.id === controlId ? { ...c, value } : c));
   lastControlId = controlId;
   lastTrigger = `Operator set ${ctrl?.label || controlId}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
+  lastBeforeCtx = null;
+  lastChanges = null;
+}
+
+/**
+ * Commit a batch of staged operator edits, then fast-forward virtual time with a
+ * before→after cascade. Mirrors applyAhuChanges / applyPlantChanges.
+ */
+export function applyEtsChanges(
+  changes: Array<{ controlId: string; label: string; oldValue: number; newValue: number; unit?: string }>,
+  seconds = 30,
+): EtsState {
+  const list = changes ?? [];
+  lastBeforeCtx = list.length ? solveEtsCtx() : null;
+  lastChanges = list.length ? list.map((c) => ({ label: c.label, oldValue: c.oldValue, newValue: c.newValue, unit: c.unit })) : null;
+  for (const ch of list) {
+    if (controls.some((c) => c.id === ch.controlId)) {
+      controls = controls.map((c) => (c.id === ch.controlId ? { ...c, value: ch.newValue } : c));
+    }
+  }
+  if (list.length) lastControlId = list[list.length - 1].controlId;
+  const steps = Math.max(1, Math.floor(seconds / SIM_DT_SEC));
+  let state = runStep();
+  for (let i = 1; i < steps; i++) state = runStep();
+  const verb = list.length === 1 ? 'change' : 'changes';
+  lastTrigger = `Applied ${list.length} ${verb} — ${state.headers.coolingDemandRt} RT · approach ${state.headers.approachC}°C · ${state.simulation.stage} pump(s) (${steps * SIM_DT_SEC}s virtual)`;
+  return { ...state, simulation: { ...state.simulation, lastTrigger, mode: 'fast_forward' } };
 }
 
 export function advanceEts(steps = 15): EtsState {
@@ -462,6 +533,8 @@ function applyEtsScenarioInternal(scenario: {
   }
 
   lastControlId = `scenario:${scenario.id}`;
+  lastBeforeCtx = null;
+  lastChanges = null;
   snapLoadLag();
 
   const advanceSec = scenario.advanceSec ?? 0;
@@ -518,6 +591,8 @@ export function resetEts(): void {
   kwhCumulative = MBS.METER_BASELINE_KWH as number;
   lastControlId = null;
   lastTrigger = 'ETS A-B03-01 reset to baseline';
+  lastBeforeCtx = null;
+  lastChanges = null;
 }
 
 export function getEtsControls(): EtsControl[] {

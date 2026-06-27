@@ -4,6 +4,7 @@
 export {
   stepPlantSimulation,
   advancePlantSimulation,
+  applyPlantChanges,
   applyChillerScenario,
   applyChillerScenarioPayload,
   startPlantSimulator,

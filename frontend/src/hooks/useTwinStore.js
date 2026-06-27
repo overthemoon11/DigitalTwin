@@ -6,6 +6,7 @@ import {
   triggerPlantFault as setPlantFault,
   stepPlantSimulation,
   advancePlantSimulation,
+  applyPlantChanges as applyPlantChangesEngine,
   applyChillerScenario as applyChillerScenarioEngine,
   applyChillerScenarioPayload as applyChillerScenarioPayloadEngine,
   acknowledgePlantAlert as ackPlantAlert,
@@ -55,6 +56,7 @@ import {
   resetEts as resetEtsEngine,
   stepEts,
   advanceEts as advanceEtsEngine,
+  applyEtsChanges as applyEtsChangesEngine,
   applyEtsScenario as applyEtsScenarioEngine,
   applyEtsScenarioPayload as applyEtsScenarioPayloadEngine,
 } from '../services/etsHeatExchangeEngine';
@@ -65,6 +67,7 @@ import {
   resetAhu as resetAhuEngine,
   stepAhu,
   advanceAhu as advanceAhuEngine,
+  applyAhuChanges as applyAhuChangesEngine,
   applyAhuScenario as applyAhuScenarioEngine,
   applyAhuScenarioPayload as applyAhuScenarioPayloadEngine,
 } from '../services/ahuEngine';
@@ -152,6 +155,11 @@ export const useTwinStore = create((set, get) => ({
     set({ etsState: advanceEtsEngine(steps) });
   },
 
+  /** Commit a batch of staged ETS control edits and fast-forward (before→after cascade). */
+  applyEtsChanges: (changes = []) => {
+    set({ etsState: applyEtsChangesEngine(changes, 30) });
+  },
+
   applyEtsScenario: (scenarioId) => {
     set({ etsState: applyEtsScenarioEngine(scenarioId) });
   },
@@ -169,6 +177,11 @@ export const useTwinStore = create((set, get) => ({
   advanceAhu: (seconds = 30) => {
     const steps = Math.max(1, Math.floor(seconds / 2));
     set({ ahuState: advanceAhuEngine(steps) });
+  },
+
+  /** Commit a batch of staged control edits and fast-forward (before→after cascade). */
+  applyAhuChanges: (changes = []) => {
+    set({ ahuState: applyAhuChangesEngine(changes, 30) });
   },
 
   applyAhuScenario: (scenarioId) => {
@@ -219,6 +232,11 @@ export const useTwinStore = create((set, get) => ({
   advancePlantSimulation: (seconds = 60) => {
     const steps = Math.max(1, Math.floor(seconds / 2));
     set({ plantState: advancePlantSimulation(steps) });
+  },
+
+  /** Commit a batch of staged chiller-plant edits and fast-forward (before→after cascade). */
+  applyPlantChanges: (changes = []) => {
+    set({ plantState: applyPlantChangesEngine(changes, 60) });
   },
 
   applyChillerScenario: (scenarioId) => {

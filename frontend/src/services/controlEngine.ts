@@ -37,7 +37,7 @@ import {
   weatherLoadFactor,
   estimateWetBulbC,
 } from './plantPhysics';
-import { buildCascadeTrace } from './plantCascade';
+import { buildCascadeTrace, buildChillerCascadeRows, type CascadeContext } from './plantCascade';
 import {
   balanceChillerLoad,
   chillerLoadPercent,
@@ -212,6 +212,13 @@ function defaultControls(): PlantControl[] {
 let controls: PlantControl[] = defaultControls();
 let lastCascadeTrigger = 'Virtual plant at steady state (physics initialised)';
 let lastControlId: string | null = null;
+// Domino-effect before→after support: the most recent tick's context (used as the
+// "before" snapshot the moment an Apply commits) plus the operator edits applied.
+let lastCascadeCtx: CascadeContext | null = null;
+let lastBeforeCtx: CascadeContext | null = null;
+let lastChanges:
+  | Array<{ label: string; oldValue: number | string; newValue: number | string; unit?: string }>
+  | null = null;
 
 let internals: SimInternals = {
   tick: 0,
@@ -672,7 +679,7 @@ function runControlStep(): PlantState {
 
   const alerts = mergeAcknowledged(rawAlerts, internals.acknowledgedAlerts);
 
-  const cascadeTrace = buildCascadeTrace({
+  const cascadeCtx: CascadeContext = {
     trigger: lastCascadeTrigger,
     chwsSp,
     chwrSp,
@@ -695,7 +702,10 @@ function runControlStep(): PlantState {
     deltaT,
     totalPlantKw: totalKw,
     plantCop: plantCopVal,
-  });
+  };
+  lastCascadeCtx = cascadeCtx;
+  const cascadeTrace = buildCascadeTrace(cascadeCtx, lastBeforeCtx, lastChanges);
+  const cascadeRows = buildChillerCascadeRows(cascadeCtx, lastBeforeCtx);
 
   const buildingLoadRt = headers.buildingLoadRt;
   const loopDeltaT = headers.chwr - headers.chws;
@@ -736,6 +746,7 @@ function runControlStep(): PlantState {
       lastTrigger: lastCascadeTrigger,
       lastControlId: lastControlId ?? undefined,
       cascadeTrace,
+      cascadeRows,
       lastOutput: {
         buildingLoadRt,
         deltaT: round(loopDeltaT, 1),
@@ -761,6 +772,38 @@ export function updatePlantControl(controlId: string, value: number): void {
   const label = ctrl?.label || controlId;
   lastControlId = controlId;
   lastCascadeTrigger = `Operator set ${label}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
+  // Single immediate edit (chatbot path) — no before/after diff.
+  lastBeforeCtx = null;
+  lastChanges = null;
+}
+
+/**
+ * Commit a batch of staged operator edits, then fast-forward virtual time with a
+ * before→after domino cascade. The current tick's context becomes the "before".
+ */
+export function applyPlantChanges(
+  changes: Array<{ controlId: string; label: string; oldValue: number; newValue: number; unit?: string }>,
+  seconds = 60,
+): PlantState {
+  const list = changes ?? [];
+  lastBeforeCtx = list.length ? lastCascadeCtx : null;
+  lastChanges = list.length
+    ? list.map((c) => ({ label: c.label, oldValue: c.oldValue, newValue: c.newValue, unit: c.unit }))
+    : null;
+  for (const ch of list) {
+    if (controls.some((c) => c.id === ch.controlId)) {
+      controls = controls.map((c) => (c.id === ch.controlId ? { ...c, value: ch.newValue } : c));
+    }
+  }
+  if (list.length) lastControlId = list[list.length - 1].controlId;
+  const n = Math.max(1, Math.floor(seconds / SIM_DT_SEC));
+  let state = runControlStep();
+  for (let i = 1; i < n; i++) state = runControlStep();
+  const load = state.headers.buildingLoadRt;
+  const dt = round(state.headers.chwr - state.headers.chws, 1);
+  const verb = list.length === 1 ? 'change' : 'changes';
+  lastCascadeTrigger = `Applied ${list.length} ${verb} — ${load} RT load · ΔT ${dt}°C (${n * SIM_DT_SEC}s virtual)`;
+  return { ...state, simulation: { ...state.simulation, lastTrigger: lastCascadeTrigger } };
 }
 
 /** Advance virtual time (dynamic lag response) without live sensors. */
@@ -813,6 +856,8 @@ function applyChillerScenarioInternal(scenario: {
   }
 
   lastControlId = `scenario:${scenario.id}`;
+  lastBeforeCtx = null;
+  lastChanges = null;
 
   const advanceSec = scenario.advanceSec ?? 0;
   const steps = advanceSec > 0 ? Math.max(1, Math.floor(advanceSec / SIM_DT_SEC)) : 1;
@@ -866,6 +911,8 @@ export function resetPlantControls(): void {
   controls = defaultControls();
   lastCascadeTrigger = 'Plant reset to baseline setpoints';
   lastControlId = null;
+  lastBeforeCtx = null;
+  lastChanges = null;
   internals = {
     tick: 0,
     chwsActual: 7,

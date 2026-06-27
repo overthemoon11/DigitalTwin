@@ -7,6 +7,8 @@ import {
   CHILLER_GROUP_LABELS,
 } from './chillerControlMeta';
 import { CHILLER_SCENARIOS } from '../../services/chillerScenarios';
+import { useDraftControls } from '../../hooks/useDraftControls';
+import { RangeSlider } from '../common/RangeSlider';
 
 function ControlMeta({ meta }) {
   return (
@@ -18,9 +20,15 @@ function ControlMeta({ meta }) {
   );
 }
 
-function ControlSlider({ control, onUpdate }) {
+function ControlSlider({ control, draftValue, onDraft }) {
   const meta = CHILLER_CONTROL_META[control.id];
   const [showMeta, setShowMeta] = useState(false);
+  const dirty = draftValue !== control.value;
+  let tooltip;
+  if (control.controlType === 'chillerEnable') tooltip = draftValue >= 1 ? 'Enabled' : 'Disabled';
+  else if (control.controlType === 'optimizationMode') tooltip = draftValue >= 1 ? 'On' : 'Off';
+  else if (control.controlType.includes('Override') && draftValue === 0) tooltip = 'Auto';
+  else tooltip = `${draftValue}${control.unit ? ` ${control.unit}` : ''}`;
 
   const labelBtn = meta ? (
     <button
@@ -28,41 +36,53 @@ function ControlSlider({ control, onUpdate }) {
       className="ets-control-label-btn"
       onClick={() => setShowMeta((s) => !s)}
       aria-expanded={showMeta}
+      title={tooltip}
     >
       {control.label}
     </button>
   ) : (
-    <label>{control.label}</label>
+    <label title={tooltip}>{control.label}</label>
   );
 
   if (control.controlType === 'chillerEnable' || control.controlType === 'optimizationMode') {
-    const on = control.value >= 1;
+    const on = draftValue >= 1;
     const offLabel = control.controlType === 'chillerEnable' ? 'Disabled' : 'Off';
     const onLabel = control.controlType === 'chillerEnable' ? 'Enabled' : 'On';
     return (
-      <div className="control-item ets-control-item">
+      <div className={`control-item ets-control-item ${dirty ? 'ctrl-dirty' : ''}`} title={tooltip}>
         {labelBtn}
         <div className="dc-toggle-row">
-          <button type="button" className={`dc-toggle-btn ${!on ? 'active' : ''}`} onClick={() => onUpdate(control.id, 0)}>{offLabel}</button>
-          <button type="button" className={`dc-toggle-btn ${on ? 'active' : ''}`} onClick={() => onUpdate(control.id, 1)}>{onLabel}</button>
+          <button type="button" className={`dc-toggle-btn ${!on ? 'active' : ''}`} onClick={() => onDraft(control.id, 0)}>{offLabel}</button>
+          <button type="button" className={`dc-toggle-btn ${on ? 'active' : ''}`} onClick={() => onDraft(control.id, 1)}>{onLabel}</button>
         </div>
+        {dirty && <div className="ctrl-pending-hint">{control.value >= 1 ? onLabel : offLabel} → {on ? onLabel : offLabel}</div>}
         {showMeta && meta && <ControlMeta meta={meta} />}
       </div>
     );
   }
 
-  const displayValue = control.controlType.includes('Override') && control.value === 0 ? 'Auto' : control.value;
+  const fmtVal = (v) => (control.controlType.includes('Override') && v === 0 ? 'Auto' : v);
+  const displayValue = fmtVal(draftValue);
 
   return (
-    <div className="control-item ets-control-item">
-      {labelBtn}
-      <input
-        type="range"
+    <div className={`control-item ets-control-item ${dirty ? 'ctrl-dirty' : ''}`} title={tooltip}>
+      <div className="ctrl-label-row">
+        {labelBtn}
+        {dirty && (
+          <span className="ctrl-prev-val" title="Current value — click Apply to commit the change">
+            was {fmtVal(control.value)}{control.unit ? ` ${control.unit}` : ''}
+          </span>
+        )}
+      </div>
+      <RangeSlider
         min={control.min}
         max={control.max}
         step={control.step}
-        value={control.value ?? control.min}
-        onChange={(e) => onUpdate(control.id, parseFloat(e.target.value))}
+        value={draftValue ?? control.min}
+        unit={control.unit}
+        title={tooltip}
+        display={displayValue === 'Auto' ? 'Auto' : `${displayValue}${control.unit ? ` ${control.unit}` : ''}`}
+        onChange={(e) => onDraft(control.id, parseFloat(e.target.value))}
       />
       <div className="value-display">
         <span>{control.min} {control.unit}</span>
@@ -80,8 +100,7 @@ export default function ChillerPlantControlPanel({
   headers,
   simulation,
   equipment,
-  onUpdate,
-  onRunSimulation,
+  onApply,
   onApplyScenario,
   onReset,
   onTriggerFault,
@@ -89,8 +108,10 @@ export default function ChillerPlantControlPanel({
   const [showFormulas, setShowFormulas] = useState(false);
   const [showOutputs, setShowOutputs] = useState(false);
   const [expandedScenario, setExpandedScenario] = useState(null);
+  const { draft, setDraftValue, discardDrafts, pending } = useDraftControls(controls);
 
   const activeScenarioId = simulation?.scenarioId ?? null;
+  const hasPending = pending.length > 0;
 
   const groups = CHILLER_GROUP_ORDER.map((key) => ({
     key,
@@ -108,8 +129,8 @@ export default function ChillerPlantControlPanel({
       <div className="control-group">
         <h4>Chiller Plant Controls</h4>
         <p className="ets-control-intro">
-          L29 plant room — click a control label for <strong>ƒ</strong> formula and affected outputs.
-          See <code>docs/chiller-plant-controls-and-physics.md</code>.
+          L29 plant room — adjust controls then click <strong>Apply Changes</strong>. Hover a slider for its
+          <strong> ƒ</strong> formula; click a label for details. See <code>docs/chiller-plant-controls-and-physics.md</code>.
         </p>
         <button
           type="button"
@@ -167,7 +188,7 @@ export default function ChillerPlantControlPanel({
         <div key={g.key} className="control-group">
           <h4>{g.label}</h4>
           {g.items.map((control) => (
-            <ControlSlider key={control.id} control={control} onUpdate={onUpdate} />
+            <ControlSlider key={control.id} control={control} draftValue={draft[control.id] ?? control.value} onDraft={setDraftValue} />
           ))}
         </div>
       ))}
@@ -210,10 +231,31 @@ export default function ChillerPlantControlPanel({
         </div>
       )}
 
-      <div className="control-group" style={{ marginTop: '1.5rem' }}>
+      <div className="control-group ctrl-apply-group" style={{ marginTop: '1.5rem' }}>
         <h4>Simulation</h4>
-        <button type="button" className="dc-run-btn" onClick={onRunSimulation}>▶ Run Simulation Step</button>
-        <p className="dc-run-hint">Advances physics ~60s virtual time (30 × 2s ticks)</p>
+        {hasPending && (
+          <div className="ctrl-pending-summary">
+            <strong>{pending.length}</strong> pending change{pending.length > 1 ? 's' : ''}:
+            <ul>
+              {pending.map((c) => (
+                <li key={c.controlId}>{c.label}: {c.oldValue} → {c.newValue}{c.unit ? ` ${c.unit}` : ''}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        <button
+          type="button"
+          className={`dc-run-btn ${hasPending ? 'has-pending' : ''}`}
+          onClick={() => onApply(pending)}
+        >
+          {hasPending ? `▶ Apply ${pending.length} Change${pending.length > 1 ? 's' : ''} & Run` : '▶ Run Simulation Step'}
+        </button>
+        {hasPending && (
+          <button type="button" className="dc-reset-btn ctrl-discard-btn" onClick={discardDrafts}>
+            ✕ Discard pending
+          </button>
+        )}
+        <p className="dc-run-hint">Staged edits apply only when you click Apply · advances physics ~60s virtual time.</p>
         <button type="button" className="dc-reset-btn" onClick={onReset}>🔄 Reset to Baseline</button>
       </div>
 

@@ -19,9 +19,9 @@ export const ETS_CONTROL_META = {
     description: 'Time program scales effective load. Unoccupied reduces demand ~45%.',
   },
   'ets-chws-sp': {
-    formula: 'T_CHWS ≈ SP + 0.5×(T_approach − 1.5°C)',
-    affects: ['chwsC', 'chwrC', 'secDeltaT', 'approachC (display)'],
-    description: 'Secondary chilled-water supply setpoint. Shifts CHWS/CHWR while HX balances duty.',
+    formula: 'T_CHWS ≈ SP + 0.5×(T_approach − 1.5°C); T_CHWR = T_CHWS + ΔT_sec',
+    affects: ['chwsC', 'chwrC'],
+    description: 'Secondary chilled-water supply setpoint. Shifts CHWS/CHWR together; ΔT_sec is set by load, not by this setpoint.',
   },
   'ets-dp-sp': {
     formula: 'DP_header ≈ DP_SP + 2×load_fraction',
@@ -34,9 +34,9 @@ export const ETS_CONTROL_META = {
     description: 'LT bypass valve target return temperature. Higher SP closes bypass as CHWR rises above target.',
   },
   'ets-dcs-temp': {
-    formula: 'T_approach = T_CHWS − T_DCS; ΔT_pri = T_DCR − T_DCS',
-    affects: ['dcsSupplyC', 'approachC', 'priDeltaT', 'priFlowM3h', 'effectiveness'],
-    description: 'Primary district supply from DCS plant. Colder DCS tightens approach and primary ΔT.',
+    formula: 'ΔT_pri = T_DCR − T_DCS; ε, NTU & LMTD shift with DCS temp (approach is load-driven, not DCS-driven)',
+    affects: ['dcsSupplyC', 'priDeltaT', 'priFlowM3h', 'effectiveness', 'LMTD'],
+    description: 'Primary district supply from DCS plant. Colder DCS widens primary ΔT and changes HX effectiveness/LMTD.',
   },
   'ets-hx-service': {
     formula: 'Q_capacity = Σ(rated_RT in service); load_frac = demand / capacity',

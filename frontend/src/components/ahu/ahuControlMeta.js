@@ -14,19 +14,19 @@ export const AHU_CONTROL_META = {
     description: 'Operating mode sets minimum outdoor-air fraction and heating/cooling strategy.',
   },
   'ahu-sat-sp': {
-    formula: 'approach = (T_MAT − SAT_SP)×(1 − CHW_valve/110); SAT = T_MAT − approach',
+    formula: 'SAT = T_MAT − (CHW%/100)·(T_MAT − max(SAT_SP, T_CHW,enter + 2°C))',
     affects: ['SAT', 'coil approach', 'cooling kW', 'CHW valve demand'],
-    description: 'Supply-air temperature setpoint. Lower SP drives CHW valve open and deeper coil approach.',
+    description: 'Supply-air temperature setpoint. Lower SP drives CHW valve open and deeper coil approach (floored at CHW entering + 2°C).',
   },
   'ahu-ra-temp-sp': {
-    formula: 'e_T = T_RA − T_RA,SP; coolingDemand ∝ 0.4·e_T + 0.03·e_RH',
-    affects: ['CHW valve %', 'fan speed trim', 'zone lag target T_RA', 'cooling kW'],
-    description: 'Return-air dry-bulb comfort setpoint. Higher room temp vs SP increases cooling demand.',
+    formula: 'e_T = T_RA − T_RA,SP; coilLoad += 0.1·max(0, e_T) (× zone-load); zone lag target T_RA = SP + 3·(load−1)',
+    affects: ['CHW valve %', 'cooling kW', 'zone lag target T_RA'],
+    description: 'Return-air dry-bulb comfort setpoint. Higher room temp vs SP raises coil load and CHW valve.',
   },
   'ahu-ra-rh-sp': {
-    formula: 'e_RH = RH_RA − RH_RA,SP; coolingDemand ∝ 0.4·e_T + 0.03·e_RH',
-    affects: ['CHW valve %', 'dehumidification demand', 'zone lag target RH_RA'],
-    description: 'Return-air humidity setpoint. High RH vs SP adds dehumid load and opens CHW valve.',
+    formula: 'zone lag target RH_RA = SP + 12·(load−1); coilLoad rises with absolute RH_RA (0.75 weight) as RA tracks the target',
+    affects: ['zone lag target RH_RA', 'CHW valve % (via RA RH)', 'dehumidification demand', 'RA RH KPI / alarm'],
+    description: 'Return-air humidity setpoint. Drives the zone humidity target; CHW valve responds to the resulting RA RH, not the error directly.',
   },
   'ahu-sa-cfm-sp': {
     formula: 'SA_fan% = f(SA_CFM_SP/design, SP_SP, filterFactor, coolingDemand)',
@@ -39,9 +39,9 @@ export const AHU_CONTROL_META = {
     description: 'Return airflow setpoint. Sets RA fan speed relative to SA for pressurization balance.',
   },
   'ahu-sp-sp': {
-    formula: 'ΔP_static ≈ SP_SP × (SA_fan%/100)^1.8',
-    affects: ['static pressure Pa', 'SA fan speed %', 'duct velocity'],
-    description: 'Duct static-pressure setpoint. Higher SP increases fan speed to maintain duct pressure.',
+    formula: 'ΔP_static ≈ SP_SP × clamp((SA_CFM / SA_CFM_SP)^0.12, 0.75, 1.12)',
+    affects: ['static pressure Pa'],
+    description: 'Duct static-pressure setpoint. Scales the reported static pressure; SA fan speed tracks the airflow setpoint independently.',
   },
   'ahu-chw-enter': {
     formula: 'T_CHW,leave = T_CHW,enter + Q / (ṁ_w·c_p)',
@@ -69,8 +69,8 @@ export const AHU_CONTROL_META = {
     description: 'Filter loading (0=clean, 100=dirty). Increases ΔP and reduces effective airflow.',
   },
   'ahu-zone-load': {
-    formula: 'T_RA,target = T_RA,SP + 1.2×load; RH_target = RH_RA,SP + 18×load; lag α=0.12/0.10',
-    affects: ['RA temp/RH drift', 'coolingDemand multiplier', 'comfort KPIs'],
+    formula: 'T_RA,target = T_RA,SP + 3×(load−1); RH_target = RH_RA,SP + 12×(load−1); lag α=0.12/0.10; coilLoad ×load',
+    affects: ['RA temp/RH drift', 'coilLoad multiplier', 'CHW valve %', 'comfort KPIs'],
     description: 'Zone internal load index. >1 simulates higher occupancy/equipment heat and moisture.',
   },
   'ahu-oat': {
@@ -113,7 +113,7 @@ export const AHU_DERIVED_EXTRAS = [
 /** Core physics equations shown in the panel reference block. */
 export const AHU_CORE_FORMULAS = [
   { name: 'Sensible cooling (Imperial)', eq: 'Q[Btu/h] = CFM × 1.08 × ΔT[°F]' },
-  { name: 'Sensible cooling (metric)', eq: 'Q[kW] = 0.0167 × CFM × ΔT[°C]' },
+  { name: 'Sensible cooling (metric)', eq: 'Q[kW] = 0.00057 × CFM × ΔT[°C]' },
   { name: 'Mixed air', eq: 'T_MAT = f_OA·T_OA + (1−f_OA)·T_RA' },
   { name: 'Fan affinity', eq: 'Q∝N, H∝N², P∝N³' },
   { name: 'Mass balance', eq: 'V_OA = V_SA·f_OA; V_EA = max(0, V_SA − V_RA·(1−f_OA))' },

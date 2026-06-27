@@ -10,8 +10,8 @@
 export const CHILLER_CONTROL_META = {
   'ctrl-building-load': {
     formula: 'Q_demand = RT × 3.517 [kW]; ṁ = Q / (1.163 × ΔT_design)',
-    affects: ['buildingLoadRt', 'running chillers', 'CHW flow', 'CHWP staging', 'plant kW', 'COP', 'M/H Rise display'],
-    description: 'Base cooling demand before weather modifiers. Drives chiller count, required flow, and total plant power.',
+    affects: ['buildingLoadRt', 'running chillers', 'CHW flow', 'CHWP staging', 'plant kW', 'plant kW/RT'],
+    description: 'Base cooling demand before weather modifiers. Drives chiller count, required flow, and total plant power (chiller COP is set by CHWS/condenser, not load).',
   },
   'ctrl-ambient-temp': {
     formula: 'L_demand = L_base × f_temp(T_amb) × f_RH; f_temp = 1 + 0.03×(T−32°C) above ref',

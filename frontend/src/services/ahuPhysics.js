@@ -2,7 +2,8 @@
  * AHU01 air-side physics — plain ESM for tests + ahuEngine.ts.
  * Calibrated to BMS overview: RA 25.1°C/74.4%RH, SA 2555 CFM, CHW valve ~100%.
  *
- * Sensible: Q[Btu/h] = 1.08 × CFM × ΔT[°F]; metric Q[kW] ≈ 0.0167 × CFM × ΔT[°C]
+ * Sensible: Q[Btu/h] = 1.08 × CFM × ΔT[°F]; metric Q[kW] ≈ 0.00057 × CFM × ΔT[°C]
+ *   (= 1.08·CFM·ΔT°F ÷ 3412 Btu/kWh, with ΔT°F = 1.8·ΔT°C)
  */
 
 export const AHU01 = {
@@ -25,9 +26,9 @@ export function round(v, d = 1) {
   return Math.round(v * f) / f;
 }
 
-/** Sensible cooling kW from CFM and ΔT (°C). */
+/** Sensible cooling kW from CFM and ΔT (°C). Coefficient ≈ 1.08·CFM·ΔT°F ÷ 3412. */
 export function coolingKwFromCfm(cfm, deltaTC) {
-  return 0.0167 * cfm * Math.max(0, deltaTC);
+  return 0.00057 * cfm * Math.max(0, deltaTC);
 }
 
 /** Fan shaft kW from speed % (affinity P ∝ N³). */
@@ -123,6 +124,9 @@ export function solveAhu01Airside(inp) {
   const saFanKw = fanKwFromSpeed(18, 100, saFanSpeedPct);
   const raFanKw = fanKwFromSpeed(12, 100, raFanSpeedPct);
   const coolingKw = coolingKwFromCfm(saCfm, matC - satC);
+  // Heuristic CHW leaving temp: the coil water flow is not modelled, so the air-side
+  // flow (saCfm → m³/s via 0.000471) stands in as a proxy capacity rate. Indicative
+  // only — not a true water-side energy balance.
   const chwLeaveC = chwEnterC + coolingKw / Math.max(0.5, saCfm * 0.000471 * 4.186 * 1000);
   const hwLeaveC = hwEnterC - (hwValvePct / 100) * 8;
 

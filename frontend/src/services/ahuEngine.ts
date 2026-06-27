@@ -14,7 +14,7 @@ import type {
   EquipStatus,
 } from '../types/ahu';
 import { clamp, round, solveAhu01Airside } from './ahuPhysics.js';
-import { buildAhuCascadeTrace } from './ahuCascade.js';
+import { buildAhuCascadeTrace, buildAhuCascadeRows } from './ahuCascade.js';
 import { getAhuScenarioById } from './ahuScenarios.js';
 import {
   recommendForRaTempHigh,
@@ -37,9 +37,74 @@ let lagRatC = 25.1;
 let lagRaRh = 74.4;
 let lastTrigger = 'AHU01 initialized';
 let lastControlId: string | null = null;
+// Snapshot of the solved state captured just before the most recent operator
+// "Apply" + the edits that drove it — persisted so the before→after cascade
+// survives the live 2 s ticks until the next apply / reset / scenario.
+let lastBeforeCtx: Record<string, number | string> | null = null;
+let lastChanges: Array<{ label: string; oldValue: number; newValue: number; unit?: string }> | null = null;
 
 function getControl(id: string): number {
   return controls.find((c) => c.id === id)?.value ?? 0;
+}
+
+/** Map a solved airside result + setpoints to the flat cascade context. */
+function ahuCtxFrom(
+  s: ReturnType<typeof solveAhu01Airside>,
+  sp: { satSp: number; raTempSp: number; raRhSp: number; saCfmSp: number; raCfmSp: number }
+): Record<string, number | string> {
+  return {
+    mode: s.mode,
+    oatC: s.oatC,
+    oaRhPct: s.oaRhPct,
+    raTempSpC: sp.raTempSp,
+    raRhSpPct: sp.raRhSp,
+    ratC: s.ratC,
+    raRhPct: s.raRhPct,
+    matC: s.matC,
+    chwValvePct: s.chwValvePct,
+    hwValvePct: s.hwValvePct,
+    satC: s.satC,
+    satSpC: sp.satSp,
+    saFanSpeedPct: s.saFanSpeedPct,
+    raFanSpeedPct: s.raFanSpeedPct,
+    saCfm: s.saCfm,
+    raCfm: s.raCfm,
+    saCfmSp: sp.saCfmSp,
+    raCfmSp: sp.raCfmSp,
+    staticPressurePa: s.staticPressurePa,
+    coolingKw: s.coolingKw,
+    fanPowerKw: s.fanPowerKw,
+    oaFraction: s.oaFraction,
+    oaDamperPct: s.oaDamperPct,
+    raDamperPct: s.raDamperPct,
+    filterDpPa: s.filterDpPa,
+  };
+}
+
+/** Pure solve of the *current* controls (no tick/lag mutation) → cascade ctx. Used for the "before" snapshot. */
+function solveAhuCtx(): Record<string, number | string> {
+  const modeIndex = Math.round(getControl('ahu-mode'));
+  const satSp = getControl('ahu-sat-sp');
+  const raTempSp = getControl('ahu-ra-temp-sp');
+  const raRhSp = getControl('ahu-ra-rh-sp');
+  const saCfmSp = getControl('ahu-sa-cfm-sp');
+  const raCfmSp = getControl('ahu-ra-cfm-sp');
+  const spSp = getControl('ahu-sp-sp');
+  const chwEnter = getControl('ahu-chw-enter');
+  const hwEnter = getControl('ahu-hw-enter');
+  const filterLoad = getControl('ahu-filter-load');
+  const zoneLoad = getControl('ahu-zone-load');
+  const oat = getControl('ahu-oat');
+  const oarh = getControl('ahu-oarh');
+  const saFanOn = getControl('ahu-sa-fan') >= 1;
+  const raFanOn = getControl('ahu-ra-fan') >= 1;
+  const s = solveAhu01Airside({
+    modeIndex, oatC: oat, oaRhPct: oarh, ratC: lagRatC, raRhPct: lagRaRh,
+    satSpC: satSp, saCfmSp, raCfmSp, raTempSpC: raTempSp, raRhSpPct: raRhSp,
+    spSpPa: spSp, chwEnterC: chwEnter, hwEnterC: hwEnter,
+    filterLoadingPct: filterLoad, zoneLoadIdx: zoneLoad, saFanOn, raFanOn,
+  });
+  return ahuCtxFrom(s, { satSp, raTempSp, raRhSp, saCfmSp, raCfmSp });
 }
 
 function defaultControls(): AhuControl[] {
@@ -379,7 +444,7 @@ function runStep(): AhuState {
     // Energy & balance
     { id: 'ahu-kpi-chw', name: 'CHW Valve', value: s.chwValvePct, unit: '%', category: 'operational', status: s.chwValvePct > 95 ? 'warning' : 'normal', target: '< 95', trend: 'stable' },
     { id: 'ahu-kpi-hw', name: 'HW Valve', value: s.hwValvePct, unit: '%', category: 'operational', status: s.hwValvePct > 40 && s.chwValvePct > 50 ? 'warning' : 'normal', target: '< 40', trend: 'stable' },
-    { id: 'ahu-kpi-cool', name: 'Cooling Duty', value: s.coolingKw, unit: 'kW', category: 'energy', status: 'normal', target: 80, trend: 'stable' },
+    { id: 'ahu-kpi-cool', name: 'Cooling Duty', value: s.coolingKw, unit: 'kW', category: 'energy', status: 'normal', target: 18, trend: 'stable' },
     { id: 'ahu-kpi-fan', name: 'Fan Power', value: s.fanPowerKw, unit: 'kW', category: 'energy', status: s.fanPowerKw > 35 ? 'warning' : 'normal', target: 25, trend: 'stable' },
     { id: 'ahu-kpi-kw-cfm', name: 'Fan kW/CFM', value: s.kwPerCfm, unit: 'kW/CFM', category: 'energy', status: s.kwPerCfm > 0.008 ? 'warning' : 'normal', target: 0.007, trend: 'stable' },
     { id: 'ahu-kpi-press', name: 'Pressurization', value: pressCfm, unit: 'CFM', category: 'operational', status: pressCfm < pressTarget * 0.5 ? 'warning' : 'normal', target: pressTarget, trend: 'stable' },
@@ -411,35 +476,13 @@ function runStep(): AhuState {
   const recommendedActions = alerts.map((a) => a.recommendedAction).filter(Boolean) as string[];
   if (!recommendedActions.length) recommendedActions.push('AHU01 operating within setpoint bands');
 
-  const cascadeTrace = buildAhuCascadeTrace({
+  const afterCtx = {
+    ...ahuCtxFrom(s, { satSp, raTempSp, raRhSp, saCfmSp, raCfmSp }),
     trigger: lastTrigger,
-    mode: s.mode,
-    oatC: s.oatC,
-    oaRhPct: s.oaRhPct,
-    raTempSpC: raTempSp,
-    raRhSpPct: raRhSp,
-    ratC: s.ratC,
-    raRhPct: s.raRhPct,
-    matC: s.matC,
-    chwValvePct: s.chwValvePct,
-    hwValvePct: s.hwValvePct,
-    satC: s.satC,
-    satSpC: satSp,
-    saFanSpeedPct: s.saFanSpeedPct,
-    raFanSpeedPct: s.raFanSpeedPct,
-    saCfm: s.saCfm,
-    raCfm: s.raCfm,
-    saCfmSp,
-    raCfmSp,
-    staticPressurePa: s.staticPressurePa,
-    coolingKw: s.coolingKw,
-    fanPowerKw: s.fanPowerKw,
-    oaFraction: s.oaFraction,
-    oaDamperPct: s.oaDamperPct,
-    raDamperPct: s.raDamperPct,
-    filterDpPa: s.filterDpPa,
     alertCount: alerts.length,
-  });
+  };
+  const cascadeTrace = buildAhuCascadeTrace(afterCtx, lastBeforeCtx, lastChanges);
+  const cascadeRows = buildAhuCascadeRows(afterCtx, lastBeforeCtx);
 
   return {
     unit: 'AHU01',
@@ -461,6 +504,7 @@ function runStep(): AhuState {
       lastTrigger,
       lastControlId: lastControlId ?? undefined,
       cascadeTrace,
+      cascadeRows,
       saFanCmd: saFanOn ? 'ON' : 'OFF',
       raFanCmd: raFanOn ? 'ON' : 'OFF',
     },
@@ -485,6 +529,35 @@ export function updateAhuControl(controlId: string, value: number): void {
   controls = controls.map((c) => (c.id === controlId ? { ...c, value } : c));
   lastControlId = controlId;
   lastTrigger = `Operator set ${ctrl?.label || controlId}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
+  // Single immediate edit (chatbot path) — no before/after diff.
+  lastBeforeCtx = null;
+  lastChanges = null;
+}
+
+/**
+ * Commit a batch of staged operator edits, then fast-forward virtual time.
+ * Captures a "before" snapshot first so the cascade renders before → after for
+ * every affected output until the next apply / reset / scenario.
+ */
+export function applyAhuChanges(
+  changes: Array<{ controlId: string; label: string; oldValue: number; newValue: number; unit?: string }>,
+  seconds = 60,
+): AhuState {
+  const list = changes ?? [];
+  lastBeforeCtx = list.length ? solveAhuCtx() : null;
+  lastChanges = list.length ? list.map((c) => ({ label: c.label, oldValue: c.oldValue, newValue: c.newValue, unit: c.unit })) : null;
+  for (const ch of list) {
+    if (controls.some((c) => c.id === ch.controlId)) {
+      controls = controls.map((c) => (c.id === ch.controlId ? { ...c, value: ch.newValue } : c));
+    }
+  }
+  if (list.length) lastControlId = list[list.length - 1].controlId;
+  const steps = Math.max(1, Math.floor(seconds / SIM_DT_SEC));
+  let state = runStep();
+  for (let i = 1; i < steps; i++) state = runStep();
+  const verb = list.length === 1 ? 'change' : 'changes';
+  lastTrigger = `Applied ${list.length} ${verb} — SA ${state.headers.saCfm} CFM · RA ${state.headers.ratC}°C/${state.headers.raRhPct}%RH (${steps * SIM_DT_SEC}s virtual)`;
+  return { ...state, simulation: { ...state.simulation, lastTrigger, mode: 'fast_forward' } };
 }
 
 export function advanceAhu(steps = 15): AhuState {
@@ -519,6 +592,8 @@ function applyScenarioInternal(scenario: {
     snapZoneLag();
   }
   lastControlId = `scenario:${scenario.id}`;
+  lastBeforeCtx = null;
+  lastChanges = null;
   const advanceSec = scenario.advanceSec ?? 0;
   const steps = advanceSec > 0 ? Math.max(1, Math.floor(advanceSec / SIM_DT_SEC)) : 1;
   let state = runStep();
@@ -567,6 +642,8 @@ export function resetAhu(): void {
   lagRaRh = 74.4;
   lastControlId = null;
   lastTrigger = 'AHU01 reset to baseline';
+  lastBeforeCtx = null;
+  lastChanges = null;
 }
 
 export function getAhuControls(): AhuControl[] {

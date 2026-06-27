@@ -46,16 +46,19 @@ function App() {
     resetDistrictCooling,
     updateEtsControl,
     advanceEts,
+    applyEtsChanges,
     applyEtsScenario,
     resetEts,
     updateAhuControl,
     advanceAhu,
+    applyAhuChanges,
     applyAhuScenario,
     resetAhu,
     resetPlant,
     triggerPlantFault,
     updatePlantControl,
     advancePlantSimulation,
+    applyPlantChanges,
     applyChillerScenario,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState('controls');
@@ -310,8 +313,7 @@ function App() {
                   headers={plantState?.headers}
                   simulation={plantState?.simulation}
                   equipment={plantState?.equipment}
-                  onUpdate={updatePlantControl}
-                  onRunSimulation={() => advancePlantSimulation(60)}
+                  onApply={applyPlantChanges}
                   onApplyScenario={applyChillerScenario}
                   onReset={resetPlant}
                   onTriggerFault={triggerPlantFault}
@@ -324,8 +326,7 @@ function App() {
                   valves={etsState?.valves}
                   meter={etsState?.meter}
                   simulation={etsState?.simulation}
-                  onUpdate={updateEtsControl}
-                  onRunSimulation={() => advanceEts(30)}
+                  onApply={applyEtsChanges}
                   onApplyScenario={applyEtsScenario}
                   onReset={resetEts}
                 />
@@ -341,8 +342,7 @@ function App() {
                   dampers={ahuState?.dampers}
                   filters={ahuState?.filters}
                   simulation={ahuState?.simulation}
-                  onUpdate={updateAhuControl}
-                  onRunSimulation={() => advanceAhu(30)}
+                  onApply={applyAhuChanges}
                   onApplyScenario={applyAhuScenario}
                   onReset={resetAhu}
                 />

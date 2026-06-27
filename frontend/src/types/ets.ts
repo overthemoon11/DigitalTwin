@@ -98,6 +98,7 @@ export interface EtsSimulation {
   scenarioId?: string;
   lastControlId?: string;
   cascadeTrace?: string[];
+  cascadeRows?: Array<{ label: string; before: number | string | null; after: number | string; unit: string; changed: boolean }>;
   lastOutput?: {
     buildingLoadRt?: number;
     primaryDeltaT?: number;

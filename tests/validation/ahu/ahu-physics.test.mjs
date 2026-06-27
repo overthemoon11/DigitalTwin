@@ -18,7 +18,8 @@ const approx = (a, b, tol, msg) =>
 test('cooling kW from CFM and delta-T is positive for cooling', () => {
   const q = coolingKwFromCfm(2000, 5);
   assert.ok(q > 0, `cooling ${q}`);
-  approx(q, 0.0167 * 2000 * 5, 0.1, 'cooling formula');
+  // Sensible cooling: Q[kW] = 1.08·CFM·ΔT°F ÷ 3412 ≈ 0.00057·CFM·ΔT°C
+  approx(q, 0.00057 * 2000 * 5, 0.1, 'cooling formula');
 });
 
 test('fan affinity law: power scales with speed cubed', () => {

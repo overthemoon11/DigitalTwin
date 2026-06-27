@@ -21,6 +21,54 @@ const DC_CONTROL_AFFECTS = {
 
 import { CHILLER_CONTROL_META } from '../chiller/chillerControlMeta';
 
+function fmtCell(v, unit) {
+  if (v == null || v === '') return '—';
+  return `${v}${unit ? ` ${unit}` : ''}`;
+}
+
+/** Before → after domino-effect table (falls back to the text trace). */
+function DominoEffect({ simulation }) {
+  const rows = simulation?.cascadeRows;
+  if (rows?.length) {
+    const hasBefore = rows.some((r) => r.before != null);
+    return (
+      <section className="vsp-section">
+        <h4>Domino effect{hasBefore ? ' — before → after' : ''}</h4>
+        <table className="vsp-cascade-table">
+          <thead>
+            <tr>
+              <th>Parameter</th>
+              <th>Before</th>
+              <th>After</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.label} className={r.changed ? 'changed' : ''}>
+                <td className="vsp-ct-param">{r.label}</td>
+                <td className="vsp-ct-before">{fmtCell(r.before, r.unit)}</td>
+                <td className="vsp-ct-after">{fmtCell(r.after, r.unit)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!hasBefore && <p className="vsp-desc">Adjust controls and click Apply to see before → after.</p>}
+      </section>
+    );
+  }
+  if (simulation?.cascadeTrace?.length > 0) {
+    return (
+      <section className="vsp-section">
+        <h4>Domino effect</h4>
+        <ol className="vsp-cascade">
+          {simulation.cascadeTrace.map((step, i) => <li key={i}>{step}</li>)}
+        </ol>
+      </section>
+    );
+  }
+  return null;
+}
+
 function MetricRow({ label, value, unit, warn }) {
   if (value == null || value === '') return null;
   return (
@@ -60,14 +108,7 @@ function EtsInsight({ state, simulation }) {
           {meta.description && <p className="vsp-desc">{meta.description}</p>}
         </section>
       )}
-      {simulation?.cascadeTrace?.length > 0 && (
-        <section className="vsp-section">
-          <h4>Domino effect</h4>
-          <ol className="vsp-cascade">
-            {simulation.cascadeTrace.map((step, i) => <li key={i}>{step}</li>)}
-          </ol>
-        </section>
-      )}
+      <DominoEffect simulation={simulation} />
       <section className="vsp-section">
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">
@@ -103,14 +144,7 @@ function AhuInsight({ state, simulation }) {
           {meta.description && <p className="vsp-desc">{meta.description}</p>}
         </section>
       )}
-      {simulation?.cascadeTrace?.length > 0 && (
-        <section className="vsp-section">
-          <h4>Domino effect</h4>
-          <ol className="vsp-cascade">
-            {simulation.cascadeTrace.map((step, i) => <li key={i}>{step}</li>)}
-          </ol>
-        </section>
-      )}
+      <DominoEffect simulation={simulation} />
       <section className="vsp-section">
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">
@@ -179,14 +213,7 @@ function ChillerInsight({ state, simulation }) {
           {meta.description && <p className="vsp-desc">{meta.description}</p>}
         </section>
       )}
-      {simulation?.cascadeTrace?.length > 0 && (
-        <section className="vsp-section">
-          <h4>Domino effect</h4>
-          <ol className="vsp-cascade">
-            {simulation.cascadeTrace.map((step, i) => <li key={i}>{step}</li>)}
-          </ol>
-        </section>
-      )}
+      <DominoEffect simulation={simulation} />
       <section className="vsp-section">
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">

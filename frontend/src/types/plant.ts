@@ -135,6 +135,8 @@ export interface PlantSimulationMeta {
   lastControlId?: string;
   /** Ordered domino-effect steps from last calculation */
   cascadeTrace: string[];
+  /** Structured before→after rows for the domino-effect table */
+  cascadeRows?: Array<{ label: string; before: number | string | null; after: number | string; unit: string; changed: boolean }>;
   /** Latest calculated load and delta-T after each physics step */
   lastOutput?: {
     buildingLoadRt: number;
