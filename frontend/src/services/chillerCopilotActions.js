@@ -467,16 +467,13 @@ export function analyzeChillerQuery(message, state) {
   }
 
   if (q.includes('chiller') && (q.includes('stop') || q.includes('which'))) {
-    const running = ['ch-29-1', 'ch-29-2', 'ch-29-3']
-      .map((id) => state.equipment[id])
+    const running = Object.values(state.equipment)
       .filter((e) => e?.type === 'chiller' && e.status === 'running');
     if (running.length <= 1) {
       return 'Only one chiller is running. Staging down is not recommended at current plant load.';
     }
-    const weakest = [...running].sort((a, b) =>
-      a.type === 'chiller' && b.type === 'chiller' ? a.loadPercent - b.loadPercent : 0
-    )[0];
-    return `## Chiller Sequencing\n\nRecommend staging down **${weakest?.name || 'CH-29-3'}** (lowest load among running units).\n\nPlant load: **${headers.buildingLoadRt} RT** with **${running.length}** chillers online.`;
+    const weakest = [...running].sort((a, b) => a.loadPercent - b.loadPercent)[0];
+    return `## Chiller Sequencing\n\nRecommend staging down **${weakest?.name || 'the lowest-load chiller'}** (lowest load among running units).\n\nPlant load: **${headers.buildingLoadRt} RT** with **${running.length}** chillers online.`;
   }
 
   if (q.includes('chws') && (q.includes('high') || q.includes('caused'))) {

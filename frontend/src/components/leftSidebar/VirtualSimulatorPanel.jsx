@@ -1,5 +1,4 @@
 import React from 'react';
-import SimulationOutputSummary from '../SimulationOutputSummary';
 import { ETS_CONTROL_META } from '../ets/etsControlMeta';
 import { getEtsScenarioById } from '../../services/etsScenarios';
 import { getAhuScenarioById } from '../../services/ahuScenarios';
@@ -69,8 +68,9 @@ function DominoEffect({ simulation }) {
   return null;
 }
 
-function MetricRow({ label, value, unit, warn }) {
+function MetricRow({ label, value, unit, warn, before }) {
   if (value == null || value === '') return null;
+  const showBefore = before != null && before !== '' && String(before) !== String(value);
   return (
     <div className={`vsp-metric ${warn ? 'warn' : ''}`}>
       <span className="vsp-metric-label">{label}</span>
@@ -78,12 +78,20 @@ function MetricRow({ label, value, unit, warn }) {
         {value}
         {unit ? <span className="vsp-metric-unit"> {unit}</span> : null}
       </strong>
+      {showBefore && (
+        <span className="vsp-metric-before">
+          from {before}
+          {unit ? ` ${unit}` : ''}
+        </span>
+      )}
     </div>
   );
 }
 
 function EtsInsight({ state, simulation }) {
   const headers = state?.headers;
+  const bh = simulation?.beforeHeaders;
+  const bef = (key) => bh?.[key];
   const meta = simulation?.scenarioId
     ? {
         formula: null,
@@ -112,15 +120,15 @@ function EtsInsight({ state, simulation }) {
       <section className="vsp-section">
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">
-          <MetricRow label="Cooling demand" value={headers?.coolingDemandRt} unit="RT" />
-          <MetricRow label="HX approach" value={headers?.approachC} unit="°C" warn={headers?.approachC > 2.5} />
-          <MetricRow label="HX effectiveness" value={effPct} unit="%" />
-          <MetricRow label="Load / capacity" value={headers?.loadPct} unit="%" warn={headers?.loadPct > 95} />
-          <MetricRow label="Pump power" value={headers?.pumpPowerKw?.toFixed?.(1) ?? headers?.pumpPowerKw} unit="kW" />
-          <MetricRow label="Pump efficiency" value={headers?.pumpKwPerRt?.toFixed?.(3) ?? headers?.pumpKwPerRt} unit="kW/RT" warn={headers?.pumpKwPerRt > 0.1} />
-          <MetricRow label="Pumps online" value={simulation?.stage} unit={`/ ${3}`} />
-          <MetricRow label="Primary ΔT" value={headers?.primaryDeltaT} unit="°C" />
-          <MetricRow label="Secondary ΔT" value={headers?.secondaryDeltaT} unit="°C" />
+          <MetricRow label="Cooling demand" value={headers?.coolingDemandRt} unit="RT" before={bef('coolingDemandRt')} />
+          <MetricRow label="HX approach" value={headers?.approachC} unit="°C" warn={headers?.approachC > 2.5} before={bef('approachC')} />
+          <MetricRow label="HX effectiveness" value={effPct} unit="%" before={bef('effectiveness') != null ? (bef('effectiveness') * 100).toFixed(1) : undefined} />
+          <MetricRow label="Load / capacity" value={headers?.loadPct} unit="%" warn={headers?.loadPct > 95} before={bef('loadPct')} />
+          <MetricRow label="Pump power" value={headers?.pumpPowerKw?.toFixed?.(1) ?? headers?.pumpPowerKw} unit="kW" before={bef('pumpPowerKw')?.toFixed?.(1)} />
+          <MetricRow label="Pump efficiency" value={headers?.pumpKwPerRt?.toFixed?.(3) ?? headers?.pumpKwPerRt} unit="kW/RT" warn={headers?.pumpKwPerRt > 0.1} before={bef('pumpKwPerRt')?.toFixed?.(3)} />
+          <MetricRow label="Pumps online" value={simulation?.stage} unit={`/ ${3}`} before={bef('stage')} />
+          <MetricRow label="Primary ΔT" value={headers?.primaryDeltaT} unit="°C" before={bef('primaryDeltaT')} />
+          <MetricRow label="Secondary ΔT" value={headers?.secondaryDeltaT} unit="°C" before={bef('secondaryDeltaT')} />
         </div>
       </section>
     </>
@@ -198,6 +206,8 @@ function ChillerInsight({ state, simulation }) {
   const headers = state?.headers;
   const kpis = state?.kpis || [];
   const kpi = (id) => kpis.find((k) => k.id === id)?.value;
+  const beforeKpis = simulation?.beforeKpis;
+  const bkpi = (id) => beforeKpis?.find((k) => k.id === id)?.value;
   const meta = simulation?.lastControlId ? CHILLER_CONTROL_META[simulation.lastControlId] : null;
   const deltaT = headers ? round(headers.chwr - headers.chws, 1) : null;
 
@@ -217,15 +227,15 @@ function ChillerInsight({ state, simulation }) {
       <section className="vsp-section">
         <h4>Performance & efficiency</h4>
         <div className="vsp-metrics">
-          <MetricRow label="Building load" value={headers?.buildingLoadRt} unit="RT" />
-          <MetricRow label="Plant COP" value={typeof kpi('kpi-cop') === 'number' ? kpi('kpi-cop').toFixed(2) : kpi('kpi-cop')} warn={Number(kpi('kpi-cop')) < 4.5} />
-          <MetricRow label="Total plant kW" value={kpi('kpi-kw')} unit="kW" />
-          <MetricRow label="Plant kW/RT" value={kpi('kpi-eff')} unit="kW/RT" warn={Number(kpi('kpi-eff')) > 0.85} />
-          <MetricRow label="CHW ΔT" value={kpi('kpi-chw-dt') ?? deltaT} unit="°C" warn={Number(kpi('kpi-chw-dt') ?? deltaT) < 4.5} />
-          <MetricRow label="Tower approach" value={kpi('kpi-approach')} unit="°C" warn={Number(kpi('kpi-approach')) > 5} />
-          <MetricRow label="Header DP" value={kpi('kpi-dp')} unit="psi" />
-          <MetricRow label="Bypass" value={kpi('kpi-bypass')} unit="%" warn={Number(kpi('kpi-bypass')) > 15} />
-          <MetricRow label="Chillers online" value={kpi('kpi-rch')} />
+          <MetricRow label="Building load" value={headers?.buildingLoadRt} unit="RT" before={bkpi('kpi-load')} />
+          <MetricRow label="Plant COP" value={typeof kpi('kpi-cop') === 'number' ? kpi('kpi-cop').toFixed(2) : kpi('kpi-cop')} warn={Number(kpi('kpi-cop')) < 4.5} before={bkpi('kpi-cop')} />
+          <MetricRow label="Total plant kW" value={kpi('kpi-kw')} unit="kW" before={bkpi('kpi-kw')} />
+          <MetricRow label="Plant kW/RT" value={kpi('kpi-eff')} unit="kW/RT" warn={Number(kpi('kpi-eff')) > 0.85} before={bkpi('kpi-eff')} />
+          <MetricRow label="CHW ΔT" value={kpi('kpi-chw-dt') ?? deltaT} unit="°C" warn={Number(kpi('kpi-chw-dt') ?? deltaT) < 4.5} before={bkpi('kpi-chw-dt')} />
+          <MetricRow label="Tower approach" value={kpi('kpi-approach')} unit="°C" warn={Number(kpi('kpi-approach')) > 5} before={bkpi('kpi-approach')} />
+          <MetricRow label="Header DP" value={kpi('kpi-dp')} unit="psi" before={bkpi('kpi-dp')} />
+          <MetricRow label="Bypass" value={kpi('kpi-bypass')} unit="%" warn={Number(kpi('kpi-bypass')) > 15} before={bkpi('kpi-bypass')} />
+          <MetricRow label="Chillers online" value={kpi('kpi-rch')} before={bkpi('kpi-rch')} />
         </div>
       </section>
     </>
@@ -250,7 +260,7 @@ export default function VirtualSimulatorPanel({ plantScenario, state }) {
     );
   }
 
-  const { tick, simTimeSec, dtSeconds, lastTrigger, mode, dataSource, lastOutput } = simulation;
+  const { lastTrigger } = simulation;
   const isEts = plantScenario === 'ets';
   const isAhu = plantScenario === 'ahu';
   const isChiller = plantScenario === 'chiller';
@@ -259,28 +269,12 @@ export default function VirtualSimulatorPanel({ plantScenario, state }) {
     <div className="virtual-simulator-panel">
       <div className="vsp-header">
         <span className="vsp-badge">Virtual Simulator</span>
-        <span className="vsp-meta">
-          {mode || 'live'}
-          {dataSource ? ` · ${dataSource}` : ''}
-          {dtSeconds != null ? ` · Δt ${dtSeconds}s` : ''}
-        </span>
-        <span className="vsp-time">t = {simTimeSec}s (tick {tick})</span>
       </div>
 
       <section className="vsp-section vsp-section--trigger">
         <h4>Last input</h4>
         <p className="vsp-trigger">{lastTrigger}</p>
       </section>
-
-      {lastOutput && (
-        <SimulationOutputSummary
-          compact
-          buildingLoadRt={lastOutput.buildingLoadRt}
-          primaryDeltaT={lastOutput.primaryDeltaT}
-          secondaryDeltaT={lastOutput.secondaryDeltaT}
-          deltaT={lastOutput.deltaT}
-        />
-      )}
 
       {isEts && <EtsInsight state={state} simulation={simulation} />}
       {isAhu && <AhuInsight state={state} simulation={simulation} />}

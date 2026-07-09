@@ -1,6 +1,7 @@
 import type { ValveEquipment, EquipmentStatus } from '../../types/plant';
 import { EquipLabel } from './EquipLabel';
-import { SCADA, statusFill } from './scadaTheme';
+import { EquipSprite } from './EquipSprite';
+import { EQUIP_IMG } from './equipmentImages';
 
 interface Props {
   equipment: ValveEquipment;
@@ -14,25 +15,11 @@ const W = 40;
 const H = 32;
 
 export function Valve({ equipment, x, y, selected, onSelect }: Props) {
-  const fill = statusFill(equipment.status as EquipmentStatus);
-  const cx = x + 20;
-  const cy = y + 16;
-  const open = equipment.positionPercent;
+  const status = equipment.status as EquipmentStatus;
 
   return (
     <g className="plant-equip scada-valve" onClick={() => onSelect(equipment.id)} style={{ cursor: 'pointer' }}>
-      <line x1={x} y1={cy} x2={x + W} y2={cy} stroke="#475569" strokeWidth={4} strokeLinecap="round" />
-      <circle cx={cx} cy={cy} r={14} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : fill} strokeWidth={selected ? 2.5 : 2} />
-      <line
-        x1={cx - 10}
-        y1={cy}
-        x2={cx + 10}
-        y2={cy}
-        stroke={fill}
-        strokeWidth={3}
-        strokeLinecap="round"
-        transform={`rotate(${open * 0.9 - 45}, ${cx}, ${cy})`}
-      />
+      <EquipSprite href={EQUIP_IMG.valve} x={x} y={y} w={W} h={H} status={status} selected={selected} scale={2.0} />
       <EquipLabel
         iconX={x}
         iconY={y}

@@ -1,5 +1,6 @@
 /**
- * Preset operator scenarios for L29 Chiller Plant — one-click what-if demos.
+ * Preset operator scenarios for the T1 Chiller Plant — one-click what-if demos.
+ * Loads are on the real T1 scale (5 × ~1250 RT chillers, ~3,200 RT design day).
  * Control IDs match controlEngine defaultControls().
  */
 
@@ -17,7 +18,7 @@ export const CHILLER_SCENARIOS = [
   {
     id: 'baseline',
     label: 'Design baseline',
-    description: 'Reference L29 day — 900 RT, 32°C OAT, 70% RH, CHWS 7°C.',
+    description: 'Reference T1 day — 3,200 RT, 31°C OAT, 75% RH, CHWS 7.5°C, 3 of 5 chillers.',
     reset: true,
     advanceSec: 0,
   },
@@ -26,7 +27,7 @@ export const CHILLER_SCENARIOS = [
     label: 'Peak summer afternoon',
     description: 'Near-capacity load on a hot humid afternoon — all chillers staged, tower and condenser stress.',
     controls: {
-      'ctrl-building-load': 1300,
+      'ctrl-building-load': 5500,
       'ctrl-ambient-temp': 38,
       'ctrl-humidity': 85,
       'ctrl-chws-sp': 7,
@@ -39,7 +40,7 @@ export const CHILLER_SCENARIOS = [
     label: 'Night low load',
     description: 'Cool night, minimal cooling — single chiller, low pump speed.',
     controls: {
-      'ctrl-building-load': 350,
+      'ctrl-building-load': 1200,
       'ctrl-ambient-temp': 26,
       'ctrl-humidity': 60,
       'ctrl-dp-sp': 12,
@@ -51,9 +52,9 @@ export const CHILLER_SCENARIOS = [
     label: 'Aggressive CHWS reset',
     description: '5.5°C supply setpoint — higher chiller kW and COP trade-off for tighter cold water.',
     controls: {
-      'ctrl-building-load': 900,
+      'ctrl-building-load': 3200,
       'ctrl-chws-sp': 5.5,
-      'ctrl-chwr-sp': 12,
+      'ctrl-chwr-sp': 14,
     },
     advanceSec: 60,
   },
@@ -62,7 +63,7 @@ export const CHILLER_SCENARIOS = [
     label: 'High header DP',
     description: '28 psi DP setpoint — faster CHWPs, bypass may open, higher auxiliary kW/RT.',
     controls: {
-      'ctrl-building-load': 1000,
+      'ctrl-building-load': 3200,
       'ctrl-dp-sp': 28,
     },
     advanceSec: 60,
@@ -72,7 +73,7 @@ export const CHILLER_SCENARIOS = [
     label: 'Humid monsoon day',
     description: 'High latent load from 92% RH — weather factor boosts effective plant load.',
     controls: {
-      'ctrl-building-load': 800,
+      'ctrl-building-load': 2800,
       'ctrl-ambient-temp': 33,
       'ctrl-humidity': 92,
     },
@@ -83,7 +84,7 @@ export const CHILLER_SCENARIOS = [
     label: 'Condenser loop stress',
     description: 'Hot day with warm CWS target — tower fans work harder, approach KPI widens.',
     controls: {
-      'ctrl-building-load': 1100,
+      'ctrl-building-load': 3600,
       'ctrl-ambient-temp': 39,
       'ctrl-humidity': 75,
       'ctrl-cws-sp': 32,
@@ -94,9 +95,9 @@ export const CHILLER_SCENARIOS = [
   {
     id: 'part-load-tune',
     label: 'Part-load shoulder season',
-    description: '~650 RT — two chillers, moderate pumps, good COP opportunity.',
+    description: '~2,200 RT — two chillers, moderate pumps, good COP opportunity.',
     controls: {
-      'ctrl-building-load': 650,
+      'ctrl-building-load': 2200,
       'ctrl-ambient-temp': 30,
       'ctrl-chws-sp': 7.5,
     },

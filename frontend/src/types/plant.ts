@@ -137,6 +137,8 @@ export interface PlantSimulationMeta {
   cascadeTrace: string[];
   /** Structured before→after rows for the domino-effect table */
   cascadeRows?: Array<{ label: string; before: number | string | null; after: number | string; unit: string; changed: boolean }>;
+  /** Pre-Apply KPI snapshot for the "before → after" performance cards */
+  beforeKpis?: PlantKpi[];
   /** Latest calculated load and delta-T after each physics step */
   lastOutput?: {
     buildingLoadRt: number;

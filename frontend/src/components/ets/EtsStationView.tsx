@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import type { ExpansionTankEquipment } from '../../types/plant';
+import type { ExpansionTankEquipment, EquipmentStatus } from '../../types/plant';
 import type { EtsState, EtsHeatExchanger } from '../../types/ets';
 import { ExpansionTank } from '../chiller/ExpansionTank';
+import { EquipSprite } from '../chiller/EquipSprite';
+import { ETS_IMG } from '../chiller/equipmentImages';
 import { EquipLabel } from '../chiller/EquipLabel';
 import { ScadaPipe } from '../chiller/ScadaPipe';
-import { ScadaSpin } from '../chiller/ScadaSpin';
 import { ScadaTag } from '../chiller/ScadaTag';
 import { ScadaZonePanel, ScadaZoneTitle } from '../chiller/ScadaZone';
-import { LOOP, SCADA, statusFill } from '../chiller/scadaTheme';
+import { LOOP, SCADA } from '../chiller/scadaTheme';
 import { EtsChwpPump } from './EtsChwpPump';
 import { SideStreamVessel } from './SideStreamVessel';
 import { EtsScadaLegend } from './EtsScadaLegend';
@@ -39,18 +40,18 @@ function EtsPlateHx({ hx, x, y, w, h, supplyC, returnC, selected, onSelect }: {
   hx: EtsHeatExchanger; x: number; y: number; w: number; h: number;
   supplyC: number; returnC: number; selected: boolean; onSelect: (id: string) => void;
 }) {
-  const fill = statusFill(hx.status);
-  const plates = 7;
   return (
     <g className="plant-equip scada-hx" onClick={() => onSelect(hx.id)} style={{ cursor: 'pointer' }}>
-      <rect x={x} y={y} width={w} height={h} rx={3} fill={SCADA.faceplate}
-        stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1.5} />
-      {Array.from({ length: plates }, (_, i) => (
-        <line key={i}
-          x1={x + 10 + (i * (w - 20)) / (plates - 1)} y1={y + 22}
-          x2={x + 10 + (i * (w - 20)) / (plates - 1)} y2={y + h - 22}
-          stroke={hx.inService ? fill : SCADA.stopped} strokeWidth={2} opacity={0.55} />
-      ))}
+      <EquipSprite
+        href={ETS_IMG.hx}
+        x={x}
+        y={y}
+        w={w}
+        h={h}
+        status={(hx.inService ? hx.status : 'stopped') as EquipmentStatus}
+        selected={selected}
+        scale={1.7}
+      />
       <EquipLabel
         iconX={x}
         iconY={y}
@@ -176,20 +177,24 @@ function CycSpPump({
   selected: boolean;
   onSelect: (id: string) => void;
 }) {
-  const col = on ? SCADA.running : SCADA.stopped;
-  const px = x - 30;
-  const py = y - 26;
+  const px = x - 28;
+  const py = y - 18;
+  const w = 56;
+  const h = 36;
+  const status = (on ? 'running' : 'stopped') as EquipmentStatus;
   return (
     <g className="plant-equip scada-pump" onClick={() => onSelect(id)} style={{ cursor: 'pointer' }}>
-      <rect x={px} y={py} width={60} height={52} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2 : 1} rx={3} />
-      <circle cx={x} cy={y} r={14} fill="#f1f5f9" stroke={col} strokeWidth={2} />
-      <g transform={`translate(${x}, ${y})`}>
-        <g>
-          <polygon points="0,-7 6,5 -6,5" fill={col} />
-          <ScadaSpin durSec={on ? 1.4 : 0} />
-        </g>
-      </g>
-      <EquipLabel iconX={px} iconY={py} iconW={60} iconH={52} plateW={88} lines={[
+      <EquipSprite
+        href={ETS_IMG.cycsp}
+        x={px}
+        y={py}
+        w={w}
+        h={h}
+        status={status}
+        selected={selected}
+        scale={1.35}
+      />
+      <EquipLabel iconX={px} iconY={py} iconW={w} iconH={h} plateW={88} lines={[
         { text: name, variant: 'tag' },
         { text: on ? 'On' : 'Off', variant: 'pv' },
       ]} />
@@ -302,8 +307,8 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
 
         {/* Piping */}
         {pipes.map((p, i) => (
-          <ScadaPipe key={i} d={p.d} loop={p.loop} flowSpeed={flowSpeed} running={flowSpeed > 0}
-            width={p.loop.startsWith('dc') ? 6 : 9} dashed={p.dashed} />
+          <ScadaPipe key={i} d={p.d} loop={p.loop} running={flowSpeed > 0}
+            width={p.loop.startsWith('dc') ? 3 : 4} arrows />
         ))}
 
         {/* Pipe loop labels — plain text on the line (MBS SCADA style, no HDR tags) */}
@@ -373,7 +378,7 @@ export default function EtsStationView({ state, selectedId, onSelect }: Props) {
           pct={ltv?.positionPct ?? 0} status={ltv?.status ?? 'running'} selected={selectedId === 'lt-bypass'} onSelect={onSelect} orient="vertical" labelSide="below" plateW={75} />
         <LtBypassFlowMeter x={POS.ltBypassFlowMeter.x} y={POS.ltBypassFlowMeter.y} m3h={h.ltBypassFlowM3h.toFixed(1)} onSelect={onSelect} />
 
-        <ExpansionTank equipment={fetnk} x={POS.fetnk.x} y={POS.fetnk.y} selected={selectedId === fetnk.id} onSelect={onSelect} />
+        <ExpansionTank equipment={fetnk} x={POS.fetnk.x} y={POS.fetnk.y} selected={selectedId === fetnk.id} onSelect={onSelect} href={ETS_IMG.tank} scale={1.7} />
 
         <EtsScadaValve id="minflow-bypass" name="Min Flow Bypass" x={POS.minFlowBypass.x} y={POS.minFlowBypass.y}
           pct={mfv?.positionPct ?? 0} status={mfv?.status ?? 'running'} selected={selectedId === 'minflow-bypass'} onSelect={onSelect} orient="vertical" labelSide="below" plateW={75} />

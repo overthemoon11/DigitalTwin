@@ -65,31 +65,31 @@ export function boundsForEquipment(id: string): { x: number; y: number; w: numbe
   };
   if (staticMap[id]) return staticMap[id];
 
-  let   m = id.match(/^cwp-29-(\d)$/);
+  let   m = id.match(/^cwp-(\d+)$/);
   if (m) {
     const i = Number(m[1]) - 1;
-    if (i >= 0 && i < 3) {
+    if (i >= 0 && i < CWP_X.length) {
       return box(CWP_X[i], CWP_Y, PUMP_DIM.CWP.w, PUMP_DIM.CWP.h + 28);
     }
-    if (i === 3) return box(STANDBY_CWP_X, CWP_Y, PUMP_DIM.CWP.w, PUMP_DIM.CWP.h + 28);
+    if (i === CWP_X.length) return box(STANDBY_CWP_X, CWP_Y, PUMP_DIM.CWP.w, PUMP_DIM.CWP.h + 28);
   }
 
-  m = id.match(/^chwp-29-(\d)$/);
+  m = id.match(/^chwp-(\d+)$/);
   if (m) {
     const i = Number(m[1]) - 1;
-    if (i >= 0 && i < 3) {
+    if (i >= 0 && i < CHWP_X.length) {
       return box(CHWP_X[i], CHWP_Y, PUMP_DIM.CHWP.w, PUMP_DIM.CHWP.h + 28);
     }
-    if (i === 3) return box(STANDBY_CHWP_X, CHWP_Y, PUMP_DIM.CHWP.w, PUMP_DIM.CHWP.h + 28);
+    if (i === CHWP_X.length) return box(STANDBY_CHWP_X, CHWP_Y, PUMP_DIM.CHWP.w, PUMP_DIM.CHWP.h + 28);
   }
 
-  m = id.match(/^ct-41-(\d)$/);
+  m = id.match(/^ct-(\d+)$/);
   if (m) {
     const i = Number(m[1]) - 1;
     if (i >= 0 && i < CT_X.length) return box(CT_X[i], CT_Y, TOWER_W, TOWER_H);
   }
 
-  m = id.match(/^ch-29-(\d)$/);
+  m = id.match(/^ch-(\d+)$/);
   if (m) {
     const i = Number(m[1]) - 1;
     if (i >= 0 && i < CH_X.length) return box(CH_X[i], CH_Y, CHILLER_W, CHILLER_H + 56);

@@ -99,6 +99,8 @@ export interface EtsSimulation {
   lastControlId?: string;
   cascadeTrace?: string[];
   cascadeRows?: Array<{ label: string; before: number | string | null; after: number | string; unit: string; changed: boolean }>;
+  /** Pre-Apply snapshot of headers (+ pump stage) for the before→after performance cards. */
+  beforeHeaders?: Record<string, number>;
   lastOutput?: {
     buildingLoadRt?: number;
     primaryDeltaT?: number;

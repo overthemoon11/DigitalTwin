@@ -9,18 +9,12 @@ export default function VirtualSimulatorBanner({ simulation }) {
 
   if (!simulation) return null;
 
-  const { tick, dtSeconds, simTimeSec, lastTrigger, cascadeTrace, mode, dataSource, lastOutput } = simulation;
+  const { lastTrigger, cascadeTrace, lastOutput } = simulation;
 
   return (
     <div className="virtual-simulator-banner" role="status">
       <div className="virtual-simulator-banner__main">
         <span className="virtual-simulator-banner__badge">Virtual Simulator</span>
-        <span className="virtual-simulator-banner__detail">
-          {mode} · {dataSource} · no live sensors
-        </span>
-        <span className="virtual-simulator-banner__time">
-          t = {simTimeSec}s (tick {tick}, Δt {dtSeconds}s)
-        </span>
         <button
           type="button"
           className="virtual-simulator-banner__toggle"

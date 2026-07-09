@@ -1,6 +1,7 @@
 import type { ChillerEquipment, EquipmentStatus } from '../../types/plant';
 import { EquipLabel } from './EquipLabel';
-import { LOOP, SCADA, statusFill } from './scadaTheme';
+import { EquipSprite } from './EquipSprite';
+import { EQUIP_IMG } from './equipmentImages';
 
 interface Props {
   equipment: ChillerEquipment;
@@ -17,15 +18,12 @@ const H = 78;
 
 export function Chiller({ equipment, x, y, selected, onSelect, labelSide = 'right', labelW = 120 }: Props) {
   const status = equipment.status as EquipmentStatus;
-  const fill = statusFill(status);
   const alarm = status === 'alarm';
-  const running = status === 'running';
-  const cx = x + W / 2;
-  const chwFill = running ? '#dbeafe' : '#f1f5f9';
-  const chwStroke = running ? LOOP.chws.stroke : SCADA.faceplateBorder;
-  const cwsFill = running ? '#dcfce7' : '#f1f5f9';
-  const cwsStroke = running ? LOOP.cws.stroke : SCADA.faceplateBorder;
-  const statusText = running || status === 'alarm' ? '#ffffff' : SCADA.pv;
+
+  // Per-chiller cooling from evaporator energy balance: Ton = Q̇/3.517 (kW→RT).
+  const dT = equipment.returnTemp - equipment.supplyTemp;
+  const chwTon = (equipment.flowRate * dT * 1.163) / 3.517; // flow m³/h, ΔT °C
+  const kwPerTon = chwTon > 0 ? equipment.powerKw / chwTon : 0;
 
   return (
     <g
@@ -33,27 +31,22 @@ export function Chiller({ equipment, x, y, selected, onSelect, labelSide = 'righ
       onClick={() => onSelect(equipment.id)}
       style={{ cursor: 'pointer' }}
     >
-      <rect x={x} y={y} width={W} height={H} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} strokeWidth={selected ? 2.5 : 1} rx={3} />
-      <rect x={x + 4} y={y + 4} width={W - 8} height={14} fill={fill} rx={2} opacity={0.9} />
-      <text x={cx} y={y + 14} textAnchor="middle" fill={statusText} fontSize={9} fontWeight="700" fontFamily={SCADA.mono}>
-        {equipment.status.toUpperCase()}
-      </text>
-      <rect x={x + 8} y={y + 22} width={28} height={48} fill={chwFill} stroke={chwStroke} strokeWidth={1} rx={2} />
-      <rect x={x + 36} y={y + 22} width={28} height={48} fill={cwsFill} stroke={cwsStroke} strokeWidth={1} rx={2} />
-      <rect x={x + 64} y={y + 22} width={28} height={48} fill={chwFill} stroke={chwStroke} strokeWidth={1} rx={2} />
-      <circle cx={cx} cy={y + 2} r={4} fill={LOOP.cws.stroke} opacity={running ? 0.9 : 0.45} />
-      <circle cx={cx} cy={y + H - 2} r={4} fill={LOOP.chws.stroke} opacity={running ? 0.9 : 0.45} />
+      <EquipSprite href={EQUIP_IMG.chiller} x={x} y={y} w={W} h={H} status={status} selected={selected} scale={2.1} />
       <EquipLabel
         iconX={x}
         iconY={y}
         iconW={W}
         iconH={H}
-        plateW={labelW}
+        plateW={Math.max(labelW, 96)}
         side={labelSide}
-        lines={[
-          { text: equipment.name, variant: 'tag' },
-          { text: `${equipment.powerKw.toFixed(0)} kW · ${equipment.flowRate.toFixed(0)} m³/h`, variant: 'pv' },
-          { text: `${equipment.supplyTemp.toFixed(1)}°C · COP ${equipment.cop.toFixed(1)}`, variant: 'muted' },
+        title={`${equipment.name} · ${equipment.loadPercent.toFixed(0)}%`}
+        rows={[
+          { label: 'CHWS', value: `${equipment.supplyTemp.toFixed(1)} °C` },
+          { label: 'CHWR', value: `${equipment.returnTemp.toFixed(1)} °C` },
+          { label: 'CHWF', value: `${(equipment.flowRate / 3.6).toFixed(1)} L/s` },
+          { label: 'CHW Ton', value: `${chwTon.toFixed(0)} RT` },
+          { label: 'kW', value: `${equipment.powerKw.toFixed(0)}` },
+          { label: 'kW/Ton', value: `${kwPerTon.toFixed(3)}` },
         ]}
       />
     </g>

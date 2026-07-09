@@ -1,30 +1,42 @@
 /** Physical constants and deterministic plant calculations. */
 
-export const CHILLER_CAPACITY_RT = 500;
-export const CHILLER_COUNT = 3;
-export const CHWP_COUNT = 4;
-export const CWP_COUNT = 4;
-export const CT_COUNT = 3;
+/* Plant inventory + reference constants calibrated to the real T1 plant from
+ * the Dec-2025 BMS trend (T1_MVrawDataR2), validated at the operating point
+ * (RT 3150–3250, 3 of 5 chillers running, n=108 rows):
+ *   total ≈ 1,938 kW · kW/RT ≈ 0.605 · ΔT ≈ 6.85°C
+ *   chillers 545 kW ea (0.510 kW/RT) · CHWP 24 · CWP 54 · CT 17 kW ea
+ *   CHWS 7.5 / CHWR 14.5 / CWS 29 / CWR 33, wet-bulb ≈ 25.
+ * (kW/RT is the per-row operating ratio, not mean-kW/mean-RT which idle rows skew low.) */
+export const CHILLER_CAPACITY_RT = 1250;
+export const CHILLER_COUNT = 5;
+export const CHWP_COUNT = 6;
+export const CWP_COUNT = 6;
+export const CT_COUNT = 5;
 
-/** Baseline reference at CHWS setpoint 7°C */
-export const REF_CHWS_SP = 7;
-export const REF_CHILLER_LOAD = 70;
-export const REF_CHILLER_KW = 500;
-export const REF_CHILLER_COP = 6.0;
+/** Baseline reference at CHWS setpoint 7.5°C */
+export const REF_CHWS_SP = 7.5;
+export const REF_CHILLER_LOAD = 85; // % chiller load at which REF_CHILLER_KW applies
+export const REF_CHILLER_KW = 543; // 545 kW/chiller at ~85% load (0.510 kW/RT)
+export const REF_CHILLER_COP = 6.9;
 
 export const REF_DP_SP = 15;
 export const REF_CHWP_SPEED = 70;
-export const REF_CHWP_FLOW = 600;
-export const REF_CHWP_KW = 20;
+export const REF_CHWP_FLOW = 520;
+export const REF_CHWP_KW = 24;
+
+/** Condenser-water pump / cooling-tower fan reference kW (at REF speed 70%). */
+export const REF_CWP_KW = 30;
+export const REF_CWP_FLOW = 520;
+export const REF_CT_KW = 14;
 
 export const REF_CWS_SP = 29;
-export const REF_CHWR_SP = 12;
-export const REF_CWR_SP = 32;
+export const REF_CHWR_SP = 14.5;
+export const REF_CWR_SP = 33;
 export const REF_CT_FAN = 70;
 
 /** Reference outdoor conditions for load / condenser modifiers */
-export const REF_AMBIENT_TEMP = 32;
-export const REF_HUMIDITY_RH = 65;
+export const REF_AMBIENT_TEMP = 31;
+export const REF_HUMIDITY_RH = 75;
 
 export const FLOW_COEFF = 1.163;
 export const RT_TO_KW = 3.517;

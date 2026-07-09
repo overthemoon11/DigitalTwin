@@ -1,11 +1,12 @@
-import { CHILLER_CAPACITY_RT, CHWP_COUNT, clamp } from './plantPhysics';
+import { CHILLER_CAPACITY_RT, CHILLER_COUNT, CHWP_COUNT, CWP_COUNT, CT_COUNT, clamp } from './plantPhysics';
+
+/** Stage 1 chiller per ~90% of nameplate capacity (T1: 5 × 1250 RT). */
+const STAGE_RT_PER_CHILLER = CHILLER_CAPACITY_RT * 0.9;
 
 /** Stage chillers from total cooling load (RT). */
 export function stageChillers(totalLoadRt: number, chillerEnabled: boolean): number {
   if (!chillerEnabled || totalLoadRt <= 0) return 0;
-  if (totalLoadRt < 400) return 1;
-  if (totalLoadRt <= 900) return 2;
-  return 3;
+  return clamp(Math.ceil(totalLoadRt / STAGE_RT_PER_CHILLER), 1, CHILLER_COUNT);
 }
 
 /** Distribute RT equally among running chillers. */
@@ -19,23 +20,23 @@ export function chillerLoadPercent(rtPerChiller: number): number {
   return clamp((rtPerChiller / CHILLER_CAPACITY_RT) * 100, 0, 100);
 }
 
-/** Stage CHWP pumps from total chilled-water flow (m³/h). */
+/** Stage CHWP pumps from total chilled-water flow (m³/h) — one primary pump per
+ *  ~500 m³/h, up to the installed count (T1: 6, i.e. 5 duty + 1 standby). */
 export function stageChwp(totalFlowM3h: number): number {
-  if (totalFlowM3h < 800) return 1;
-  if (totalFlowM3h <= 1500) return 2;
-  if (totalFlowM3h <= 2500) return 3;
-  return CHWP_COUNT;
+  if (totalFlowM3h <= 0) return 0;
+  return clamp(Math.ceil(totalFlowM3h / 500), 1, CHWP_COUNT);
 }
 
 /** CWP count follows operating chillers (standby available). */
 export function stageCwp(runningChillers: number): number {
-  return clamp(runningChillers, 0, 4);
+  return clamp(runningChillers, 0, CWP_COUNT);
 }
 
-/** Stage cooling towers — match running chillers, min 1 if plant on. */
+/** Stage cooling towers — one more than running chillers for a lower approach,
+ *  capped at the installed count (T1: 5). */
 export function stageCoolingTowers(runningChillers: number): number {
   if (runningChillers <= 0) return 0;
-  return Math.min(runningChillers, 3);
+  return clamp(runningChillers + 1, 1, CT_COUNT);
 }
 
 /** CHWP speed from DP setpoint: 70% at 15 psi, +3% per psi above reference. */

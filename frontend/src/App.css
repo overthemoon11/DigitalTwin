@@ -25,8 +25,10 @@
   --radius: 8px;
   --radius-lg: 12px;
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 14px rgba(15, 23, 42, 0.09), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-sm:
+    0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md:
+    0 4px 14px rgba(15, 23, 42, 0.09), 0 2px 4px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 14px 32px rgba(15, 23, 42, 0.16);
   --ring: 0 0 0 3px rgba(2, 132, 199, 0.28);
   --transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -37,8 +39,16 @@
   flex-direction: column;
   height: 100vh;
   background:
-    radial-gradient(1200px 600px at 100% -10%, rgba(2, 132, 199, 0.06), transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, rgba(37, 99, 235, 0.05), transparent 55%),
+    radial-gradient(
+      1200px 600px at 100% -10%,
+      rgba(2, 132, 199, 0.06),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at -10% 110%,
+      rgba(37, 99, 235, 0.05),
+      transparent 55%
+    ),
     var(--bg-dark);
   color: var(--text);
 }
@@ -46,8 +56,11 @@
 /* Global interaction polish */
 button {
   font-family: inherit;
-  transition: background var(--transition), color var(--transition),
-    border-color var(--transition), box-shadow var(--transition),
+  transition:
+    background var(--transition),
+    color var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition),
     transform var(--transition);
 }
 
@@ -86,7 +99,9 @@ input[type="range"]::-webkit-slider-thumb {
   background: #ffffff;
   border: 3px solid var(--accent-light);
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), border-color var(--transition),
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
     box-shadow var(--transition);
 }
 
@@ -122,7 +137,9 @@ input[type="range"]::-moz-range-thumb {
   border-radius: 50%;
   background: #ffffff;
   box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), border-color var(--transition);
+  transition:
+    transform var(--transition),
+    border-color var(--transition);
 }
 
 input[type="range"]:hover::-moz-range-thumb {
@@ -160,6 +177,30 @@ input[type="range"]:active::-moz-range-thumb {
   flex-direction: row;
   align-items: center;
   gap: 1rem;
+}
+
+.header-sidebar-open,
+.header-right-sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+}
+
+.header-sidebar-open:hover,
+.header-right-sidebar-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.header-sidebar-open svg,
+.header-right-sidebar-toggle svg {
+  display: block;
 }
 
 .app-view-tabs {
@@ -255,11 +296,6 @@ input[type="range"]:active::-moz-range-thumb {
 .virtual-simulator-banner__badge {
   font-weight: 600;
   color: var(--accent-light);
-}
-
-.virtual-simulator-banner__detail,
-.virtual-simulator-banner__time {
-  color: var(--text-muted);
 }
 
 .virtual-simulator-banner__toggle {
@@ -406,7 +442,19 @@ input[type="range"]:active::-moz-range-thumb {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
+  flex: 0 0 300px;
+  position: relative;
+  transition:
+    flex-basis var(--transition),
+    width var(--transition);
+}
+
+.left-panel--collapsed {
+  width: 0;
+  flex-basis: 0;
+  border-right: none;
+  align-items: center;
 }
 
 .left-sidebar-mode-tabs {
@@ -486,12 +534,6 @@ input[type="range"]:active::-moz-range-thumb {
   font-weight: 700;
   font-size: 0.8rem;
   color: var(--accent-light);
-}
-
-.vsp-meta,
-.vsp-time {
-  font-size: 0.68rem;
-  color: var(--text-muted);
 }
 
 .vsp-section {
@@ -592,7 +634,6 @@ input[type="range"]:active::-moz-range-thumb {
   color: var(--accent-light);
 }
 .vsp-cascade-table tr.changed td.vsp-ct-before {
-  text-decoration: line-through;
   color: var(--text-muted);
 }
 
@@ -630,6 +671,17 @@ input[type="range"]:active::-moz-range-thumb {
   font-size: 0.62rem;
   font-weight: 500;
   color: var(--text-muted);
+}
+
+.vsp-metric-before {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.58rem;
+  color: var(--accent-light);
+  font-family: Consolas, "Cascadia Mono", monospace;
+}
+.vsp-metric.warn .vsp-metric-before {
+  color: #b45309;
 }
 
 .virtual-simulator-panel .sim-output-summary {
@@ -1118,6 +1170,162 @@ input[type="range"]:active::-moz-range-thumb {
   pointer-events: none;
 }
 
+.scada-metrics {
+  position: absolute;
+  left: 8px;
+  bottom: 100px;
+  z-index: 2;
+  display: flex;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+  pointer-events: none;
+}
+.scada-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 14px;
+  border-right: 1px solid var(--border);
+}
+.scada-metric:last-child {
+  border-right: none;
+}
+.scada-metric-label {
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.scada-metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.scada-metric-value em {
+  font-style: normal;
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 3px;
+}
+.scada-metric-value.warning {
+  color: #d97706;
+}
+.scada-metric-value.critical {
+  color: #dc2626;
+}
+
+/* --- Plant summary pop-up (Σ Summary button) ----------------------------- */
+.scada-summary-btn {
+  width: auto !important;
+  padding: 0 10px;
+  font-size: 0.72rem !important;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.scada-summary-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-light);
+  color: var(--accent);
+}
+.scada-summary {
+  position: absolute;
+  top: 44px;
+  right: 8px;
+  z-index: 6;
+  width: 300px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.scada-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.6rem;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.scada-summary-head button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.scada-summary-head button:hover {
+  color: var(--text);
+}
+.scada-summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+}
+.scada-summary-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.scada-summary-title {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 0.28rem 0.5rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  text-align: center;
+}
+.scada-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.26rem 0.5rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--bg-hover);
+}
+.scada-summary-row:first-of-type {
+  border-top: none;
+}
+.scada-summary-row strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--text);
+}
+.scada-summary-row strong em {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+.scada-summary-row--total {
+  background: var(--accent-soft);
+}
+.scada-summary-row--total span,
+.scada-summary-row--total strong {
+  color: var(--accent);
+}
+
 .scada-viewport-svg {
   cursor: grab;
   touch-action: none;
@@ -1207,7 +1415,19 @@ input[type="range"]:active::-moz-range-thumb {
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
+  flex: 0 0 360px;
+  position: relative;
+  transition:
+    flex-basis var(--transition),
+    width var(--transition);
+}
+
+.right-panel.right-panel--collapsed {
+  width: 0;
+  flex-basis: 0;
+  border-left: none;
+  align-items: center;
 }
 
 .panel-tabs {
@@ -1264,7 +1484,9 @@ input[type="range"]:active::-moz-range-thumb {
   margin: 0.125rem 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background var(--transition), color var(--transition),
+  transition:
+    background var(--transition),
+    color var(--transition),
     box-shadow var(--transition);
 }
 
@@ -1324,7 +1546,9 @@ input[type="range"]:active::-moz-range-thumb {
   margin-bottom: 0.5rem;
   border: 1px solid var(--border);
   box-shadow: var(--shadow-xs);
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
 }
 
 .control-item:hover {
@@ -1370,7 +1594,9 @@ input[type="range"]:active::-moz-range-thumb {
   border: 1px solid var(--border);
   border-left: 3px solid var(--accent);
   box-shadow: var(--shadow-xs);
-  transition: transform var(--transition), box-shadow var(--transition);
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition);
 }
 
 .kpi-card:hover {
@@ -1624,95 +1850,6 @@ input[type="range"]:active::-moz-range-thumb {
   color: var(--text-muted);
 }
 
-/* Plant scenario switcher */
-.plant-scenario-switcher {
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.plant-scenario-switcher--scroll {
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-
-.plant-scenario-switcher--scroll .plant-scenario-btn {
-  flex: 0 0 auto;
-  min-width: 7.25rem;
-}
-
-.plant-scenario-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  min-width: 0;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg-card);
-  cursor: pointer;
-  text-align: left;
-}
-
-.plant-scenario-btn--chiller {
-  flex: 0 0 auto;
-}
-
-.plant-scenario-btn--heat {
-  flex: 1 1 0;
-}
-
-.plant-scenario-btn--heat .plant-scenario-label {
-  white-space: nowrap;
-}
-
-.plant-scenario-btn--ahu {
-  flex: 0 0 auto;
-}
-
-.plant-scenario-btn:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-hover);
-}
-
-.plant-scenario-btn.active {
-  border-color: var(--primary);
-  background: #eff6ff;
-  box-shadow: var(--shadow-xs);
-}
-
-.plant-scenario-btn.active:hover {
-  background: #eff6ff;
-}
-
-.plant-scenario-head {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.3rem;
-  width: 100%;
-  min-width: 0;
-}
-
-.plant-scenario-icon {
-  font-size: 0.72rem;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.plant-scenario-label {
-  font-weight: 600;
-  font-size: 0.68rem;
-  line-height: 1.15;
-  min-width: 0;
-}
-
 .hx-plant-viewer {
   overflow: hidden;
   background: var(--bg-dark);
@@ -1913,7 +2050,7 @@ input[type="range"]:active::-moz-range-thumb {
   opacity: 1;
 }
 .slider-bubble::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 100%;
   left: 50%;
@@ -1951,6 +2088,241 @@ input[type="range"]:active::-moz-range-thumb {
   font-weight: 500;
   color: var(--text-muted);
   white-space: nowrap;
+}
+
+/* --- Model-Predictive Control result card -------------------------------- */
+.mpc-mode-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: 0.4rem 0 0;
+}
+.mpc-result {
+  margin-top: 0.6rem;
+  background: rgba(2, 132, 199, 0.06);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--accent-light);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.7rem;
+}
+.mpc-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.mpc-kwrt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.mpc-kwrt-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.mpc-kwrt-vals {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.mpc-before {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.mpc-after {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.mpc-arrow {
+  color: var(--text-muted);
+}
+.mpc-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.mpc-badge.good {
+  background: rgba(22, 163, 74, 0.15);
+  color: #16a34a;
+}
+.mpc-badge.bad {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+}
+.mpc-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+.mpc-moves {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+.mpc-move {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.28rem 0;
+  border-top: 1px dashed var(--border);
+}
+.mpc-move:first-child {
+  border-top: none;
+}
+.mpc-move-label {
+  color: var(--text);
+}
+.mpc-move-vals {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.mpc-move-vals strong {
+  color: var(--accent);
+}
+.mpc-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+.mpc-warn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin-top: 0.4rem;
+}
+
+/* --- T1 SCADA control panel (right sidebar) — matches app card style ------ */
+.right-panel.right-panel--scada {
+  width: 300px;
+  flex-basis: 300px;
+}
+
+.right-panel.right-panel--scada.right-panel--collapsed {
+  width: 0;
+  flex-basis: 0;
+}
+.scada-panel-content {
+  padding: 0.6rem;
+  overflow-y: auto;
+  height: 100%;
+}
+.scada-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  align-items: start;
+}
+.scada-box {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-panel);
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+.scada-box:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+.scada-box-title {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.scada-box-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0.2rem 0.65rem;
+}
+.scada-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.32rem 0;
+  border-bottom: 1px solid var(--bg-hover);
+}
+.scada-row:last-child {
+  border-bottom: none;
+}
+.scada-row-label {
+  font-size: 0.68rem;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+.scada-row--edit .scada-row-label {
+  color: var(--text);
+  font-weight: 600;
+}
+.scada-row-read {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.scada-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: 4.8rem;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-light);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  justify-content: flex-end;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+.scada-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+.scada-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: right;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.scada-input::-webkit-outer-spin-button,
+.scada-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.scada-row-unit {
+  font-size: 0.62rem;
+  color: var(--text-muted);
 }
 .ctrl-pending-hint {
   font-size: 0.7rem;
@@ -2196,8 +2568,8 @@ input[type="range"]:active::-moz-range-thumb {
 .sim-output-summary {
   margin-bottom: 1rem;
   padding: 0.75rem 0.85rem;
-  background: #f0fdf4;
-  border: 1px solid #86efac;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 .sim-output-summary--compact {

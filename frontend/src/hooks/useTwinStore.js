@@ -12,6 +12,7 @@ import {
   acknowledgePlantAlert as ackPlantAlert,
   getPlantControls,
 } from '../services/plantSimulator';
+import { computeMpcMove as computeMpcMoveEngine } from '../services/plantMpc';
 import {
   parseChillerCopilotIntents,
   formatChillerControlConfirmation,
@@ -82,6 +83,7 @@ export const useTwinStore = create((set, get) => ({
   ahuState: null,
   activeAppTab: 'chiller_plant',
   activePlantScenario: 'chiller',
+  mpcAuto: false,
   selectedAsset: null,
   isConnected: false,
   ws: null,
@@ -121,6 +123,15 @@ export const useTwinStore = create((set, get) => ({
             },
           },
         });
+      }
+      // Closed-loop MPC: each tick, apply the first move of the kW/RT-optimal
+      // plan. Move-suppression keeps per-tick moves gentle; re-solving every
+      // tick is the receding horizon. Applied setpoints take effect next tick.
+      if (get().mpcAuto) {
+        const res = computeMpcMoveEngine({ horizon: 12, maxPasses: 2, rateLimitFrac: 0.34 });
+        for (const r of res.recommendations) {
+          if (r.changed) setPlantControlValue(r.controlId, r.recommendedValue);
+        }
       }
     });
 
@@ -242,6 +253,14 @@ export const useTwinStore = create((set, get) => ({
   applyChillerScenario: (scenarioId) => {
     set({ plantState: applyChillerScenarioEngine(scenarioId) });
   },
+
+  /** Compute the MPC control move (minimising predicted kW/RT) for the current
+   *  plant state. Pure read — does not commit; the panel stages the first move
+   *  as pending drafts for the operator to Apply. */
+  computeMpcMove: () => computeMpcMoveEngine(),
+
+  /** Toggle closed-loop MPC auto mode (applies the first move each tick). */
+  setMpcAuto: (on) => set({ mpcAuto: !!on }),
 
   loadTwinState: async () => {
     try {

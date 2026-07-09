@@ -62,7 +62,7 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
           id: 'alm-chws-high',
           severity: 'warning',
           message: `High CHWS Temperature (${ctx.headers.chws.toFixed(1)}°C vs SP ${ctx.chwsSetpoint}°C)`,
-          assetId: 'ch-29-1',
+          assetId: 'ch-1',
           resolved: false,
           acknowledged: false,
           timestamp: ts,
@@ -80,7 +80,7 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
           id: 'alm-chwr-high',
           severity: 'warning',
           message: `High CHWR Temperature (${ctx.headers.chwr.toFixed(1)}°C vs SP ${ctx.chwrSetpoint}°C)`,
-          assetId: 'chwp-29-1',
+          assetId: 'chwp-1',
           resolved: false,
           acknowledged: false,
           timestamp: ts,
@@ -98,7 +98,7 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
           id: 'alm-cws-high',
           severity: 'warning',
           message: `High Condenser Temperature (${ctx.headers.cws.toFixed(1)}°C vs SP ${ctx.cwsSetpoint}°C)`,
-          assetId: 'ct-41-1',
+          assetId: 'ct-1',
           resolved: false,
           acknowledged: false,
           timestamp: ts,
@@ -152,7 +152,7 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
           id: 'alm-dp-high',
           severity: 'warning',
           message: `High Header DP (${ctx.measuredDp.toFixed(1)} psi vs SP ${ctx.dpSetpoint} psi)`,
-          assetId: 'chwp-29-1',
+          assetId: 'chwp-1',
           resolved: false,
           acknowledged: false,
           timestamp: ts,
@@ -189,8 +189,8 @@ export function evaluateAlarms(ctx: AlarmContext): PlantAlert[] {
     }
   });
 
-  ['ch-29-1', 'ch-29-2', 'ch-29-3'].forEach((id) => {
-    const ch = ctx.equipment[id];
+  Object.values(ctx.equipment).forEach((ch) => {
+    const id = ch.id;
     if (ch && ch.type === 'chiller' && ch.loadPercent > 95) {
       const rec = recommendForChillerOverload(ctx);
       alerts.push(

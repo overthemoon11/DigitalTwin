@@ -60,7 +60,7 @@ export const CHILLER_CONTROL_META = {
   },
   'ctrl-ch-enable': {
     formula: 'N_chillers = f(L_demand) if enabled else 0',
-    affects: ['CH-29-1/2/3 status', 'plant cooling capacity', 'CWP/CT staging'],
+    affects: ['CH-1…5 status', 'plant cooling capacity', 'CWP/CT staging'],
     description: 'Master chiller enable. Off stops all chillers regardless of load.',
   },
   'ctrl-opt-mode': {

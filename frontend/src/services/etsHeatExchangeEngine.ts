@@ -44,6 +44,9 @@ let lastControlId: string | null = null;
 // Before-snapshot for the before→after domino cascade (persisted across live ticks).
 let lastBeforeCtx: Record<string, number | string | boolean> | null = null;
 let lastChanges: Array<{ label: string; oldValue: number; newValue: number; unit?: string }> | null = null;
+// Headers (+ stage) snapshots for the before→after performance cards.
+let lastMetricsSnapshot: Record<string, number> | null = null;
+let lastBeforeMetrics: Record<string, number> | null = null;
 
 function getControl(id: string): number {
   return controls.find((c) => c.id === id)?.value ?? 0;
@@ -415,6 +418,7 @@ function runStep(): EtsState {
   };
   const cascadeTrace = buildEtsCascadeTrace(afterCtx, lastBeforeCtx, lastChanges);
   const cascadeRows = buildEtsCascadeRows(afterCtx, lastBeforeCtx);
+  lastMetricsSnapshot = { ...headers, stage: s.pumpsRunning };
 
   return {
     station: 'A-B03-01',
@@ -439,6 +443,7 @@ function runStep(): EtsState {
       lastControlId: lastControlId ?? undefined,
       cascadeTrace,
       cascadeRows,
+      beforeHeaders: lastBeforeMetrics ?? undefined,
       lastOutput: {
         buildingLoadRt: s.demandRt,
         primaryDeltaT: s.priDeltaT,
@@ -470,6 +475,7 @@ export function updateEtsControl(controlId: string, value: number): void {
   lastControlId = controlId;
   lastTrigger = `Operator set ${ctrl?.label || controlId}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
   lastBeforeCtx = null;
+  lastBeforeMetrics = null;
   lastChanges = null;
 }
 
@@ -483,6 +489,7 @@ export function applyEtsChanges(
 ): EtsState {
   const list = changes ?? [];
   lastBeforeCtx = list.length ? solveEtsCtx() : null;
+  lastBeforeMetrics = list.length ? lastMetricsSnapshot : null;
   lastChanges = list.length ? list.map((c) => ({ label: c.label, oldValue: c.oldValue, newValue: c.newValue, unit: c.unit })) : null;
   for (const ch of list) {
     if (controls.some((c) => c.id === ch.controlId)) {
@@ -534,6 +541,7 @@ function applyEtsScenarioInternal(scenario: {
 
   lastControlId = `scenario:${scenario.id}`;
   lastBeforeCtx = null;
+  lastBeforeMetrics = null;
   lastChanges = null;
   snapLoadLag();
 
@@ -592,6 +600,7 @@ export function resetEts(): void {
   lastControlId = null;
   lastTrigger = 'ETS A-B03-01 reset to baseline';
   lastBeforeCtx = null;
+  lastBeforeMetrics = null;
   lastChanges = null;
 }
 

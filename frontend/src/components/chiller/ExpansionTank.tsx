@@ -1,6 +1,7 @@
-import type { ExpansionTankEquipment } from '../../types/plant';
+import type { ExpansionTankEquipment, EquipmentStatus } from '../../types/plant';
 import { EquipLabel } from './EquipLabel';
-import { SCADA } from './scadaTheme';
+import { EquipSprite } from './EquipSprite';
+import { EQUIP_IMG } from './equipmentImages';
 
 interface Props {
   equipment: ExpansionTankEquipment;
@@ -8,21 +9,21 @@ interface Props {
   y: number;
   selected: boolean;
   onSelect: (id: string) => void;
+  /** Override sprite (e.g. the ETS white vessel). */
+  href?: string;
+  scale?: number;
 }
 
 const W = 48;
 const BODY_H = 52;
 
-export function ExpansionTank({ equipment, x, y, selected, onSelect }: Props) {
-  const lvl = (equipment.levelPercent / 100) * (BODY_H - 8);
-  const cx = x + 24;
+export function ExpansionTank({ equipment, x, y, selected, onSelect, href = EQUIP_IMG.tank, scale = 1.5 }: Props) {
   const iconH = BODY_H + 8;
+  const status = (equipment.status ?? 'running') as EquipmentStatus;
 
   return (
     <g className="plant-equip scada-exp-tank" onClick={() => onSelect(equipment.id)} style={{ cursor: 'pointer' }}>
-      <ellipse cx={cx} cy={y + 8} rx={22} ry={6} fill="#e2e8f0" stroke={selected ? SCADA.selected : SCADA.faceplateBorder} />
-      <rect x={x + 4} y={y + 8} width={40} height={BODY_H} fill={SCADA.faceplate} stroke={selected ? SCADA.selected : SCADA.faceplateBorder} rx={2} />
-      <rect x={x + 8} y={y + BODY_H - lvl} width={32} height={lvl} fill="#0ea5e9" opacity={0.8} className="tank-level-anim" />
+      <EquipSprite href={href} x={x} y={y} w={W} h={iconH} status={status} selected={selected} scale={scale} />
       <EquipLabel
         iconX={x}
         iconY={y}

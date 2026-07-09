@@ -245,13 +245,13 @@ function ControlPanel({ controls, selectedAsset, assets, plantMode = false }) {
               onClick={() => triggerPlantFault('chiller_fault')}
               style={scenarioBtnStyle}
             >
-              ❄️ Chiller Fault (CH-29-3)
+              ❄️ Chiller Fault (CH-3)
             </button>
             <button
               onClick={() => triggerPlantFault('pump_trip')}
               style={scenarioBtnStyle}
             >
-              💧 Pump Trip (CHWP-29-2)
+              💧 Pump Trip (CHWP-2)
             </button>
             <button
               onClick={resetPlant}

@@ -7,11 +7,10 @@ const TREE = [
     children: [
       {
         name: 'Cooling Towers',
-        children: [
-          { id: 'ct-41-1', name: 'CT-41-1' },
-          { id: 'ct-41-2', name: 'CT-41-2' },
-          { id: 'ct-41-3', name: 'CT-41-3' },
-        ],
+        children: Array.from({ length: 5 }, (_, i) => ({
+          id: `ct-${i + 1}`,
+          name: `CT-${String(i + 1).padStart(2, '0')}`,
+        })),
       },
       {
         name: 'Cooling Water Make-up System',
@@ -23,29 +22,24 @@ const TREE = [
       },
       {
         name: 'Chillers',
-        children: [
-          { id: 'ch-29-1', name: 'CH-29-1' },
-          { id: 'ch-29-2', name: 'CH-29-2' },
-          { id: 'ch-29-3', name: 'CH-29-3' },
-        ],
+        children: Array.from({ length: 5 }, (_, i) => ({
+          id: `ch-${i + 1}`,
+          name: `CH-${i + 1}`,
+        })),
       },
       {
         name: 'Condenser Water Pumps',
-        children: [
-          { id: 'cwp-29-1', name: 'CWP-29-1' },
-          { id: 'cwp-29-2', name: 'CWP-29-2' },
-          { id: 'cwp-29-3', name: 'CWP-29-3' },
-          { id: 'cwp-29-4', name: 'CWP-29-4' },
-        ],
+        children: Array.from({ length: 6 }, (_, i) => ({
+          id: `cwp-${i + 1}`,
+          name: `CWP-${i + 1}`,
+        })),
       },
       {
         name: 'Chilled Water Pumps',
-        children: [
-          { id: 'chwp-29-1', name: 'CHWP-29-1' },
-          { id: 'chwp-29-2', name: 'CHWP-29-2' },
-          { id: 'chwp-29-3', name: 'CHWP-29-3' },
-          { id: 'chwp-29-4', name: 'CHWP-29-4' },
-        ],
+        children: Array.from({ length: 6 }, (_, i) => ({
+          id: `chwp-${i + 1}`,
+          name: `CHWP-${i + 1}`,
+        })),
       },
       {
         name: 'Expansion Tanks',
