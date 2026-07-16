@@ -6,7 +6,7 @@ import {
   CHILLER_GROUP_ORDER,
   CHILLER_GROUP_LABELS,
 } from "./chillerControlMeta";
-import { CHILLER_SCENARIOS } from "../../services/chillerScenarios";
+import { CHILLER_SCENARIOS } from "../../services/chiller/chillerScenarios";
 import { useDraftControls } from "../../hooks/useDraftControls";
 import { RangeSlider } from "../common/RangeSlider";
 

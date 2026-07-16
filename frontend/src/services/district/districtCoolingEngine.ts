@@ -4,8 +4,8 @@ import type {
   DistrictCoolingState,
   DistrictCoolingEquipment,
   ScenarioComparisonRow,
-} from '../types/districtCooling';
-import type { PlantAlert, PlantKpi } from '../types/plant';
+} from '../../types/districtCooling';
+import type { PlantAlert, PlantKpi } from '../../types/plant';
 
 const SIM_DT_SEC = 2;
 

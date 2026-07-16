@@ -23,8 +23,8 @@ import {
   pumpPowerFromSpeed,
   pumpHeadFromSpeed,
   solveEtsThermoHydraulics,
-} from '../../../frontend/src/services/etsPhysics.js';
-import { buildEtsCascadeTrace } from '../../../frontend/src/services/etsCascade.js';
+} from '../../../frontend/src/services/ets/etsPhysics.js';
+import { buildEtsCascadeTrace } from '../../../frontend/src/services/ets/etsCascade.js';
 
 const approx = (a, b, tol, msg) =>
   assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} (tol ${tol})`);

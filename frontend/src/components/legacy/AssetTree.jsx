@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ASSET_TYPE_ICONS, BuildingIcon, AlertIcon } from './Icons';
+import { ASSET_TYPE_ICONS, BuildingIcon, AlertIcon } from '../common/Icons';
 
 // Fallback emoji icons if SVG not available
 const ASSET_EMOJI = {

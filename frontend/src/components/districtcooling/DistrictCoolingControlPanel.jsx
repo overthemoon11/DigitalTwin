@@ -1,5 +1,5 @@
 import React from 'react';
-import SimulationOutputSummary from '../SimulationOutputSummary';
+import SimulationOutputSummary from '../common/SimulationOutputSummary';
 
 function ControlSlider({ control, onUpdate }) {
   const handleChange = (e) => {

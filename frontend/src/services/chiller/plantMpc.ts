@@ -13,7 +13,7 @@
  * the true kW/RT optimum; a rate limit lets the controller ease toward the true
  * optimum over successive ticks with no steady-state offset.
  */
-import type { PlantControl } from '../types/plant';
+import type { PlantControl } from '../../types/plant';
 import { predictPlant, getPlantControls } from './controlEngine';
 import { round, clamp } from './plantPhysics';
 

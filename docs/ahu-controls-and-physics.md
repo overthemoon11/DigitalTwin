@@ -1,8 +1,8 @@
 # AHU01 — Controls, Formulas & Parameter Relationships
 
 **Unit:** AHU01 (1F recirculation AHU)  
-**Physics core:** [`frontend/src/services/ahuPhysics.js`](../frontend/src/services/ahuPhysics.js)  
-**Simulation engine:** [`frontend/src/services/ahuEngine.ts`](../frontend/src/services/ahuEngine.ts)  
+**Physics core:** [`frontend/src/services/ahu/ahuPhysics.js`](../frontend/src/services/ahu/ahuPhysics.js)  
+**Simulation engine:** [`frontend/src/services/ahu/ahuEngine.ts`](../frontend/src/services/ahu/ahuEngine.ts)  
 **UI controls:** right sidebar → **Controls** tab (`AhuControlPanel.jsx`)  
 **Control metadata:** [`frontend/src/components/ahu/ahuControlMeta.js`](../frontend/src/components/ahu/ahuControlMeta.js)  
 **Validation:** [`tests/validation/ahu/ahu-physics.test.mjs`](../tests/validation/ahu/ahu-physics.test.mjs)  
@@ -407,9 +407,9 @@ Zone load
 
 | File | Role |
 |------|------|
-| `frontend/src/services/ahuPhysics.js` | Steady-state airside solve |
-| `frontend/src/services/ahuEngine.ts` | 2 s tick, lag, alerts, equipment map |
-| `frontend/src/services/ahuCascade.js` | Virtual simulator domino trace |
+| `frontend/src/services/ahu/ahuPhysics.js` | Steady-state airside solve |
+| `frontend/src/services/ahu/ahuEngine.ts` | 2 s tick, lag, alerts, equipment map |
+| `frontend/src/services/ahu/ahuCascade.js` | Virtual simulator domino trace |
 | `frontend/src/components/ahu/ahuControlMeta.js` | Panel formula hints |
 | `frontend/src/components/ahu/AhuControlPanel.jsx` | Right-sidebar UI |
 | `frontend/src/components/ahu/Ahu01StationView.tsx` | SCADA schematic |

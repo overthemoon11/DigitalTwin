@@ -102,7 +102,7 @@ function matchScenarioByText(text) {
 
 /**
  * @param {string} message
- * @param {import('../types/ahu').AhuControl[]} controls
+ * @param {import('../../types/ahu').AhuControl[]} controls
  * @returns {AhuCopilotParseResult}
  */
 export function parseAhuCopilotIntents(message, controls) {
@@ -274,7 +274,7 @@ export function formatAhuCustomScenarioConfirmation(payload) {
   return `## AHU01 Scenario Applied\n\n**${label}**${desc}${adv}`;
 }
 
-/** @param {import('../types/ahu').AhuState | null} state */
+/** @param {import('../../types/ahu').AhuState | null} state */
 export function buildAhuContextForCopilot(state) {
   if (!state) return '';
   const { headers, simulation, alerts, recommendedActions, chwCoil } = state;
@@ -296,7 +296,7 @@ export function buildAhuContextForCopilot(state) {
     .join('\n');
 }
 
-/** @param {import('../types/ahu').AhuState | null} state */
+/** @param {import('../../types/ahu').AhuState | null} state */
 export function buildAhuChatSuggestions(state) {
   if (!state) return [];
   /** @type {{ id: string; label: string; prompt: string; priority: string }[]} */
@@ -367,7 +367,7 @@ function formatAlertBlock(alerts) {
   }).join('\n');
 }
 
-/** @param {string} message @param {import('../types/ahu').AhuState | null} state */
+/** @param {string} message @param {import('../../types/ahu').AhuState | null} state */
 export function analyzeAhuQuery(message, state) {
   if (!state) return 'AHU01 telemetry is not available yet. Wait for the simulation to initialize.';
   const q = message.toLowerCase();
@@ -425,7 +425,7 @@ export function analyzeAhuQuery(message, state) {
   return null;
 }
 
-/** @param {import('../types/ahu').AhuControl[]} controls */
+/** @param {import('../../types/ahu').AhuControl[]} controls */
 export function buildAhuControlsSummary(controls) {
   return controls
     .filter((c) => typeof c.value === 'number')

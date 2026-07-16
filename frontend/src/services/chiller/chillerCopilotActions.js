@@ -94,7 +94,7 @@ function matchScenarioByText(text) {
 
 /**
  * @param {string} message
- * @param {import('../types/plant').PlantControl[]} controls
+ * @param {import('../../types/plant').PlantControl[]} controls
  * @returns {ChillerCopilotParseResult}
  */
 export function parseChillerCopilotIntents(message, controls) {
@@ -297,7 +297,7 @@ export function formatChillerCustomScenarioConfirmation(payload) {
   return `## Chiller Scenario Applied\n\n**${label}**${desc}${adv}`;
 }
 
-/** @param {import('../types/plant').PlantState | null} state */
+/** @param {import('../../types/plant').PlantState | null} state */
 export function buildChillerContextForCopilot(state) {
   if (!state) return '';
   const { headers, simulation, alerts, kpis } = state;
@@ -320,7 +320,7 @@ export function buildChillerContextForCopilot(state) {
     .join('\n');
 }
 
-/** @param {import('../types/plant').PlantControl[]} controls */
+/** @param {import('../../types/plant').PlantControl[]} controls */
 export function buildChillerControlsSummary(controls) {
   return controls
     .filter((c) => typeof c.value === 'number')
@@ -354,7 +354,7 @@ function formatChillerAlertBlock(alerts) {
     .join('\n');
 }
 
-/** @param {import('../types/plant').PlantState | null} state */
+/** @param {import('../../types/plant').PlantState | null} state */
 export function buildChillerChatSuggestions(state) {
   if (!state) return [];
   /** @type {{ id: string; label: string; prompt: string; priority: string }[]} */
@@ -406,7 +406,7 @@ export function buildChillerChatSuggestions(state) {
   return suggestions.slice(0, 5);
 }
 
-/** @param {string} message @param {import('../types/plant').PlantState | null} state */
+/** @param {string} message @param {import('../../types/plant').PlantState | null} state */
 export function analyzeChillerQuery(message, state) {
   if (!state) return 'Plant telemetry is not available yet. Wait for the simulation to initialize.';
 

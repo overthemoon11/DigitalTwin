@@ -3,8 +3,8 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseAhuCopilotIntents } from '../../../frontend/src/services/ahuCopilotActions.js';
-import { getAhuControls, resetAhu, applyAhuScenarioPayload } from '../../../frontend/src/services/ahuEngine.ts';
+import { parseAhuCopilotIntents } from '../../../frontend/src/services/ahu/ahuCopilotActions.js';
+import { getAhuControls, resetAhu, applyAhuScenarioPayload } from '../../../frontend/src/services/ahu/ahuEngine.ts';
 
 const BASE_CONTROLS = () => {
   resetAhu();

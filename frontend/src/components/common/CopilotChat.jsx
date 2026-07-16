@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useTwinStore } from "../hooks/useTwinStore";
-import { buildAhuChatSuggestions } from "../services/ahuCopilotActions";
-import { buildEtsChatSuggestions } from "../services/etsCopilotActions";
-import { buildChillerChatSuggestions } from "../services/chillerCopilotActions";
+import { useTwinStore } from "../../hooks/useTwinStore";
+import { buildAhuChatSuggestions } from "../../services/ahu/ahuCopilotActions";
+import { buildEtsChatSuggestions } from "../../services/ets/etsCopilotActions";
+import { buildChillerChatSuggestions } from "../../services/chiller/chillerCopilotActions";
 
 // Simple Markdown-like renderer for chat messages
 function renderMarkdown(text) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CHILLER_CONTROL_CONSTRAINTS } from '../../services/chillerConstraints';
+import { CHILLER_CONTROL_CONSTRAINTS } from '../../services/chiller/chillerConstraints';
 
 /** Format a number, or em-dash for non-finite. */
 const fmt = (v, d = 1) => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '—');
@@ -91,6 +91,7 @@ export default function ChillerScadaPanel({ plantState, onSet }) {
   const headers = plantState?.headers ?? {};
   const kpis = plantState?.kpis ?? [];
   const equipment = plantState?.equipment ?? {};
+  const risers = plantState?.risers ?? [];
 
   const cval = (id, d = 0) => {
     const c = controls.find((x) => x.id === id);
@@ -193,6 +194,15 @@ export default function ChillerScadaPanel({ plantState, onSet }) {
     {
       title: 'Heat Balance',
       rows: [{ label: 'Heat Balance', value: heatBalance, unit: '%' }],
+    },
+    {
+      title: 'CHW Risers — Load Share',
+      rows: risers.map((r) => ({
+        label: `${r.name} (${r.rt} RT · ${r.flowLs.toFixed(0)} L/s)`,
+        value: r.loadSharePct,
+        unit: '%',
+        edit: edit(r.controlId, { decimals: 1 }),
+      })),
     },
   ];
 

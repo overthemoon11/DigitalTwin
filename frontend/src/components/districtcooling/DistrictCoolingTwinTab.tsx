@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import HeatExchangeViewer from '../heatexchange/HeatExchangeViewer';
-import SimulationOutputSummary from '../SimulationOutputSummary';
+import SimulationOutputSummary from '../common/SimulationOutputSummary';
 
 /**
  * Full District Cooling Digital Twin tab — 3-column workflow from mockup.

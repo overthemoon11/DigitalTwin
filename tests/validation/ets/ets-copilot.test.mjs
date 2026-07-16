@@ -7,13 +7,13 @@ import {
   parseEtsCopilotIntents,
   analyzeEtsQuery,
   buildEtsChatSuggestions,
-} from '../../../frontend/src/services/etsCopilotActions.js';
+} from '../../../frontend/src/services/ets/etsCopilotActions.js';
 import {
   resetEts,
   getEtsControls,
   applyEtsScenario,
   applyEtsScenarioPayload,
-} from '../../../frontend/src/services/etsHeatExchangeEngine.ts';
+} from '../../../frontend/src/services/ets/etsHeatExchangeEngine.ts';
 
 const controls = () => {
   resetEts();

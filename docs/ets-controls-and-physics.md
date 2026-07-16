@@ -1,8 +1,8 @@
 # ETS A-B03-01 — Controls, Formulas & Parameter Relationships
 
 **Station:** Marina Bay Sands Energy Transfer Station `A-B03-01` (serves ASM)  
-**Physics core:** [`frontend/src/services/etsPhysics.js`](../frontend/src/services/etsPhysics.js)  
-**Simulation engine:** [`frontend/src/services/etsHeatExchangeEngine.ts`](../frontend/src/services/etsHeatExchangeEngine.ts)  
+**Physics core:** [`frontend/src/services/ets/etsPhysics.js`](../frontend/src/services/ets/etsPhysics.js)  
+**Simulation engine:** [`frontend/src/services/ets/etsHeatExchangeEngine.ts`](../frontend/src/services/ets/etsHeatExchangeEngine.ts)  
 **UI controls:** right sidebar → **Controls** tab (`EtsControlPanel.jsx`)  
 **Validation:** [`tests/validation/ets/ets-physics.test.mjs`](../tests/validation/ets/ets-physics.test.mjs)  
 **Broader formula catalog:** [`physics-formulas-reference.md`](physics-formulas-reference.md) §2.7
@@ -352,6 +352,6 @@ Asserted by `tests/validation/ets/ets-physics.test.mjs`.
 |------|------|
 | `frontend/src/components/ets/EtsControlPanel.jsx` | Right-sidebar UI |
 | `frontend/src/components/ets/etsControlMeta.js` | Per-control formula hints |
-| `frontend/src/services/etsPhysics.js` | Physics core |
-| `frontend/src/services/etsHeatExchangeEngine.ts` | 2 s tick, state, equipment |
+| `frontend/src/services/ets/etsPhysics.js` | Physics core |
+| `frontend/src/services/ets/etsHeatExchangeEngine.ts` | 2 s tick, state, equipment |
 | `docs/physics-formulas-reference.md` | Project-wide formula catalog |

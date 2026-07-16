@@ -13,6 +13,8 @@ export {
   triggerPlantFault,
   acknowledgePlantAlert,
   getPlantControls,
+  getPlantDutyOrders,
+  togglePlantDutyUnit,
   getSimInternals,
   EQUIPMENT_DEFS,
 } from './controlEngine';

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTwinStore } from "./hooks/useTwinStore";
 import { usePlantTelemetry } from "./hooks/usePlantTelemetry";
 import ChillerPlant2DView from "./components/chiller/ChillerPlant2DView";
-import PlantAssetTree from "./components/PlantAssetTree";
+import PlantAssetTree from "./components/chiller/PlantAssetTree";
 import HeatExchangeAssetTree from "./components/heatexchange/HeatExchangeAssetTree";
 import HeatExchangeViewer from "./components/heatexchange/HeatExchangeViewer";
 import EtsStationView from "./components/ets/EtsStationView";
@@ -15,61 +15,18 @@ import AhuKPIPanel from "./components/ahu/AhuKPIPanel";
 import AhuControlPanel from "./components/ahu/AhuControlPanel";
 import ChillerPlantControlPanel from "./components/chiller/ChillerPlantControlPanel";
 import ChillerScadaPanel from "./components/chiller/ChillerScadaPanel";
+import ChillerPointsList from "./components/chiller/ChillerPointsList";
 import ChillerKPIPanel from "./components/chiller/ChillerKPIPanel";
 import VirtualSimulatorPanel from "./components/leftSidebar/VirtualSimulatorPanel";
 import DistrictCoolingControlPanel from "./components/districtcooling/DistrictCoolingControlPanel";
 import DistrictCoolingTwinTab from "./components/districtcooling/DistrictCoolingTwinTab";
-import KPIPanel from "./components/KPIPanel";
-import AlertPanel from "./components/AlertPanel";
-import CopilotChat from "./components/CopilotChat";
-import ModelStatusBanner from "./components/ModelStatusBanner";
+import KPIPanel from "./components/common/KPIPanel";
+import AlertPanel from "./components/common/AlertPanel";
+import CopilotChat from "./components/common/CopilotChat";
+import ModelStatusBanner from "./components/common/ModelStatusBanner";
+import HeaderSidebarToggle from "./components/layout/HeaderSidebarToggle";
+import SidebarModeRail from "./components/layout/SidebarModeRail";
 import "./App.css";
-
-function SidebarModeIcon({ mode }) {
-  if (mode === "assets") {
-    return (
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-boxes" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M7.752.066a.5.5 0 0 1 .496 0l3.75 2.143a.5.5 0 0 1 .252.434v3.995l3.498 2A.5.5 0 0 1 16 9.07v4.286a.5.5 0 0 1-.252.434l-3.75 2.143a.5.5 0 0 1-.496 0l-3.502-2-3.502 2.001a.5.5 0 0 1-.496 0l-3.75-2.143A.5.5 0 0 1 0 13.357V9.071a.5.5 0 0 1 .252-.434L3.75 6.638V2.643a.5.5 0 0 1 .252-.434zM4.25 7.504 1.508 9.071l2.742 1.567 2.742-1.567zM7.5 9.933l-2.75 1.571v3.134l2.75-1.571zm1 3.134 2.75 1.571v-3.134L8.5 9.933zm.508-3.996 2.742 1.567 2.742-1.567-2.742-1.567zm2.242-2.433V3.504L8.5 5.076V8.21zM7.5 8.21V5.076L4.75 3.504v3.134zM5.258 2.643 8 4.21l2.742-1.567L8 1.076zM15 9.933l-2.75 1.571v3.134L15 13.067zM3.75 14.638v-3.134L1 9.933v3.134z" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-building" viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4 2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zM4 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM7.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zM4.5 8a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5zm2.5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3.5-.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5z" />
-      <path d="M2 1a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1zm11 0H3v14h3v-2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V15h3z" />
-    </svg>
-  );
-}
-
-function SidebarModeRail({ mode, sidebarOpen, onModeSelect }) {
-  const items = [
-    { id: "assets", label: "Assets" },
-    { id: "simulator", label: "Virtual Simulator" },
-  ];
-
-  return (
-    <nav className="sidebar-mode-rail" aria-label="Left sidebar mode">
-      {items.map((item) => {
-        const isActive = sidebarOpen && mode === item.id;
-
-        return (
-          <button
-            key={item.id}
-            type="button"
-            className={`sidebar-mode-rail__button ${isActive ? "active" : ""}`}
-            onClick={() => onModeSelect(item.id)}
-            title={item.label}
-            aria-label={item.label}
-            aria-pressed={isActive}
-          >
-            <SidebarModeIcon mode={item.id} />
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
 
 function App() {
   const {
@@ -105,11 +62,13 @@ function App() {
     advancePlantSimulation,
     applyPlantChanges,
     applyChillerScenario,
+    togglePlantDuty,
     computeMpcMove,
     mpcAuto,
     setMpcAuto,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState("controls");
+  const [scadaTab, setScadaTab] = useState("controls");
   const [leftSidebarMode, setLeftSidebarMode] = useState("assets");
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
@@ -173,18 +132,10 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-left">
-          <button
-            type="button"
-            className="header-left-sidebar-toggle"
-            onClick={() => setLeftSidebarOpen((open) => !open)}
-            aria-label={leftSidebarOpen ? "Close left sidebar" : "Open left sidebar"}
-            aria-expanded={leftSidebarOpen}
-            title={leftSidebarOpen ? "Close left sidebar" : "Open left sidebar"}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-list" viewBox="0 0 16 16" aria-hidden="true">
-              <path fillRule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
-            </svg>
-          </button>
+          <HeaderSidebarToggle
+            isOpen={leftSidebarOpen}
+            onToggle={() => setLeftSidebarOpen((open) => !open)}
+          />
           <h1>Digital Twin</h1>
           <div className="app-view-tabs">
             <button
@@ -221,9 +172,13 @@ function App() {
             type="button"
             className="header-right-sidebar-toggle"
             onClick={() => setRightSidebarOpen((open) => !open)}
-            aria-label={rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"}
+            aria-label={
+              rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
+            }
             aria-expanded={rightSidebarOpen}
-            title={rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"}
+            title={
+              rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
+            }
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -272,7 +227,9 @@ function App() {
               onModeSelect={selectLeftSidebarMode}
             />
           )}
-          <aside className={`left-panel ${leftSidebarOpen ? "" : "left-panel--collapsed"}`}>
+          <aside
+            className={`left-panel ${leftSidebarOpen ? "" : "left-panel--collapsed"}`}
+          >
             {leftSidebarOpen && (
               <>
                 {leftSidebarMode === "assets" ? (
@@ -382,137 +339,165 @@ function App() {
             )}
           </main>
 
-          <aside className={`right-panel ${isChillerScenario ? "right-panel--scada" : ""} ${rightSidebarOpen ? "" : "right-panel--collapsed"}`}>
-            {rightSidebarOpen && (isChillerScenario ? (
-              /* T1 SCADA control panel — replaces the Controls/KPIs/Alerts/Chatbot
+          <aside
+            className={`right-panel ${isChillerScenario ? "right-panel--scada" : ""} ${rightSidebarOpen ? "" : "right-panel--collapsed"}`}
+          >
+            {rightSidebarOpen &&
+              (isChillerScenario ? (
+                /* T1 SCADA control panel — replaces the Controls/KPIs/Alerts/Chatbot
                  tabs for the chiller plant (those panels are kept but hidden). */
-              <div className="panel-content scada-panel-content">
-                <ChillerScadaPanel
-                  plantState={plantState}
-                  onSet={updatePlantControl}
-                />
-              </div>
-            ) : (
-              <>
-            <div className="panel-tabs">
-              <button
-                type="button"
-                className={activePanel === "controls" ? "active" : ""}
-                onClick={() => setActivePanel("controls")}
-              >
-                Controls
-              </button>
-              <button
-                type="button"
-                className={activePanel === "kpis" ? "active" : ""}
-                onClick={() => setActivePanel("kpis")}
-              >
-                KPIs
-              </button>
-              <button
-                type="button"
-                className={activePanel === "alerts" ? "active" : ""}
-                onClick={() => setActivePanel("alerts")}
-              >
-                Alerts ({activeAlertCount})
-              </button>
-              <button
-                type="button"
-                className={activePanel === "copilot" ? "active" : ""}
-                onClick={() => setActivePanel("copilot")}
-              >
-                🤖 Chatbot
-              </button>
-            </div>
+                <>
+                  <div className="panel-tabs">
+                    <button
+                      type="button"
+                      className={scadaTab === "controls" ? "active" : ""}
+                      onClick={() => setScadaTab("controls")}
+                    >
+                      Controls
+                    </button>
+                    <button
+                      type="button"
+                      className={scadaTab === "points" ? "active" : ""}
+                      onClick={() => setScadaTab("points")}
+                    >
+                      BMS Points
+                    </button>
+                  </div>
+                  <div className="panel-content scada-panel-content">
+                    {scadaTab === "controls" ? (
+                      <ChillerScadaPanel
+                        plantState={plantState}
+                        onSet={updatePlantControl}
+                      />
+                    ) : (
+                      <ChillerPointsList
+                        plantState={plantState}
+                        onToggleDuty={togglePlantDuty}
+                      />
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="panel-tabs">
+                    <button
+                      type="button"
+                      className={activePanel === "controls" ? "active" : ""}
+                      onClick={() => setActivePanel("controls")}
+                    >
+                      Controls
+                    </button>
+                    <button
+                      type="button"
+                      className={activePanel === "kpis" ? "active" : ""}
+                      onClick={() => setActivePanel("kpis")}
+                    >
+                      KPIs
+                    </button>
+                    <button
+                      type="button"
+                      className={activePanel === "alerts" ? "active" : ""}
+                      onClick={() => setActivePanel("alerts")}
+                    >
+                      Alerts ({activeAlertCount})
+                    </button>
+                    <button
+                      type="button"
+                      className={activePanel === "copilot" ? "active" : ""}
+                      onClick={() => setActivePanel("copilot")}
+                    >
+                      🤖 Chatbot
+                    </button>
+                  </div>
 
-            <div className="panel-content">
-              {activePanel === "controls" && isChillerScenario && (
-                <ChillerPlantControlPanel
-                  controls={plantState?.controls || []}
-                  headers={plantState?.headers}
-                  simulation={plantState?.simulation}
-                  equipment={plantState?.equipment}
-                  onApply={applyPlantChanges}
-                  onApplyScenario={applyChillerScenario}
-                  onReset={resetPlant}
-                  onTriggerFault={triggerPlantFault}
-                  onMpc={computeMpcMove}
-                  mpcAuto={mpcAuto}
-                  onToggleMpcAuto={setMpcAuto}
-                />
-              )}
-              {activePanel === "controls" && isEtsScenario && (
-                <EtsControlPanel
-                  controls={etsState?.controls || []}
-                  headers={etsState?.headers}
-                  valves={etsState?.valves}
-                  meter={etsState?.meter}
-                  simulation={etsState?.simulation}
-                  onApply={applyEtsChanges}
-                  onApplyScenario={applyEtsScenario}
-                  onReset={resetEts}
-                />
-              )}
-              {activePanel === "controls" && isAhuScenario && (
-                <AhuControlPanel
-                  controls={ahuState?.controls || []}
-                  headers={ahuState?.headers}
-                  chwCoil={ahuState?.chwCoil}
-                  hwCoil={ahuState?.hwCoil}
-                  saFan={ahuState?.saFan}
-                  raFan={ahuState?.raFan}
-                  dampers={ahuState?.dampers}
-                  filters={ahuState?.filters}
-                  simulation={ahuState?.simulation}
-                  onApply={applyAhuChanges}
-                  onApplyScenario={applyAhuScenario}
-                  onReset={resetAhu}
-                />
-              )}
-              {activePanel === "controls" &&
-                !isChillerScenario &&
-                !isEtsScenario &&
-                !isAhuScenario && (
-                  <DistrictCoolingControlPanel
-                    controls={districtCoolingState?.controls || []}
-                    headers={districtCoolingState?.headers}
-                    simulation={districtCoolingState?.simulation}
-                    onUpdate={updateDistrictControl}
-                    onRunSimulation={() => advanceDistrictCooling(30)}
-                    onReset={resetDistrictCooling}
-                    compact
-                  />
-                )}
-              {activePanel === "kpis" &&
-                (isChillerScenario ? (
-                  <ChillerKPIPanel kpis={scenarioKpis} />
-                ) : isEtsScenario ? (
-                  <EtsKPIPanel kpis={scenarioKpis} />
-                ) : isAhuScenario ? (
-                  <AhuKPIPanel kpis={scenarioKpis} />
-                ) : (
-                  <KPIPanel kpis={scenarioKpis} />
-                ))}
-              {activePanel === "alerts" && (
-                <AlertPanel
-                  alerts={scenarioAlerts}
-                  assets={twinState.assets}
-                  plantEquipment={
-                    isChillerScenario
-                      ? plantState?.equipment
-                      : isEtsScenario
-                        ? etsState?.equipment
-                        : isAhuScenario
-                          ? ahuState?.equipment
-                          : districtCoolingState?.equipment
-                  }
-                  plantMode
-                />
-              )}
-              {activePanel === "copilot" && <CopilotChat />}
-            </div>
-              </>
-            ))}
+                  <div className="panel-content">
+                    {activePanel === "controls" && isChillerScenario && (
+                      <ChillerPlantControlPanel
+                        controls={plantState?.controls || []}
+                        headers={plantState?.headers}
+                        simulation={plantState?.simulation}
+                        equipment={plantState?.equipment}
+                        onApply={applyPlantChanges}
+                        onApplyScenario={applyChillerScenario}
+                        onReset={resetPlant}
+                        onTriggerFault={triggerPlantFault}
+                        onMpc={computeMpcMove}
+                        mpcAuto={mpcAuto}
+                        onToggleMpcAuto={setMpcAuto}
+                      />
+                    )}
+                    {activePanel === "controls" && isEtsScenario && (
+                      <EtsControlPanel
+                        controls={etsState?.controls || []}
+                        headers={etsState?.headers}
+                        valves={etsState?.valves}
+                        meter={etsState?.meter}
+                        simulation={etsState?.simulation}
+                        onApply={applyEtsChanges}
+                        onApplyScenario={applyEtsScenario}
+                        onReset={resetEts}
+                      />
+                    )}
+                    {activePanel === "controls" && isAhuScenario && (
+                      <AhuControlPanel
+                        controls={ahuState?.controls || []}
+                        headers={ahuState?.headers}
+                        chwCoil={ahuState?.chwCoil}
+                        hwCoil={ahuState?.hwCoil}
+                        saFan={ahuState?.saFan}
+                        raFan={ahuState?.raFan}
+                        dampers={ahuState?.dampers}
+                        filters={ahuState?.filters}
+                        simulation={ahuState?.simulation}
+                        onApply={applyAhuChanges}
+                        onApplyScenario={applyAhuScenario}
+                        onReset={resetAhu}
+                      />
+                    )}
+                    {activePanel === "controls" &&
+                      !isChillerScenario &&
+                      !isEtsScenario &&
+                      !isAhuScenario && (
+                        <DistrictCoolingControlPanel
+                          controls={districtCoolingState?.controls || []}
+                          headers={districtCoolingState?.headers}
+                          simulation={districtCoolingState?.simulation}
+                          onUpdate={updateDistrictControl}
+                          onRunSimulation={() => advanceDistrictCooling(30)}
+                          onReset={resetDistrictCooling}
+                          compact
+                        />
+                      )}
+                    {activePanel === "kpis" &&
+                      (isChillerScenario ? (
+                        <ChillerKPIPanel kpis={scenarioKpis} />
+                      ) : isEtsScenario ? (
+                        <EtsKPIPanel kpis={scenarioKpis} />
+                      ) : isAhuScenario ? (
+                        <AhuKPIPanel kpis={scenarioKpis} />
+                      ) : (
+                        <KPIPanel kpis={scenarioKpis} />
+                      ))}
+                    {activePanel === "alerts" && (
+                      <AlertPanel
+                        alerts={scenarioAlerts}
+                        assets={twinState.assets}
+                        plantEquipment={
+                          isChillerScenario
+                            ? plantState?.equipment
+                            : isEtsScenario
+                              ? etsState?.equipment
+                              : isAhuScenario
+                                ? ahuState?.equipment
+                                : districtCoolingState?.equipment
+                        }
+                        plantMode
+                      />
+                    )}
+                    {activePanel === "copilot" && <CopilotChat />}
+                  </div>
+                </>
+              ))}
           </aside>
         </div>
       )}

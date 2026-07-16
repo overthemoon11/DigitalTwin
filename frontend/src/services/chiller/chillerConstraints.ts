@@ -24,6 +24,10 @@ export const CHILLER_CONTROL_CONSTRAINTS = {
   'ctrl-cwp-spd': { min: 0, max: 100, step: 5 },
   'ctrl-ch-enable': { min: 0, max: 1, step: 1 },
   'ctrl-opt-mode': { min: 0, max: 1, step: 1 },
+  'ctrl-riser-finger': { min: 0, max: 70, step: 0.5 },
+  'ctrl-riser-l13': { min: 0, max: 70, step: 0.5 },
+  'ctrl-riser-main': { min: 0, max: 70, step: 0.5 },
+  'ctrl-riser-t1u': { min: 0, max: 70, step: 0.5 },
 } as const satisfies Record<string, ChillerControlConstraint>;
 
 export type ChillerControlId = keyof typeof CHILLER_CONTROL_CONSTRAINTS;

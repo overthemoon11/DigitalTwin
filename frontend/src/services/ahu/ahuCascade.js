@@ -6,7 +6,7 @@
  * the operator can see exactly what each parameter moved. During live ticks both
  * are omitted and the current value is shown on its own.
  */
-import { ba, changesHeader, buildCascadeRows } from './cascadeDelta.js';
+import { ba, changesHeader, buildCascadeRows } from '../shared/cascadeDelta.js';
 
 /** Affected outputs tracked in the AHU before→after domino table. */
 export const AHU_CASCADE_SPEC = [

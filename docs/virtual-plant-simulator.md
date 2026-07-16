@@ -50,11 +50,11 @@ The **Controls** panel “Show domino effect” banner lists the trace from the 
 
 | File | Role |
 |------|------|
-| `frontend/src/services/controlEngine.ts` | Main simulation step |
-| `frontend/src/services/plantPhysics.ts` | Q, RT, pump laws, COP, lag filters |
-| `frontend/src/services/stagingController.ts` | Chiller/pump/tower staging |
-| `frontend/src/services/plantCascade.ts` | Cascade order + human-readable trace |
-| `frontend/src/services/alarmEngine.ts` | Alarm rules on simulated state |
+| `frontend/src/services/chiller/controlEngine.ts` | Main simulation step |
+| `frontend/src/services/chiller/plantPhysics.ts` | Q, RT, pump laws, COP, lag filters |
+| `frontend/src/services/chiller/stagingController.ts` | Chiller/pump/tower staging |
+| `frontend/src/services/chiller/plantCascade.ts` | Cascade order + human-readable trace |
+| `frontend/src/services/chiller/alarmEngine.ts` | Alarm rules on simulated state |
 | `frontend/src/components/chiller/ChillerPlant2DView.tsx` | SCADA P&ID (display) |
 | `docs/chiller-plant-controls-and-physics.md` | Controls, formulas & parameter relationships |
 

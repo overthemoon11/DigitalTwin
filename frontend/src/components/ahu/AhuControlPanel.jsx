@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AHU_SCENARIOS } from '../../services/ahuScenarios';
+import { AHU_SCENARIOS } from '../../services/ahu/ahuScenarios';
 import { MODE_LABELS } from './ahu01Topology';
 import { useDraftControls } from '../../hooks/useDraftControls';
 import { RangeSlider } from '../common/RangeSlider';

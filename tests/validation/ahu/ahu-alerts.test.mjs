@@ -7,8 +7,8 @@ import {
   recommendForChwSaturated,
   recommendForFilterLoading,
   recommendForSaCfmLow,
-} from '../../../frontend/src/services/ahuAlertRecommendations.js';
-import { resetAhu, applyAhuScenario } from '../../../frontend/src/services/ahuEngine.ts';
+} from '../../../frontend/src/services/ahu/ahuAlertRecommendations.js';
+import { resetAhu, applyAhuScenario } from '../../../frontend/src/services/ahu/ahuEngine.ts';
 
 test('CHW saturation recommendation includes control adjustments', () => {
   const rec = recommendForChwSaturated({

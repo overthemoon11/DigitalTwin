@@ -2,7 +2,7 @@
  * Documents the offline virtual simulator causal chain.
  * Every displayed value is calculated — no live sensor ingestion.
  */
-import { ba, changesHeader, buildCascadeRows } from './cascadeDelta.js';
+import { ba, changesHeader, buildCascadeRows } from '../shared/cascadeDelta.js';
 
 /** Affected outputs tracked in the chiller-plant before→after domino table. */
 export const CHILLER_CASCADE_SPEC = [

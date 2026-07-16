@@ -93,7 +93,7 @@ function matchScenarioByText(text) {
 
 /**
  * @param {string} message
- * @param {import('../types/ets').EtsControl[]} controls
+ * @param {import('../../types/ets').EtsControl[]} controls
  * @returns {EtsCopilotParseResult}
  */
 export function parseEtsCopilotIntents(message, controls) {
@@ -248,7 +248,7 @@ export function formatEtsCustomScenarioConfirmation(payload) {
   return `## ETS Scenario Applied\n\n**${label}**${desc}${adv}`;
 }
 
-/** @param {import('../types/ets').EtsState | null} state */
+/** @param {import('../../types/ets').EtsState | null} state */
 export function buildEtsContextForCopilot(state) {
   if (!state) return '';
   const { headers, simulation, alerts, recommendedActions } = state;
@@ -270,7 +270,7 @@ export function buildEtsContextForCopilot(state) {
     .join('\n');
 }
 
-/** @param {import('../types/ets').EtsState | null} state */
+/** @param {import('../../types/ets').EtsState | null} state */
 export function buildEtsChatSuggestions(state) {
   if (!state) return [];
   /** @type {{ id: string; label: string; prompt: string; priority: string }[]} */
@@ -339,7 +339,7 @@ function formatEtsAlertBlock(alerts) {
   }).join('\n');
 }
 
-/** @param {string} message @param {import('../types/ets').EtsState | null} state */
+/** @param {string} message @param {import('../../types/ets').EtsState | null} state */
 export function analyzeEtsQuery(message, state) {
   if (!state) return 'ETS telemetry is not available yet. Wait for the simulation to initialize.';
   const q = message.toLowerCase();
@@ -405,7 +405,7 @@ export function analyzeEtsQuery(message, state) {
   return null;
 }
 
-/** @param {import('../types/ets').EtsControl[]} controls */
+/** @param {import('../../types/ets').EtsControl[]} controls */
 export function buildEtsControlsSummary(controls) {
   return controls
     .filter((c) => typeof c.value === 'number')

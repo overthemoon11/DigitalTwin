@@ -1,7 +1,7 @@
 import React from 'react';
 import { ETS_CONTROL_META } from '../ets/etsControlMeta';
-import { getEtsScenarioById } from '../../services/etsScenarios';
-import { getAhuScenarioById } from '../../services/ahuScenarios';
+import { getEtsScenarioById } from '../../services/ets/etsScenarios';
+import { getAhuScenarioById } from '../../services/ahu/ahuScenarios';
 
 const DC_CONTROL_AFFECTS = {
   'ctrl-dc-load': ['coolingDemandRt', 'building flows', 'pump staging', 'HX duty'],

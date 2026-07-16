@@ -2,9 +2,9 @@
 
 **Plant:** mTower Level 29 chiller plant room (virtual simulator)  
 **Schematic:** [`ChillerPlant2DView.tsx`](../frontend/src/components/chiller/ChillerPlant2DView.tsx) + [`plantTopology.ts`](../frontend/src/components/chiller/plantTopology.ts)  
-**Physics engine:** [`controlEngine.ts`](../frontend/src/services/controlEngine.ts)  
-**Constants & laws:** [`plantPhysics.ts`](../frontend/src/services/plantPhysics.ts)  
-**Staging:** [`stagingController.ts`](../frontend/src/services/stagingController.ts)  
+**Physics engine:** [`controlEngine.ts`](../frontend/src/services/chiller/controlEngine.ts)  
+**Constants & laws:** [`plantPhysics.ts`](../frontend/src/services/chiller/plantPhysics.ts)  
+**Staging:** [`stagingController.ts`](../frontend/src/services/chiller/stagingController.ts)  
 **UI controls:** right sidebar → **Controls** tab (`ChillerPlantControlPanel.jsx`)  
 **Validation:** [`physics-formulas-reference.md`](physics-formulas-reference.md) — core water-side formulas validated on December 2025 M&V data (7/7 checks pass)
 
@@ -405,8 +405,8 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 |------|------|
 | `frontend/src/components/chiller/ChillerPlantControlPanel.jsx` | Right-sidebar UI |
 | `frontend/src/components/chiller/chillerControlMeta.js` | Per-control formula hints |
-| `frontend/src/services/controlEngine.ts` | Simulation step |
-| `frontend/src/services/plantPhysics.ts` | Physical constants & laws |
-| `frontend/src/services/stagingController.ts` | Equipment staging |
-| `frontend/src/services/plantCascade.ts` | Domino-effect trace text |
+| `frontend/src/services/chiller/controlEngine.ts` | Simulation step |
+| `frontend/src/services/chiller/plantPhysics.ts` | Physical constants & laws |
+| `frontend/src/services/chiller/stagingController.ts` | Equipment staging |
+| `frontend/src/services/chiller/plantCascade.ts` | Domino-effect trace text |
 | `tests/validation/physics/validate_physics.py` | M&V formula validation |

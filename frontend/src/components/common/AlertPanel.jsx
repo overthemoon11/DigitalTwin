@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTwinStore } from '../hooks/useTwinStore';
+import { useTwinStore } from '../../hooks/useTwinStore';
 import { AlertIcon, CheckIcon } from './Icons';
 
 // Lightbulb icon for recommendations

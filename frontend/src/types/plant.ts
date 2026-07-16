@@ -17,6 +17,13 @@ export interface ChillerEquipment extends PlantEquipmentBase {
   cop: number;
   supplyTemp: number;
   returnTemp: number;
+  /** Per-compressor power split (dataset CP-1 / CP-2 meters) */
+  cp1Kw?: number;
+  cp2Kw?: number;
+  /** Per-chiller condenser-side temperatures / flow (dataset CwSt/CwRt/CwFls) */
+  cwSupplyTemp?: number;
+  cwReturnTemp?: number;
+  condFlowRate?: number;
 }
 
 export interface PumpEquipment extends PlantEquipmentBase {
@@ -26,11 +33,20 @@ export interface PumpEquipment extends PlantEquipmentBase {
   loop: 'condenser' | 'chilled' | 'makeup';
 }
 
+/** One cell of a two-cell cooling tower (dataset A/B VSDs and temp sensors). */
+export interface TowerCell {
+  kw: number;
+  cwst: number;
+  cwrt: number;
+}
+
 export interface CoolingTowerEquipment extends PlantEquipmentBase {
   type: 'cooling_tower';
   fanSpeedPercent: number;
   frequencyHz: number;
   leavingTemp: number;
+  /** Two-cell detail (dataset CT_nA/CT_nB points) */
+  cells?: { a: TowerCell; b: TowerCell };
 }
 
 export interface ValveEquipment extends PlantEquipmentBase {
@@ -76,6 +92,23 @@ export interface PlantHeaders {
   ambientTemp: number;
   /** Outdoor relative humidity (operator humidity control) */
   humidityRh: number;
+  /** The five wet-bulb sensors (dataset WST_1..5, °C) */
+  wetBulbSensors?: number[];
+  /** Condenser header flow (dataset Header-hcwf, m³/h) */
+  condFlowM3h?: number;
+}
+
+/** One CHW riser (dataset CHW-Riser-<name> flow/supply/return points). */
+export interface PlantRiser {
+  id: string;
+  name: string;
+  controlId: string;
+  loadSharePct: number;
+  flowM3h: number;
+  flowLs: number;
+  chwSt: number;
+  chwRt: number;
+  rt: number;
 }
 
 export interface PlantControl {
@@ -154,6 +187,10 @@ export interface PlantState {
   kpis: PlantKpi[];
   controls: PlantControl[];
   alerts: PlantAlert[];
+  /** The four CHW risers (dataset Finger / L1-3 / MainBuilding / T1U) */
+  risers?: PlantRiser[];
+  /** Unit duty orders — first N units of each order run at stage count N */
+  dutyOrders?: { chiller: number[]; chwp: number[]; cwp: number[]; ct: number[] };
   simulationTime: string;
   simulation: PlantSimulationMeta;
 }

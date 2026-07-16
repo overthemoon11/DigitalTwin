@@ -4,11 +4,12 @@ import type {
   PlantEquipment,
   PlantHeaders,
   PlantKpi,
+  PlantRiser,
   PlantState,
-} from '../types/plant';
+} from '../../types/plant';
 import { evaluateAlarms, mergeAcknowledged } from './alarmEngine';
 import {
-  REF_CHILLER_COP,
+  CHILLER_CAPACITY_RT,
   REF_CHILLER_KW,
   REF_CHILLER_LOAD,
   REF_CHWP_FLOW,
@@ -26,11 +27,12 @@ import {
   CHWP_COUNT,
   CWP_COUNT,
   CT_COUNT,
+  REF_CHWS_SP,
+  REF_CWS_SP,
+  MIN_CONDENSER_APPROACH_C,
   chwsSetpointModifiers,
-  condenserCopBonus,
-  coolingKwFromFlow,
+  condenserLiftFactor,
   humidityLoadFactor,
-  kwToRt,
   lag,
   plantCop,
   plantEfficiencyKwPerRt,
@@ -57,11 +59,37 @@ import {
   stageCoolingTowers,
 } from './stagingController';
 import { getChillerScenarioById } from './chillerScenarios.js';
+import {
+  DUTY_DEFAULTS,
+  type DutyCategory,
+  CH_TRIM,
+  CHWP_TRIM,
+  CWP_TRIM,
+  CT_TRIM,
+  CH_CP1_SHARE,
+  CH_STANDBY_KW,
+  CT_CELL_KW_FRAC,
+  CH_SENSOR_OFFSET,
+  CH_STAGNANT,
+  CT_CELL_OFFSET,
+  CT_STAGNANT,
+  RISERS,
+  RISER_LOAD_SHARE_DEFAULT,
+  WST_OFFSET,
+  ROW1_LOAD_RT,
+  ROW1_CHWS_SP,
+  ROW1_CW_DT_SP,
+  CH_EVAP_FLOW_TRIM,
+  CH_COND_FLOW_TRIM,
+  CHWP_STANDBY_KW,
+  CWP_STANDBY_KW,
+} from './t1Snapshot';
 
 const SIM_DT_SEC = 2;
-/** Design ΔT used only for required flow / pump staging (hydronic design).
- *  Calibrated to the T1 trend (loop ΔT ≈ 6.85°C). */
-const DESIGN_DELTA_T_FLOW = 6.5;
+/** Design ΔT used ONLY to size required flow for CHWP staging. Matches the
+ *  measured T1 loop ΔT (6.85 °C); the displayed loop ΔT is computed from the
+ *  energy balance over the actual pumped flow, not from this constant. */
+const DESIGN_DELTA_T_FLOW = 6.85;
 
 /**
  * Static (steady-state) model. When true, every state variable jumps straight to
@@ -95,11 +123,20 @@ function defaultControls(): PlantControl[] {
       id: 'ctrl-building-load',
       controlType: 'buildingLoad',
       label: 'Building Cooling Load',
-      value: 3200,
+      value: ROW1_LOAD_RT,
       ...CHILLER_CONTROL_CONSTRAINTS['ctrl-building-load'],
       unit: 'RT',
       group: 'load',
     },
+    ...RISERS.map((r, i) => ({
+      id: r.controlId,
+      controlType: 'riserLoadShare',
+      label: `Riser ${r.name} Load Share`,
+      value: RISER_LOAD_SHARE_DEFAULT[i],
+      ...CHILLER_CONTROL_CONSTRAINTS[r.controlId as keyof typeof CHILLER_CONTROL_CONSTRAINTS],
+      unit: '%',
+      group: 'load',
+    })),
     {
       id: 'ctrl-ambient-temp',
       controlType: 'ambientTemperature',
@@ -122,7 +159,7 @@ function defaultControls(): PlantControl[] {
       id: 'ctrl-chws-sp',
       controlType: 'chwsSetpoint',
       label: 'Chilled Water Supply Temp',
-      value: 7.5,
+      value: ROW1_CHWS_SP,
       ...CHILLER_CONTROL_CONSTRAINTS['ctrl-chws-sp'],
       unit: '°C',
       group: 'chilled',
@@ -158,7 +195,7 @@ function defaultControls(): PlantControl[] {
       id: 'ctrl-cw-dt-sp',
       controlType: 'cwDeltaTSetpoint',
       label: 'CW Differential Temp Setpoint',
-      value: 4.5,
+      value: ROW1_CW_DT_SP,
       ...CHILLER_CONTROL_CONSTRAINTS['ctrl-cw-dt-sp'],
       unit: '°C',
       group: 'condenser',
@@ -253,6 +290,54 @@ let lastChanges:
 // persists (like the domino cascade) until the next single edit / scenario / reset.
 let lastKpiSnapshot: PlantKpi[] | null = null;
 let lastBeforeKpis: PlantKpi[] | null = null;
+
+// Unit duty orders — staging count N runs the FIRST N units of each order
+// (real T1 duty-cycles units; defaults are the row-1 running sets).
+let dutyOrders: Record<DutyCategory, number[]> = {
+  chiller: [...DUTY_DEFAULTS.chiller],
+  chwp: [...DUTY_DEFAULTS.chwp],
+  cwp: [...DUTY_DEFAULTS.cwp],
+  ct: [...DUTY_DEFAULTS.ct],
+};
+
+export function getPlantDutyOrders(): Record<DutyCategory, number[]> {
+  return {
+    chiller: [...dutyOrders.chiller],
+    chwp: [...dutyOrders.chwp],
+    cwp: [...dutyOrders.cwp],
+    ct: [...dutyOrders.ct],
+  };
+}
+
+/**
+ * Toggle a unit between duty and standby: a standby unit is promoted to the
+ * front of its duty order (so it joins the running set); a running unit is
+ * demoted to the back (a standby peer takes its place). The RUNNING COUNT
+ * stays load-driven — this selects WHICH units serve it, like the real
+ * plant's rotation.
+ */
+export function togglePlantDutyUnit(category: DutyCategory, unit: number): void {
+  const order = dutyOrders[category];
+  const pos = order.indexOf(unit);
+  if (pos === -1) return;
+  order.splice(pos, 1);
+  const label = `${category.toUpperCase()}-${unit}`;
+  if (pos < lastDutyRunningCount[category]) {
+    order.push(unit);
+    lastCascadeTrigger = `Operator set ${label} to standby (duty rotation)`;
+  } else {
+    order.unshift(unit);
+    lastCascadeTrigger = `Operator put ${label} on duty (duty rotation)`;
+  }
+  lastControlId = `duty:${category}-${unit}`;
+  lastBeforeCtx = null;
+  lastBeforeKpis = null;
+  lastChanges = null;
+}
+
+/** Running counts from the latest tick — used by the duty toggle to know
+ *  whether a clicked unit is currently in the running set. */
+const lastDutyRunningCount: Record<DutyCategory, number> = { chiller: 3, chwp: 3, cwp: 3, ct: 4 };
 
 let internals: SimInternals = {
   tick: 0,
@@ -369,7 +454,7 @@ function buildKpis(input: PlantKpiInputs): PlantKpi[] {
   return [
     // Energy / performance
     card('kpi-load', 'Plant Load', round(headers.buildingLoadRt, 0), 'RT', 'operational', 3200, 'normal'),
-    card('kpi-kw', 'Total Plant kW', round(totalKw, 1), 'kW', 'energy', '—', 'normal'),
+    card('kpi-kw', 'Total Plant kW', round(totalKw, 2), 'kW', 'energy', '—', 'normal'),
     card('kpi-eff', 'Plant kW/RT', kwPerRt, 'kW/RT', 'energy', '≤ 0.65', kwRtStatus),
     card('kpi-cop', 'Plant COP', cop, '', 'energy', '≥ 5.5', copStatus),
     card('kpi-ch-kwrt', 'Chiller kW/RT', chillerKwPerRt, 'kW/RT', 'energy', '≤ 0.55', chillerKwPerRt > 0.7 ? 'warning' : 'normal'),
@@ -378,7 +463,7 @@ function buildKpis(input: PlantKpiInputs): PlantKpi[] {
     card('kpi-cwp-kw', 'CWP kW', round(cwpKw, 1), 'kW', 'energy', '—', 'normal'),
     card('kpi-ct-kw', 'CT Fan kW', round(ctKw, 1), 'kW', 'energy', '—', 'normal'),
     // Chilled water loop
-    card('kpi-chw-dt', 'CHW ΔT', round(chwDeltaT, 1), '°C', 'operational', '5–7', chwDtStatus),
+    card('kpi-chw-dt', 'CHW ΔT', round(chwDeltaT, 2), '°C', 'operational', '5–7', chwDtStatus),
     card('kpi-chws', 'CHWS', headers.chws, '°C', 'operational', chwsSetpoint, chwsStatus),
     card('kpi-chwr', 'CHWR', headers.chwr, '°C', 'operational', '—', 'normal'),
     card('kpi-dp', 'Header DP', round(measuredDp, 1), 'psi', 'operational', dpSetpoint, dpStatus),
@@ -405,13 +490,13 @@ function buildKpis(input: PlantKpiInputs): PlantKpi[] {
 function runControlStep(): PlantState {
   internals.tick += 1;
 
-  const chwsSp = getControl('ctrl-chws-sp') || 7;
+  const chwsSp = getControl('ctrl-chws-sp') || REF_CHWS_SP;
   const chwrSp = getControl('ctrl-chwr-sp') || REF_CHWR_SP;
-  const cwsSp = getControl('ctrl-cws-sp') || 29;
+  const cwsSp = getControl('ctrl-cws-sp') || REF_CWS_SP;
   const cwrSp = getControl('ctrl-cwr-sp') || REF_CWR_SP;
   const dpSp = getControl('ctrl-dp-sp') || 15;
   const dpSpHigh = getControl('ctrl-dp-sp-high') || dpSp;
-  const cwDtSp = getControl('ctrl-cw-dt-sp') || 4.5;
+  const cwDtSp = getControl('ctrl-cw-dt-sp') || ROW1_CW_DT_SP;
   const ctFanOverride = getControl('ctrl-ct-fan');
   const pumpOverride = getControl('ctrl-pump-spd');
   const cwpOverride = getControl('ctrl-cwp-spd');
@@ -426,38 +511,64 @@ function runControlStep(): PlantState {
     6000
   );
   const runningChCount = stageChillers(buildingDemandRt, chillerEnabled);
-  const rtPerChiller = balanceChillerLoad(buildingDemandRt, runningChCount);
-  const loadPctBase = chillerLoadPercent(rtPerChiller);
 
-  const { loadFactor, kwFactor, copFactor } = chwsSetpointModifiers(chwsSp);
-  const loadPct = clamp(loadPctBase * loadFactor, 0, 100);
-  let cop = REF_CHILLER_COP * copFactor * condenserCopBonus(cwsSp, internals.cwsActual);
-  let chKw = REF_CHILLER_KW * (loadPct / REF_CHILLER_LOAD) * kwFactor;
+  // Fault redistribution — a tripped unit inside the staged set drops out of the
+  // energy math and the survivors pick up its share (loadPct clamps at 100).
+  // Which specific units serve the staged count comes from the duty orders
+  // (row-1 defaults: CH-2/3/4 duty, CH-1/5 standby).
+  const chillerRunUnits = dutyOrders.chiller.slice(0, runningChCount);
+  const chillerRunSet = new Set(chillerRunUnits);
+  const trippedChIdx = internals.faults.chillerTripId
+    ? Number(internals.faults.chillerTripId.split('-')[1])
+    : 0;
+  const chTrippedActive = trippedChIdx >= 1 && chillerRunSet.has(trippedChIdx);
+  const effCh = Math.max(runningChCount - (chTrippedActive ? 1 : 0), 0);
+  const chTrimSum = chillerRunUnits
+    .filter((u) => u !== trippedChIdx)
+    .reduce((s, u) => s + (CH_TRIM[u - 1] ?? 1), 0);
+  const rtPerChiller = balanceChillerLoad(buildingDemandRt, effCh);
+  const loadPct = clamp(chillerLoadPercent(rtPerChiller), 0, 100);
+
+  // Stopped (non-tripped) chillers still draw a small parasitic standby load
+  // (controls / oil heaters) — visible in the dataset's DPM meters (~0.6 kW/comp).
+  const chStandbyKw = CH_STANDBY_KW.reduce((s, u, idx) => {
+    const unit = idx + 1;
+    const stopped = !chillerRunSet.has(unit) && trippedChIdx !== unit;
+    return s + (stopped ? u.cp1 + u.cp2 : 0);
+  }, 0);
+
+  // Tower water cannot get below wet-bulb + approach; the condenser loop runs at
+  // the achievable CWS, which sets the compressor lift.
+  const wetBulbC = estimateWetBulbC(ambientTemp, humidityRh);
+  const cwsAchievable = Math.max(cwsSp, wetBulbC + MIN_CONDENSER_APPROACH_C);
+
+  // Chiller power: part-load × evaporator-reset lift × condenser lift.
+  // COP is the Q/P identity on delivered cooling — never a separate estimate.
+  const { kwFactor } = chwsSetpointModifiers(chwsSp);
+  const liftCws = STATIC_MODE ? cwsAchievable : internals.cwsActual;
+  const chKw = REF_CHILLER_KW * (loadPct / REF_CHILLER_LOAD) * kwFactor * condenserLiftFactor(liftCws);
+  const deliveredRtPerChiller = Math.min(rtPerChiller, CHILLER_CAPACITY_RT);
 
   // CHWS lags toward setpoint (instant in static mode); rises if plant cannot meet load
   const chwsTarget = chwsSp + (loadPct > 90 ? 0.3 : 0);
   internals.chwsActual = STATIC_MODE ? chwsTarget : lag(internals.chwsActual, chwsTarget, 25);
 
-  // Required flow from building load (design ΔT for staging)
+  // Required flow from building load (design ΔT — used for CHWP staging only)
   const totalChwFlow = rtToKw(buildingDemandRt) / (DESIGN_DELTA_T_FLOW * 1.163);
 
-  // Actual delta-T from energy balance (may differ when bypass open)
-  let deltaTPhysics =
-    totalChwFlow > 0 ? rtToKw(buildingDemandRt) / (totalChwFlow * 1.163) : 5.5;
-
-  // Bypass reduces effective delta-T
-  if (internals.bypassPercent > 0) {
-    deltaTPhysics = deltaTPhysics * (1 - internals.bypassPercent / 200);
-  }
-
-  const deltaTFromSp = clamp(chwrSp - internals.chwsActual, 2.5, 8);
-  const deltaT = deltaTPhysics * 0.35 + deltaTFromSp * 0.65;
-
-  const chwr = internals.chwsActual + deltaT;
-
   // CHWP staging & speed (affinity laws)
-  let chwpSpeed = pumpOverride > 0 ? pumpOverride : chwpSpeedFromDpSetpoint(Math.max(dpSp, dpSpHigh));
+  const chwpSpeed = pumpOverride > 0 ? pumpOverride : chwpSpeedFromDpSetpoint(Math.max(dpSp, dpSpHigh));
   const runningChwp = stageChwp(totalChwFlow);
+  const chwpRunUnits = dutyOrders.chwp.slice(0, runningChwp);
+  const chwpRunSet = new Set(chwpRunUnits);
+  const trippedChwpIdx = internals.faults.pumpTripId
+    ? Number(internals.faults.pumpTripId.split('-')[1])
+    : 0;
+  const chwpTrippedActive = trippedChwpIdx >= 1 && chwpRunSet.has(trippedChwpIdx);
+  const effChwp = Math.max(runningChwp - (chwpTrippedActive ? 1 : 0), 0);
+  const chwpTrimSum = chwpRunUnits
+    .filter((u) => u !== trippedChwpIdx)
+    .reduce((s, u) => s + (CHWP_TRIM[u - 1] ?? 1), 0);
   const chwpFlowEach =
     runningChwp > 0
       ? pumpFlowFromSpeed(REF_CHWP_FLOW, REF_CHWP_SPEED, chwpSpeed)
@@ -476,29 +587,104 @@ function runControlStep(): PlantState {
     internals.bypassPercent = clamp(internals.bypassPercent - 1, 0, 50);
   }
 
-  // CWP follows chillers
+  // Loop ΔT from the energy balance over the actual pumped flow (Q = ṁ·cp·ΔT).
+  // More pump speed ⇒ more flow ⇒ lower ΔT; an open bypass steals coil flow.
+  const actualChwFlow = chwpFlowEach * effChwp;
+  const deltaT =
+    actualChwFlow > 0
+      ? clamp(
+          (rtToKw(buildingDemandRt) / (actualChwFlow * 1.163)) * (1 - internals.bypassPercent / 200),
+          2.5,
+          9
+        )
+      : clamp(chwrSp - internals.chwsActual, 2.5, 9);
+
+  const chwr = internals.chwsActual + deltaT;
+
+  // Condenser loop must reject evaporator heat + compressor work. The CWP VSD
+  // modulates to hold the CW ΔT setpoint (real plants control condenser flow
+  // this way), so pump power responds to load and to the ΔT setpoint.
+  const totalChKw = chKw * chTrimSum;
+  const condenserHeatKw = rtToKw(buildingDemandRt) + totalChKw;
   const runningCwp = stageCwp(runningChCount);
-  const cwpSpeed = cwpOverride > 0 ? cwpOverride : clamp(55 + loadPct * 0.35, 30, 100);
+  const cwpRunUnits = dutyOrders.cwp.slice(0, runningCwp);
+  const cwpRunSet = new Set(cwpRunUnits);
+  const cwpTrimSum = cwpRunUnits.reduce((s, u) => s + (CWP_TRIM[u - 1] ?? 1), 0);
+  const targetCwFlow = condenserHeatKw / (Math.max(cwDtSp, 1) * 1.163);
+  const cwpSpeed =
+    cwpOverride > 0
+      ? cwpOverride
+      : runningCwp > 0
+        ? clamp((targetCwFlow / runningCwp / REF_CWP_FLOW) * 70, 30, 100)
+        : 0;
   const cwpFlowEach = pumpFlowFromSpeed(REF_CWP_FLOW, 70, cwpSpeed);
   const cwpKwEach = pumpPowerFromSpeed(REF_CWP_KW, 70, cwpSpeed);
 
   // Cooling tower control. In static mode the fan sits at the speed that holds
-  // CWS at setpoint given the weather offset (its dynamic fixed point).
+  // CWS at setpoint given the weather offset; chasing a setpoint below the
+  // reference costs fan speed (and cubed fan power) before the wet-bulb floor.
   const condenserOffset = weatherCondenserOffset(ambientTemp, humidityRh);
   if (ctFanOverride > 0) {
     internals.ctFanSpeed = ctFanOverride;
   } else if (STATIC_MODE) {
-    internals.ctFanSpeed = clamp(REF_CT_FAN + condenserOffset / 0.04, 30, 100);
+    internals.ctFanSpeed = clamp(
+      REF_CT_FAN + condenserOffset / 0.04 + 10 * (REF_CWS_SP - cwsSp),
+      30,
+      100
+    );
   } else {
     internals.ctFanSpeed = ctFanAdjust(internals.ctFanSpeed, internals.cwsActual, cwsSp);
   }
-  const cwsTarget = cwsSp - (internals.ctFanSpeed - REF_CT_FAN) * 0.04 + condenserOffset;
-  internals.cwsActual = STATIC_MODE ? cwsTarget : lag(internals.cwsActual, cwsTarget, 30);
-  const cwrTarget = Math.max(cwrSp, internals.cwsActual + cwDtSp);
+  const cwsTarget = Math.max(
+    cwsSp - (internals.ctFanSpeed - REF_CT_FAN) * 0.04 + condenserOffset,
+    wetBulbC + MIN_CONDENSER_APPROACH_C
+  );
+  internals.cwsActual = STATIC_MODE ? cwsAchievable : lag(internals.cwsActual, cwsTarget, 30);
+  // Condenser rise from the heat balance over the actual CW flow — if the pumps
+  // hit their speed clamp the achieved ΔT exceeds the setpoint, as in reality.
+  const actualCwFlow = cwpFlowEach * runningCwp;
+  const condDeltaT = actualCwFlow > 0 ? condenserHeatKw / (actualCwFlow * 1.163) : cwDtSp;
+  const cwrTarget = internals.cwsActual + condDeltaT;
   internals.cwrActual = STATIC_MODE ? cwrTarget : lag(internals.cwrActual, cwrTarget, 40);
 
   const runningCt = stageCoolingTowers(runningChCount);
+  const ctRunUnits = dutyOrders.ct.slice(0, runningCt);
+  const ctRunSet = new Set(ctRunUnits);
+  const ctTrimSum = ctRunUnits.reduce((s, u) => s + (CT_TRIM[u - 1] ?? 1), 0);
   const ctKwEach = pumpPowerFromSpeed(REF_CT_KW, 70, internals.ctFanSpeed);
+
+  // Remember the live running counts so duty toggles know running vs standby.
+  lastDutyRunningCount.chiller = runningChCount;
+  lastDutyRunningCount.chwp = runningChwp;
+  lastDutyRunningCount.cwp = runningCwp;
+  lastDutyRunningCount.ct = runningCt;
+
+  // The four CHW risers: fixed hydronic flow split (row-1 fractions), operator-
+  // settable load split (normalized), riser ΔT from each riser's own balance.
+  const riserShareRaw = RISERS.map((r) => Math.max(getControl(r.controlId), 0));
+  const riserShareSum = riserShareRaw.reduce((a, b) => a + b, 0) || 1;
+  const risers: PlantRiser[] = RISERS.map((r, i) => {
+    const share = riserShareRaw[i] / riserShareSum;
+    const flowM3h = r.flowFrac * actualChwFlow;
+    const qKw = share * rtToKw(buildingDemandRt);
+    const riserDt = flowM3h > 0 ? qKw / (flowM3h * 1.163) : 0;
+    const chwSt = internals.chwsActual + r.stOff;
+    const chwRt = chwSt + riserDt + r.rtOff;
+    return {
+      id: r.id,
+      name: r.name,
+      controlId: r.controlId,
+      loadSharePct: round(share * 100, 1),
+      flowM3h: round(flowM3h, 1),
+      flowLs: round(flowM3h / 3.6, 2),
+      chwSt: round(chwSt, 2),
+      chwRt: round(chwRt, 2),
+      rt: round(share * buildingDemandRt, 0),
+    };
+  });
+
+  // Five wet-bulb sensors = Stull estimate + per-sensor bias (row-1 spread).
+  const wetBulbSensors = WST_OFFSET.map((o) => round(wetBulbC + o, 2));
 
   // Makeup water — a slow fill/drain limit-cycle; frozen in static mode (it has
   // no steady state and does not affect the plant's thermal/energy outputs).
@@ -520,32 +706,51 @@ function runControlStep(): PlantState {
   const chillerIds = Array.from({ length: CHILLER_COUNT }, (_, i) => `ch-${i + 1}`);
 
   chillerIds.forEach((id, idx) => {
-    const running = idx < runningChCount;
+    const unit = idx + 1;
+    const running = chillerRunSet.has(unit);
     const tripped = internals.faults.chillerTripId === id;
     let status: PlantEquipment['status'] = running ? 'running' : 'stopped';
     if (tripped) status = 'alarm';
 
+    const live = running && !tripped;
+    const trim = CH_TRIM[idx] ?? 1;
+    const standby = !running && !tripped ? CH_STANDBY_KW[idx] : null;
+    // Keep full precision until the final per-field rounding, so CP splits and
+    // meter ratios reproduce the dataset values exactly.
+    const unitKwRaw = live ? chKw * trim : standby ? standby.cp1 + standby.cp2 : 0;
+    const unitKw = round(unitKwRaw, 2);
+    const cp1Share = CH_CP1_SHARE[idx] ?? 0.5;
+    const stag = CH_STAGNANT[idx];
+    const off = CH_SENSOR_OFFSET;
+
     equipment[id] = {
       id,
-      name: `CH-${idx + 1}`,
+      name: `CH-${unit}`,
       category: 'chiller',
       type: 'chiller',
       status,
-      loadPercent: running && !tripped ? round(loadPct, 1) : 0,
-      cop: running && !tripped ? round(cop, 2) : 0,
-      supplyTemp: round(internals.chwsActual, 2),
-      returnTemp: round(chwr, 2),
-      powerKw: running && !tripped ? round(chKw, 1) : 0,
-      flowRate: running && !tripped ? round(totalChwFlow / runningChCount, 0) : 0,
-      temperature: round(internals.chwsActual, 2),
+      loadPercent: live ? round(loadPct, 1) : 0,
+      cop: live ? round(rtToKw(deliveredRtPerChiller) / Math.max(chKw * trim, 1), 2) : 0,
+      supplyTemp: live ? round(internals.chwsActual + off.chwSt[idx], 2) : stag.chwSt,
+      returnTemp: live ? round(chwr + off.chwRt[idx], 2) : stag.chwRt,
+      cwSupplyTemp: live ? round(internals.cwsActual + off.cwSt[idx], 2) : stag.cwSt,
+      cwReturnTemp: live ? round(internals.cwrActual + off.cwRt[idx], 2) : stag.cwRt,
+      powerKw: unitKw,
+      cp1Kw: live ? round(unitKwRaw * cp1Share, 2) : standby ? standby.cp1 : 0,
+      cp2Kw: live ? round(unitKwRaw * (1 - cp1Share), 2) : standby ? standby.cp2 : 0,
+      flowRate: live ? round((actualChwFlow / Math.max(effCh, 1)) * (CH_EVAP_FLOW_TRIM[idx] ?? 1), 2) : 0,
+      condFlowRate: live ? round((actualCwFlow / Math.max(effCh, 1)) * (CH_COND_FLOW_TRIM[idx] ?? 1), 2) : 0,
+      temperature: live ? round(internals.chwsActual + off.chwSt[idx], 2) : stag.chwSt,
       runtimeHours: 12000 + idx * 500 + internals.tick * (2 / 3600),
     };
   });
 
   for (let i = 1; i <= CHWP_COUNT; i++) {
     const id = `chwp-${i}`;
-    const running = i <= runningChwp;
+    const running = chwpRunSet.has(i);
     const tripped = internals.faults.pumpTripId === id;
+    const live = running && !tripped;
+    const trim = CHWP_TRIM[i - 1] ?? 1;
     equipment[id] = {
       id,
       name: `CHWP-${i}`,
@@ -553,17 +758,18 @@ function runControlStep(): PlantState {
       type: 'pump',
       loop: 'chilled',
       status: tripped ? 'alarm' : running ? 'running' : 'stopped',
-      speedPercent: running && !tripped ? round(chwpSpeed, 1) : 0,
-      frequencyHz: running && !tripped ? speedToHz(chwpSpeed) : 0,
-      powerKw: running && !tripped ? round(chwpKwEach, 1) : 0,
-      flowRate: running && !tripped ? round(chwpFlowEach, 0) : 0,
+      speedPercent: live ? round(chwpSpeed, 1) : 0,
+      frequencyHz: live ? speedToHz(chwpSpeed) : 0,
+      powerKw: live ? round(chwpKwEach * trim, 2) : !tripped ? (CHWP_STANDBY_KW[i - 1] ?? 0) : 0,
+      flowRate: live ? round(chwpFlowEach, 0) : 0,
       runtimeHours: 6000 + i * 200,
     };
   }
 
   for (let i = 1; i <= CWP_COUNT; i++) {
     const id = `cwp-${i}`;
-    const running = i <= runningCwp;
+    const running = cwpRunSet.has(i);
+    const trim = CWP_TRIM[i - 1] ?? 1;
     equipment[id] = {
       id,
       name: `CWP-${i}`,
@@ -573,7 +779,7 @@ function runControlStep(): PlantState {
       status: running ? 'running' : 'stopped',
       speedPercent: running ? round(cwpSpeed, 1) : 0,
       frequencyHz: running ? speedToHz(cwpSpeed) : 0,
-      powerKw: running ? round(cwpKwEach, 1) : 0,
+      powerKw: running ? round(cwpKwEach * trim, 2) : (CWP_STANDBY_KW[i - 1] ?? 0),
       flowRate: running ? round(cwpFlowEach, 0) : 0,
       runtimeHours: 5500 + i * 180,
     };
@@ -581,19 +787,37 @@ function runControlStep(): PlantState {
 
   for (let i = 1; i <= CT_COUNT; i++) {
     const id = `ct-${i}`;
-    const running = i <= runningCt;
+    const running = ctRunSet.has(i);
     const fanFault = internals.faults.ctFanFaultId === id;
+    const live = running && !fanFault;
+    const trim = CT_TRIM[i - 1] ?? 1;
+    const unitKw = live ? ctKwEach * trim : 0;
+    const [aFrac, bFrac] = CT_CELL_KW_FRAC[i - 1] ?? [0.48, 0.48];
+    const cwstOff = CT_CELL_OFFSET.cwst[i - 1] ?? [0, 0];
+    const cwrtOff = CT_CELL_OFFSET.cwrt[i - 1] ?? [0, 0];
     equipment[id] = {
       id,
       name: `CT-${String(i).padStart(2, '0')}`,
       category: 'cooling_tower',
       type: 'cooling_tower',
       status: fanFault ? 'alarm' : running ? 'running' : 'stopped',
-      fanSpeedPercent: running && !fanFault ? round(internals.ctFanSpeed, 1) : 0,
-      frequencyHz: running && !fanFault ? speedToHz(internals.ctFanSpeed) : 0,
+      fanSpeedPercent: live ? round(internals.ctFanSpeed, 1) : 0,
+      frequencyHz: live ? speedToHz(internals.ctFanSpeed) : 0,
       leavingTemp: round(internals.cwsActual, 2),
-      powerKw: running && !fanFault ? round(ctKwEach, 1) : 0,
-      flowRate: running ? round(cwpFlowEach * runningCwp, 0) : 0,
+      powerKw: round(unitKw, 2),
+      flowRate: running ? round(actualCwFlow / Math.max(runningCt, 1), 0) : 0,
+      cells: {
+        a: {
+          kw: round(unitKw * aFrac, 2),
+          cwst: live ? round(internals.cwsActual + cwstOff[0], 2) : CT_STAGNANT.cwst[0],
+          cwrt: live ? round(internals.cwrActual + cwrtOff[0], 2) : CT_STAGNANT.cwrt[0],
+        },
+        b: {
+          kw: round(unitKw * bFrac, 2),
+          cwst: live ? round(internals.cwsActual + cwstOff[1], 2) : CT_STAGNANT.cwst[1],
+          cwrt: live ? round(internals.cwrActual + cwrtOff[1], 2) : CT_STAGNANT.cwrt[1],
+        },
+      },
       runtimeHours: 8000 + i * 300,
     };
   }
@@ -676,13 +900,26 @@ function runControlStep(): PlantState {
     runtimeHours: 0,
   };
 
-  const totalChKw = chKw * runningChCount;
-  const totalChwpKw = chwpKwEach * runningChwp;
-  const totalCwpKw = cwpKwEach * runningCwp;
-  const totalCtKw = ctKwEach * runningCt;
-  const totalKw = totalChKw + totalChwpKw + totalCwpKw + totalCtKw;
+  // Totals use trim-weighted effective (fault-adjusted) sums so the plant KPI
+  // always equals the sum of the equipment cards. Meter classes include the
+  // standby draws / meter noise of stopped units (as the dataset's sums do).
+  const chwpStandbyKw = CHWP_STANDBY_KW.reduce(
+    (s, v, idx) => s + (!chwpRunSet.has(idx + 1) && trippedChwpIdx !== idx + 1 ? v : 0),
+    0
+  );
+  const cwpStandbyKw = CWP_STANDBY_KW.reduce(
+    (s, v, idx) => s + (!cwpRunSet.has(idx + 1) ? v : 0),
+    0
+  );
+  const totalChKwMeter = totalChKw + chStandbyKw;
+  const totalChwpKw = chwpKwEach * chwpTrimSum + chwpStandbyKw;
+  const totalCwpKw = cwpKwEach * cwpTrimSum + cwpStandbyKw;
+  const totalCtKw = ctKwEach * ctTrimSum;
+  const totalKw = totalChKwMeter + totalChwpKw + totalCwpKw + totalCtKw;
 
-  const coolingKw = coolingKwFromFlow(totalChwFlow, deltaT);
+  // Steady state: cooling delivered = building load, so plant COP and kW/RT are
+  // consistent by construction (COP = 3.517 / kWRT).
+  const coolingKw = rtToKw(buildingDemandRt);
   const plantCopVal = plantCop(coolingKw, totalKw);
   const waterUse = internals.makeupPumpActive ? 14 : 2;
 
@@ -694,11 +931,13 @@ function runControlStep(): PlantState {
     buildingLoadRt: buildingDemandRt,
     ambientTemp: round(ambientTemp, 1),
     humidityRh: round(humidityRh, 0),
+    wetBulbSensors,
+    condFlowM3h: round(actualCwFlow, 2),
   };
 
   const pumpCommandedOn: Record<string, boolean> = {};
   for (let i = 1; i <= CHWP_COUNT; i++) {
-    pumpCommandedOn[`chwp-${i}`] = i <= runningChwp;
+    pumpCommandedOn[`chwp-${i}`] = chwpRunSet.has(i);
   }
 
   const rawAlerts = evaluateAlarms({
@@ -772,7 +1011,7 @@ function runControlStep(): PlantState {
     chwpKw: totalChwpKw,
     cwpKw: totalCwpKw,
     ctKw: totalCtKw,
-    totalChKw,
+    totalChKw: totalChKwMeter,
   });
   lastKpiSnapshot = kpiList;
 
@@ -780,6 +1019,8 @@ function runControlStep(): PlantState {
     equipment,
     headers,
     kpis: kpiList,
+    risers,
+    dutyOrders: getPlantDutyOrders(),
     controls: controls.map((c) => ({ ...c })),
     alerts,
     simulationTime: new Date().toISOString(),
@@ -857,7 +1098,7 @@ export function applyPlantChanges(
         unit: ch.unit ?? ctrl.unit,
       };
     })
-    .filter((ch): ch is { controlId: string; label: string; oldValue: number; newValue: number; unit?: string } => !!ch);
+    .filter((ch): ch is NonNullable<typeof ch> => ch !== null);
   lastBeforeCtx = list.length ? lastCascadeCtx : null;
   lastBeforeKpis = list.length ? lastKpiSnapshot : null;
   lastChanges = list.length
@@ -984,6 +1225,12 @@ export function applyChillerScenarioPayload(payload: {
 
 export function resetPlantControls(): void {
   controls = defaultControls();
+  dutyOrders = {
+    chiller: [...DUTY_DEFAULTS.chiller],
+    chwp: [...DUTY_DEFAULTS.chwp],
+    cwp: [...DUTY_DEFAULTS.cwp],
+    ct: [...DUTY_DEFAULTS.ct],
+  };
   lastCascadeTrigger = 'Plant reset to baseline setpoints';
   lastControlId = null;
   lastBeforeCtx = null;

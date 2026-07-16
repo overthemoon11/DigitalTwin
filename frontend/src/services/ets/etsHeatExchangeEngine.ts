@@ -11,7 +11,7 @@
  * All thermodynamics live in the shared, tested core: etsPhysics.js.
  * Formula sources: docs/physics-formulas-reference.md §2.7.
  */
-import type { PlantAlert, PlantKpi } from '../types/plant';
+import type { PlantAlert, PlantKpi } from '../../types/plant';
 import type {
   EtsControl,
   EtsEquipment,
@@ -21,7 +21,7 @@ import type {
   EtsPump,
   EtsState,
   EtsValve,
-} from '../types/ets';
+} from '../../types/ets';
 import { MBS, clamp, round, solveEtsThermoHydraulics } from './etsPhysics.js';
 import { getEtsScenarioById } from './etsScenarios.js';
 import { buildEtsCascadeTrace, buildEtsCascadeRows } from './etsCascade.js';

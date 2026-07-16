@@ -65,29 +65,29 @@ documented with references but cannot be numerically checked here.
 ## 2. Validatable formulas (checked against the data)
 
 ### 2.1 Sensible heat / cooling load — `Q = ṁ · cₚ · ΔT`
-- **Code:** [`coolingKwFromFlow()`](../frontend/src/services/plantPhysics.ts#L42) — `Q[kW] = Flow[m³/h] × ΔT[°C] × 1.163`
+- **Code:** [`coolingKwFromFlow()`](../frontend/src/services/chiller/plantPhysics.ts#L42) — `Q[kW] = Flow[m³/h] × ΔT[°C] × 1.163`
 - **Constant `1.163`:** for water, `cₚ·ρ = 4.1868 kJ/(kg·K) × 1000 kg/m³ ÷ 3600 s/h = 1.163 kW per (m³/h·K)`. Equivalent to `4.1868 kW per (L/s·K)`.
 - **Source:** ASHRAE *Handbook—Fundamentals* (2021), **Ch. 1, Eq. for sensible heat transfer** `q = ṁ cₚ Δt`. Specific heat/density of water: ASHRAE Fundamentals Ch. 33 (Physical Properties of Materials) / NIST.
 - **Validation [C]:** `rt = Σ_chiller(flow × cₚ × ΔT) / 3.517` reproduces the metered `rt` column with **mean error 0.068 %, max 0.217 %**. ✅
 
 ### 2.2 Tons of refrigeration ↔ kW — `1 RT = 3.517 kW`
-- **Code:** [`kwToRt()` / `rtToKw()`](../frontend/src/services/plantPhysics.ts#L47) — `RT_TO_KW = 3.517`
+- **Code:** [`kwToRt()` / `rtToKw()`](../frontend/src/services/chiller/plantPhysics.ts#L47) — `RT_TO_KW = 3.517`
 - **Exact value:** `1 ton = 12,000 BTU/h = 3.51685 kW`.
 - **Source:** ASHRAE / AHRI definition of a ton of refrigeration (ASHRAE *Terminology*; AHRI Standard 550/590).
 - **Validation:** embedded in check [C] (the `/3.517` step) and check [E]. ✅
 
 ### 2.3 Chilled-water ΔT — `ΔT = T_return − T_supply`
-- **Code:** [`districtCoolingEngine.ts` secondary ΔT](../frontend/src/services/districtCoolingEngine.ts#L110); [`controlEngine.ts` `deltaT`](../frontend/src/services/controlEngine.ts#L306)
+- **Code:** [`districtCoolingEngine.ts` secondary ΔT](../frontend/src/services/district/districtCoolingEngine.ts#L110); [`controlEngine.ts` `deltaT`](../frontend/src/services/chiller/controlEngine.ts#L306)
 - **Source:** Counter-flow heat-exchanger temperature difference — ASHRAE *Fundamentals* Ch. 4 (Heat Transfer); ASHRAE *Systems & Equipment* Ch. 13 (Hydronic Heating & Cooling).
 - **Validation [D]:** `deltaT` column = `Header-hcwrt − Header-hcwst` with **correlation 1.0000, mean error 0.000 %**. ✅
 
 ### 2.4 Plant power balance — `kW_total = Σ kW_devices`
-- **Code:** total-plant-kW aggregation in [`controlEngine.ts`](../frontend/src/services/controlEngine.ts) feeding [`plantCop()`](../frontend/src/services/plantPhysics.ts#L112).
+- **Code:** total-plant-kW aggregation in [`controlEngine.ts`](../frontend/src/services/chiller/controlEngine.ts) feeding [`plantCop()`](../frontend/src/services/chiller/plantPhysics.ts#L112).
 - **Source:** First law of thermodynamics / electrical power balance — ASHRAE *Fundamentals* Ch. 1; sub-metering follows **IPMVP Option B** (whole-facility / component metering).
 - **Validation [B]:** metered `kw` = sum of all 27 device meters (chiller CP1+CP2 + CHWP + CWP + CT), **mean/p95/max error 0.000 %**. ✅
 
 ### 2.5 Plant efficiency & COP — `kW/RT` and `COP = Q_cool / P_elec`
-- **Code:** [`plantEfficiencyKwPerRt()`](../frontend/src/services/plantPhysics.ts#L117), [`plantCop()`](../frontend/src/services/plantPhysics.ts#L112), `REF_CHILLER_COP = 6.0`.
+- **Code:** [`plantEfficiencyKwPerRt()`](../frontend/src/services/chiller/plantPhysics.ts#L117), [`plantCop()`](../frontend/src/services/chiller/plantPhysics.ts#L112), `REF_CHILLER_COP = 6.0`.
 - **Source:** Coefficient of Performance definition (dimensionless, `COP = useful cooling ÷ work input`) — ASHRAE *Fundamentals* Ch. 2; minimum-efficiency / rating context: ASHRAE **90.1**, AHRI **550/590**. `kW/ton` benchmark band: ASHRAE *Systems & Equipment* Ch. 43 (Centrifugal Chillers).
 - **Validation [A], [E], [F]:**
   - [A] `kw/rt = kw ÷ rt` exactly (max error 0). ✅
@@ -95,13 +95,13 @@ documented with references but cannot be numerically checked here.
   - [F] plant efficiency = **0.605 kW/RT mean** (100 % within 0.45–1.0, i.e. an efficient water-cooled plant). ✅
 
 ### 2.6 Psychrometrics — cooling-tower wet-bulb approach
-- **Code:** condenser model in [`districtCoolingEngine.ts`](../frontend/src/services/districtCoolingEngine.ts); [`condenserCopBonus()` / `weatherCondenserOffset()`](../frontend/src/services/plantPhysics.ts#L104).
+- **Code:** condenser model in [`districtCoolingEngine.ts`](../frontend/src/services/district/districtCoolingEngine.ts); [`condenserCopBonus()` / `weatherCondenserOffset()`](../frontend/src/services/chiller/plantPhysics.ts#L104).
 - **Principle:** the ambient **wet-bulb temperature is the thermodynamic floor of evaporative cooling** — water leaving a cooling tower approaches but can never drop below wet-bulb. `approach = T_leaving − T_wetbulb ≥ 0`; a well-designed tower runs a 3–5 °C approach. This is the physical basis the simulator relies on when it raises condenser-water temperature with hot/humid weather.
 - **Source:** ASHRAE *Fundamentals* Ch. 1 (Psychrometrics — wet-bulb/adiabatic saturation); ASHRAE *Systems & Equipment* Ch. 40 (Cooling Towers).
 - **Validation [G]:** using the per-tower sensors (`CT_*_CWST` leaving, `WST_*_WetBulbTemp`): mean wet-bulb 24.83 °C → tower-leaving 28.55 °C = **approach 3.72 °C** (p5 2.78), tower range 3.45 °C, and **100 % of rows respect the wet-bulb limit** (approach ≥ 0). ✅
 
 ### 2.7 Plate heat exchanger (ETS) — LMTD, effectiveness-NTU, approach
-- **Code:** [`etsPhysics.js`](../frontend/src/services/etsPhysics.js) (`lmtdCounterflow`, `hxEffectiveness`, `ntuFromEffectivenessCounterflow`, `solveEtsThermoHydraulics`), used by [`etsHeatExchangeEngine.ts`](../frontend/src/services/etsHeatExchangeEngine.ts). Models the Marina Bay Sands ETS A-B03-01 (2 × 600 tR plate HX, primary from DCS, secondary to building).
+- **Code:** [`etsPhysics.js`](../frontend/src/services/ets/etsPhysics.js) (`lmtdCounterflow`, `hxEffectiveness`, `ntuFromEffectivenessCounterflow`, `solveEtsThermoHydraulics`), used by [`etsHeatExchangeEngine.ts`](../frontend/src/services/ets/etsHeatExchangeEngine.ts). Models the Marina Bay Sands ETS A-B03-01 (2 × 600 tR plate HX, primary from DCS, secondary to building).
 - **Equations:**
   - Heat duty (both sides, steady state): `Q = ṁ_primary·cₚ·(T_dcr − T_dcs) = ṁ_secondary·cₚ·(T_chwr − T_chws)` (energy balance across the HX).
   - **LMTD** (counter-flow): `ΔT_lm = (ΔT₁ − ΔT₂) / ln(ΔT₁/ΔT₂)`, with `Q = U·A·ΔT_lm`.
@@ -112,7 +112,7 @@ documented with references but cannot be numerically checked here.
 - **Operator guide:** controllable parameters, causality tables, and schematic tag mapping — [ets-controls-and-physics.md](ets-controls-and-physics.md).
 
 ### 2.8 Chiller plant (L29 virtual simulator)
-- **Code:** [`controlEngine.ts`](../frontend/src/services/controlEngine.ts), [`plantPhysics.ts`](../frontend/src/services/plantPhysics.ts), [`stagingController.ts`](../frontend/src/services/stagingController.ts).
+- **Code:** [`controlEngine.ts`](../frontend/src/services/chiller/controlEngine.ts), [`plantPhysics.ts`](../frontend/src/services/chiller/plantPhysics.ts), [`stagingController.ts`](../frontend/src/services/chiller/stagingController.ts).
 - **Equations:** same water-side thermodynamics as §2.1–§2.6 (Q = ṁcₚΔT, COP, affinity laws, tower approach) plus staging/heuristic control in §4 of the operator guide.
 - **Operator guide:** [chiller-plant-controls-and-physics.md](chiller-plant-controls-and-physics.md).
 
@@ -125,7 +125,7 @@ the required inputs (airflow, VFD speed %, zone air RH/CO₂). They are flagged
 `SKIP` by the harness with their references.
 
 ### 3.1 Affinity laws — `P ∝ N³`, `Q ∝ N`
-- **Code:** [`pumpPowerFromSpeed()` / `pumpFlowFromSpeed()`](../frontend/src/services/plantPhysics.ts#L63); fan cube-law in [`hvac-simulator.js`](../backend/src/simulator/hvac-simulator.js#L385).
+- **Code:** [`pumpPowerFromSpeed()` / `pumpFlowFromSpeed()`](../frontend/src/services/chiller/plantPhysics.ts#L63); fan cube-law in [`hvac-simulator.js`](../backend/src/simulator/hvac-simulator.js#L385).
 - **Source:** Pump/fan **affinity (similarity) laws** — Hydraulic Institute ANSI/HI standards; ASHRAE *Fundamentals* Ch. 21 (Fans) & Ch. 22 (Pumps and Piping). Flow ∝ speed, head ∝ speed², power ∝ speed³.
 - **Why not validated:** dataset has device **kW** but no per-device **VFD speed %** to form the ratio. (Could be validated if speed feedback were logged.)
 
@@ -140,7 +140,7 @@ the required inputs (airflow, VFD speed %, zone air RH/CO₂). They are flagged
 - **Source:** unit conversion `1 hp = 0.7457 kW` (NIST).
 
 ### 3.4 Dew point (Magnus / Magnus–Tetens)
-- **Code:** [`dewPointC()`](../frontend/src/services/districtCoolingEngine.ts#L79) with `a = 17.27`, `b = 237.7`.
+- **Code:** [`dewPointC()`](../frontend/src/services/district/districtCoolingEngine.ts#L79) with `a = 17.27`, `b = 237.7`.
 - **Source:** Magnus–Tetens approximation; coefficients per **Alduchov & Eskridge (1996)**, *J. Applied Meteorology* and ASHRAE *Fundamentals* Ch. 1 (Psychrometrics).
 - **Why not validated:** no zone dry-bulb + air-RH pair in dataset. (The plant **wet-bulb** sensors *are* validated psychrometrically — see §2.6 / check [G].)
 
@@ -150,7 +150,7 @@ the required inputs (airflow, VFD speed %, zone air RH/CO₂). They are flagged
 - **Why not validated:** no zone CO₂ / occupancy points in dataset.
 
 ### 3.6 First-order thermal lag — `x ← x + (target − x)(1 − e^(−Δt/τ))`
-- **Code:** [`lag()`](../frontend/src/services/plantPhysics.ts#L123).
+- **Code:** [`lag()`](../frontend/src/services/chiller/plantPhysics.ts#L123).
 - **Source:** Standard first-order (RC) system step response — control-theory / ASHRAE *Fundamentals* Ch. 7 (Fundamentals of Control). This is a modeling smoother, not a measured quantity.
 
 ### 3.7 Missing data → formulas that stay unvalidated

@@ -1,4 +1,4 @@
-import { CHILLER_CAPACITY_RT, CHILLER_COUNT, CHWP_COUNT, CWP_COUNT, CT_COUNT, clamp } from './plantPhysics';
+import { CHILLER_CAPACITY_RT, CHILLER_COUNT, CHWP_COUNT, CWP_COUNT, CT_COUNT, REF_CHWP_FLOW, clamp } from './plantPhysics';
 
 /** Stage 1 chiller per ~90% of nameplate capacity (T1: 5 × 1250 RT). */
 const STAGE_RT_PER_CHILLER = CHILLER_CAPACITY_RT * 0.9;
@@ -20,11 +20,12 @@ export function chillerLoadPercent(rtPerChiller: number): number {
   return clamp((rtPerChiller / CHILLER_CAPACITY_RT) * 100, 0, 100);
 }
 
-/** Stage CHWP pumps from total chilled-water flow (m³/h) — one primary pump per
- *  ~500 m³/h, up to the installed count (T1: 6, i.e. 5 duty + 1 standby). */
+/** Stage CHWP pumps from total chilled-water flow (m³/h) — one pump per
+ *  ~110% of its reference delivery (pumps ride above nominal before the next
+ *  stages on; the Dec-2025 trend holds 3 CHWP through the whole 3100–3275 RT band). */
 export function stageChwp(totalFlowM3h: number): number {
   if (totalFlowM3h <= 0) return 0;
-  return clamp(Math.ceil(totalFlowM3h / 500), 1, CHWP_COUNT);
+  return clamp(Math.ceil(totalFlowM3h / (REF_CHWP_FLOW * 1.1)), 1, CHWP_COUNT);
 }
 
 /** CWP count follows operating chillers (standby available). */

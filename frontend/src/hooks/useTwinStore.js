@@ -11,8 +11,9 @@ import {
   applyChillerScenarioPayload as applyChillerScenarioPayloadEngine,
   acknowledgePlantAlert as ackPlantAlert,
   getPlantControls,
-} from '../services/plantSimulator';
-import { computeMpcMove as computeMpcMoveEngine } from '../services/plantMpc';
+  togglePlantDutyUnit as togglePlantDutyUnitEngine,
+} from '../services/chiller/plantSimulator';
+import { computeMpcMove as computeMpcMoveEngine } from '../services/chiller/plantMpc';
 import {
   parseChillerCopilotIntents,
   formatChillerControlConfirmation,
@@ -21,7 +22,7 @@ import {
   buildChillerControlsSummary,
   buildChillerContextForCopilot,
   analyzeChillerQuery,
-} from '../services/chillerCopilotActions';
+} from '../services/chiller/chillerCopilotActions';
 
 import {
   parseEtsCopilotIntents,
@@ -31,7 +32,7 @@ import {
   buildEtsControlsSummary,
   buildEtsContextForCopilot,
   analyzeEtsQuery,
-} from '../services/etsCopilotActions';
+} from '../services/ets/etsCopilotActions';
 
 import {
   parseAhuCopilotIntents,
@@ -41,7 +42,7 @@ import {
   buildAhuControlsSummary,
   buildAhuContextForCopilot,
   analyzeAhuQuery,
-} from '../services/ahuCopilotActions';
+} from '../services/ahu/ahuCopilotActions';
 
 import {
   startDistrictCoolingSimulator,
@@ -49,7 +50,7 @@ import {
   resetDistrictCooling,
   stepDistrictCooling,
   advanceDistrictCooling,
-} from '../services/districtCoolingSimulator';
+} from '../services/district/districtCoolingSimulator';
 
 import {
   startEtsSimulator,
@@ -60,7 +61,7 @@ import {
   applyEtsChanges as applyEtsChangesEngine,
   applyEtsScenario as applyEtsScenarioEngine,
   applyEtsScenarioPayload as applyEtsScenarioPayloadEngine,
-} from '../services/etsHeatExchangeEngine';
+} from '../services/ets/etsHeatExchangeEngine';
 
 import {
   startAhuSimulator,
@@ -71,7 +72,7 @@ import {
   applyAhuChanges as applyAhuChangesEngine,
   applyAhuScenario as applyAhuScenarioEngine,
   applyAhuScenarioPayload as applyAhuScenarioPayloadEngine,
-} from '../services/ahuEngine';
+} from '../services/ahu/ahuEngine';
 
 const API_BASE = '/api';
 
@@ -248,6 +249,12 @@ export const useTwinStore = create((set, get) => ({
   /** Commit a batch of staged chiller-plant edits and fast-forward (before→after cascade). */
   applyPlantChanges: (changes = []) => {
     set({ plantState: applyPlantChangesEngine(changes, 60) });
+  },
+
+  /** Toggle a unit between duty and standby (real-plant rotation). */
+  togglePlantDuty: (category, unit) => {
+    togglePlantDutyUnitEngine(category, unit);
+    set({ plantState: stepPlantSimulation() });
   },
 
   applyChillerScenario: (scenarioId) => {

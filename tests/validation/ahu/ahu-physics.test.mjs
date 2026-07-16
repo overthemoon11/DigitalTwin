@@ -9,8 +9,8 @@ import {
   solveAhu01Airside,
   coolingKwFromCfm,
   fanKwFromSpeed,
-} from '../../../frontend/src/services/ahuPhysics.js';
-import { buildAhuCascadeTrace } from '../../../frontend/src/services/ahuCascade.js';
+} from '../../../frontend/src/services/ahu/ahuPhysics.js';
+import { buildAhuCascadeTrace } from '../../../frontend/src/services/ahu/ahuCascade.js';
 
 const approx = (a, b, tol, msg) =>
   assert.ok(Math.abs(a - b) <= tol, `${msg}: ${a} vs ${b} (tol ${tol})`);

@@ -1,4 +1,4 @@
-import type { PlantAlert, PlantEquipment, PlantHeaders, PlantState } from '../types/plant';
+import type { PlantAlert, PlantEquipment, PlantHeaders, PlantState } from '../../types/plant';
 import {
   recommendForBypassHigh,
   recommendForChillerFault,

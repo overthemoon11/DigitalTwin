@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ETS_CONTROL_META, ETS_CORE_FORMULAS, ETS_DERIVED_LABELS } from './etsControlMeta';
-import { ETS_SCENARIOS } from '../../services/etsScenarios';
+import { ETS_SCENARIOS } from '../../services/ets/etsScenarios';
 import { useDraftControls } from '../../hooks/useDraftControls';
 import { RangeSlider } from '../common/RangeSlider';
 

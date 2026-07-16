@@ -1,6 +1,6 @@
 import React from 'react';
-import { useTwinStore } from '../hooks/useTwinStore';
-import SimulationOutputSummary from './SimulationOutputSummary';
+import { useTwinStore } from '../../hooks/useTwinStore';
+import SimulationOutputSummary from '../common/SimulationOutputSummary';
 
 function ControlSlider({ control, onUpdate }) {
   const handleChange = (e) => {

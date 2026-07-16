@@ -48,6 +48,21 @@ This is a full-stack web application (React + Node.js) that simulates a multi-fl
 | `twin/twin.baseline.json` | Baseline state used for resets |
 | `twin/twin.schema.json` | JSON Schema for twin state validation |
 
+## Frontend Structure
+
+`frontend/src/services/` is organised by plant domain — put new engine/physics code in the matching folder:
+
+| Folder | Contents |
+|--------|----------|
+| `services/chiller/` | T1 chiller-plant engine (`controlEngine.ts`), physics constants (`plantPhysics.ts`), staging, alarms, cascade, MPC, scenarios, constraints, copilot actions, `t1Snapshot.ts` (row-1 dataset characterisation) |
+| `services/ets/` | ETS heat-exchange engine, physics, cascade, scenarios, copilot actions |
+| `services/ahu/` | AHU engine, physics, cascade, scenarios, copilot actions |
+| `services/district/` | District-cooling engine + simulator |
+| `services/shared/` | Cross-domain helpers (`cascadeDelta.js` before→after formatting) |
+| `services/legacy/` | Deprecated, unreferenced modules kept for history |
+
+`frontend/src/components/` mirrors this: `chiller/`, `ets/`, `ahu/`, `heatexchange/`, `districtcooling/` per domain; `common/` for shared panels (AlertPanel, KPIPanel, CopilotChat, ModelStatusBanner, SimulationOutputSummary, Icons, RangeSlider); `layout/` + `leftSidebar/` for the app shell; `legacy/` for unreferenced components.
+
 ## Foundry Local Integration
 
 The backend uses the `foundry-local-sdk` npm package (not CLI commands or raw HTTP). Key patterns:

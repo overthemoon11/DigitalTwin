@@ -1,12 +1,14 @@
 /** Physical constants and deterministic plant calculations. */
 
 /* Plant inventory + reference constants calibrated to the real T1 plant from
- * the Dec-2025 BMS trend (T1_MVrawDataR2), validated at the operating point
- * (RT 3150–3250, 3 of 5 chillers running, n=108 rows):
- *   total ≈ 1,938 kW · kW/RT ≈ 0.605 · ΔT ≈ 6.85°C
- *   chillers 545 kW ea (0.510 kW/RT) · CHWP 24 · CWP 54 · CT 17 kW ea
- *   CHWS 7.5 / CHWR 14.5 / CWS 29 / CWR 33, wet-bulb ≈ 25.
- * (kW/RT is the per-row operating ratio, not mean-kW/mean-RT which idle rows skew low.) */
+ * the Dec-2025 BMS trend (T1_MVrawDataR2), MONTH-WIDE (29,412 valid minutes;
+ * RT reconstructed from riser flows × ΔT, verified to 0.13% against the
+ * 133-row M&V window — the only rows where the RT column is populated):
+ *   per-row kW/RT ≈ 0.588 (p10 0.577 / p90 0.600) · kW = −261 + 0.669·RT (3 chillers)
+ *   ΔT ≈ 6.9–7.1 °C · condenser rise 4.43 °C · CWS 28.6 · wet-bulb 25.2 · approach 3.4
+ *   per running unit: chiller ≈ 532 kW · CHWP ≈ 19.4 · CWP ≈ 54 · CT fan ≈ 14
+ *   staging locked 3 chillers / 3 CHWP / 3 CWP across the band; CT count floats ~4.
+ * (The M&V snapshot alone runs ~3% less efficient, 0.605 kW/RT — 2.2 h of the month.) */
 export const CHILLER_CAPACITY_RT = 1250;
 export const CHILLER_COUNT = 5;
 export const CHWP_COUNT = 6;
@@ -15,28 +17,40 @@ export const CT_COUNT = 5;
 
 /** Baseline reference at CHWS setpoint 7.5°C */
 export const REF_CHWS_SP = 7.5;
+/* kW calibration target (operator's choice, 2026-07-14): the DATASET'S VISIBLE
+ * VALUES — the first rows / M&V window where the rt, kw and kw/rt columns are
+ * populated (boot reproduces row 1: 1917.7 kW, 0.609 kW/RT). The reconstructed
+ * month-wide norm runs ~3.4% lower (0.588); replaying the whole month therefore
+ * over-reads by about that margin. */
 export const REF_CHILLER_LOAD = 85; // % chiller load at which REF_CHILLER_KW applies
-export const REF_CHILLER_KW = 543; // 545 kW/chiller at ~85% load (0.510 kW/RT)
-export const REF_CHILLER_COP = 6.9;
+/** Full-precision so boot per-chiller kW = row-1 running mean 537.0533 exactly
+ *  (at load 3151.04 RT / 3 chillers, CHWS 7.52 ⇒ kwFactor 0.9994). */
+export const REF_CHILLER_KW = 543.59362; // kW/chiller at 85% load (M&V level; month norm ≈ 532)
+/** Reference COP is the Q/P identity at the reference point. */
+export const REF_CHILLER_COP = 6.87;
 
 export const REF_DP_SP = 15;
 export const REF_CHWP_SPEED = 70;
-export const REF_CHWP_FLOW = 520;
-export const REF_CHWP_KW = 24;
+export const REF_CHWP_FLOW = 484.94; // m³/h per pump at 70% — 3 pumps ⇒ ΔT 6.55 at 3151 RT (row-1 deltaT)
+export const REF_CHWP_KW = 23.8866667; // row-1 mean per running pump (month norm ≈ 19.4)
 
 /** Condenser-water pump / cooling-tower fan reference kW (at REF speed 70%). */
-export const REF_CWP_KW = 30;
-export const REF_CWP_FLOW = 520;
-export const REF_CT_KW = 14;
+export const REF_CWP_KW = 30.4197585; // ⇒ 54.03 kW mean at the row-1 operating speed (84.8%)
+export const REF_CWP_FLOW = 690; // m³/h per pump at 70% — matches measured header CW flow ≈ 2507 m³/h
+export const REF_CT_KW = 17.5; // row-1 mean per running tower (month norm ≈ 14.2)
 
 export const REF_CWS_SP = 29;
 export const REF_CHWR_SP = 14.5;
 export const REF_CWR_SP = 33;
 export const REF_CT_FAN = 70;
 
-/** Reference outdoor conditions for load / condenser modifiers */
+/** A tower cannot make water colder than wet-bulb + approach (measured approach ≈ 3.4 °C). */
+export const MIN_CONDENSER_APPROACH_C = 2.5;
+
+/** Reference outdoor conditions for load / condenser modifiers.
+ *  RH 65 at 31 °C dry-bulb ⇒ Stull wet-bulb ≈ 25.5 °C, matching the measured 25.2. */
 export const REF_AMBIENT_TEMP = 31;
-export const REF_HUMIDITY_RH = 75;
+export const REF_HUMIDITY_RH = 65;
 
 export const FLOW_COEFF = 1.163;
 export const RT_TO_KW = 3.517;
@@ -97,8 +111,12 @@ export function speedToHz(speedPercent: number): number {
 }
 
 /**
- * CHWS setpoint effect relative to 7°C reference.
- * Lower setpoint → +load, +kW, -COP per °C.
+ * CHWS setpoint effect relative to the 7.5 °C reference.
+ * Lower setpoint raises compressor lift: ≈ +3% kW per °C of evaporator reset
+ * (Carnot at ~280 K evaporator / 303 K condenser gives ~4.7%; real machines 2–3%).
+ * COP is derived from Q/P in the engine, so kW and COP stay consistent by
+ * construction; copFactor = 1/kwFactor is kept for any standalone callers.
+ * The building load itself does not change with CHWS (loadFactor = 1).
  */
 export function chwsSetpointModifiers(chwsSetpoint: number): {
   loadFactor: number;
@@ -106,19 +124,26 @@ export function chwsSetpointModifiers(chwsSetpoint: number): {
   copFactor: number;
 } {
   const delta = REF_CHWS_SP - chwsSetpoint;
+  const kwFactor = clamp(1 + 0.03 * delta, 0.85, 1.25);
   return {
-    loadFactor: 1 + 0.08 * delta,
-    kwFactor: 1 + 0.1 * delta,
-    copFactor: clamp(1 - 0.05 * delta, 0.5, 1.5),
+    loadFactor: 1,
+    kwFactor,
+    copFactor: 1 / kwFactor,
   };
 }
 
-/** Condenser setpoint improves COP when lowered (more tower fan). */
-export function condenserCopBonus(cwsSetpoint: number, cwsActual: number): number {
-  const targetDrop = REF_CWS_SP - cwsSetpoint;
-  const actualDrop = REF_CWS_SP - cwsActual;
-  if (targetDrop <= 0) return 1;
-  return clamp(1 + (actualDrop / Math.max(targetDrop, 0.1)) * 0.127, 0.85, 1.15);
+/**
+ * Condenser-lift effect on compressor power: ≈ ±2.5% kW per °C of condenser
+ * water above/below the 29 °C reference. Symmetric — warmer condenser water
+ * always costs energy, colder always saves (until the wet-bulb floor).
+ */
+export function condenserLiftFactor(cwsActualC: number): number {
+  return clamp(1 + 0.025 * (cwsActualC - REF_CWS_SP), 0.85, 1.2);
+}
+
+/** @deprecated COP is now derived from Q/P in the engine. Symmetric inverse of the lift factor. */
+export function condenserCopBonus(_cwsSetpoint: number, cwsActual: number): number {
+  return clamp(1 / condenserLiftFactor(cwsActual), 0.85, 1.15);
 }
 
 export function plantCop(coolingKw: number, totalPlantKw: number): number {

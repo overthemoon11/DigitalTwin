@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SimulationOutputSummary from './SimulationOutputSummary';
+import SimulationOutputSummary from '../common/SimulationOutputSummary';
 
 /**
  * Clarifies that the chiller plant is an offline physics simulator — not live BMS points.

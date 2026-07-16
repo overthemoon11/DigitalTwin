@@ -1,7 +1,7 @@
 /**
  * AHU01 simulation engine — offline physics, 2 s ticks.
  */
-import type { PlantAlert, PlantKpi } from '../types/plant';
+import type { PlantAlert, PlantKpi } from '../../types/plant';
 import type {
   AhuControl,
   AhuDamper,
@@ -12,7 +12,7 @@ import type {
   AhuHeaders,
   AhuState,
   EquipStatus,
-} from '../types/ahu';
+} from '../../types/ahu';
 import { clamp, round, solveAhu01Airside } from './ahuPhysics.js';
 import { buildAhuCascadeTrace, buildAhuCascadeRows } from './ahuCascade.js';
 import { getAhuScenarioById } from './ahuScenarios.js';
