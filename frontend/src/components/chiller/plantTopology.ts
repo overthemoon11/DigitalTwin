@@ -180,7 +180,7 @@ export function condenserPipes() {
 
   // CWS header east–west
   paths.push({ d: `M ${left + 150} ${PIPE.CWS_HDR + 55} L ${right - 200} ${PIPE.CWS_HDR + 55}`, loop: 'cws' });
-  paths.push({ d: `M ${left + 10} ${PIPE.CWS_HDR - 40} L ${right - 320} ${PIPE.CWS_HDR - 40}`, loop: 'cws' });
+  paths.push({ d: `M ${left + 10} ${PIPE.CWS_HDR - 40} L ${right - 765} ${PIPE.CWS_HDR - 40}`, loop: 'cws' });
   paths.push({ d: `M ${left + 600} ${PIPE.CWS_HDR - 40} L ${left + 600} ${PIPE.CWS_HDR + 55}`, loop: 'cws' });
 
   // CWS from each chiller top to header

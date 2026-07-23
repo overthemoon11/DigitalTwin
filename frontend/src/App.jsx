@@ -23,7 +23,6 @@ import DistrictCoolingTwinTab from "./components/districtcooling/DistrictCooling
 import KPIPanel from "./components/common/KPIPanel";
 import AlertPanel from "./components/common/AlertPanel";
 import CopilotChat from "./components/common/CopilotChat";
-import ModelStatusBanner from "./components/common/ModelStatusBanner";
 import HeaderSidebarToggle from "./components/layout/HeaderSidebarToggle";
 import SidebarModeRail from "./components/layout/SidebarModeRail";
 import "./App.css";
@@ -207,8 +206,6 @@ function App() {
           </span> */}
         </div>
       </header>
-
-      <ModelStatusBanner />
 
       {activeAppTab === "district_cooling" ? (
         <DistrictCoolingTwinTab
