@@ -10,8 +10,6 @@ import type {
 import { evaluateAlarms, mergeAcknowledged } from './alarmEngine';
 import {
   CHILLER_CAPACITY_RT,
-  REF_CHILLER_KW,
-  REF_CHILLER_LOAD,
   REF_CHWP_FLOW,
   REF_CHWP_KW,
   REF_CHWP_SPEED,
@@ -47,6 +45,7 @@ import {
   estimateWetBulbC,
 } from './plantPhysics';
 import { buildCascadeTrace, buildChillerCascadeRows, type CascadeContext } from './plantCascade';
+import { assessCalibrationEnvelope } from './calibrationEnvelope';
 import { CHILLER_CONTROL_CONSTRAINTS } from './chillerConstraints';
 import {
   balanceChillerLoad,
@@ -62,6 +61,8 @@ import { getChillerScenarioById } from './chillerScenarios.js';
 import {
   DUTY_DEFAULTS,
   type DutyCategory,
+  CH_KW_INTERCEPT,
+  CH_KW_SLOPE_PER_PCT,
   CH_TRIM,
   CHWP_TRIM,
   CWP_TRIM,
@@ -278,6 +279,9 @@ function constrainControlValue(control: PlantControl, rawValue: number): number 
 let controls: PlantControl[] = defaultControls();
 let lastCascadeTrigger = 'Virtual plant at steady state (physics initialised)';
 let lastControlId: string | null = null;
+// Active dataset-replay / preset scenario — persists across ticks so the UI can
+// keep showing the sim-vs-dataset comparison; cleared on any manual edit.
+let lastScenarioId: string | null = null;
 // Domino-effect before→after support: the most recent tick's context (used as the
 // "before" snapshot the moment an Apply commits) plus the operator edits applied.
 let lastCascadeCtx: CascadeContext | null = null;
@@ -330,6 +334,7 @@ export function togglePlantDutyUnit(category: DutyCategory, unit: number): void 
     lastCascadeTrigger = `Operator put ${label} on duty (duty rotation)`;
   }
   lastControlId = `duty:${category}-${unit}`;
+  lastScenarioId = null;
   lastBeforeCtx = null;
   lastBeforeKpis = null;
   lastChanges = null;
@@ -542,11 +547,14 @@ function runControlStep(): PlantState {
   const wetBulbC = estimateWetBulbC(ambientTemp, humidityRh);
   const cwsAchievable = Math.max(cwsSp, wetBulbC + MIN_CONDENSER_APPROACH_C);
 
-  // Chiller power: part-load × evaporator-reset lift × condenser lift.
-  // COP is the Q/P identity on delivered cooling — never a separate estimate.
+  // Chiller power: affine part-load curve (fixed losses + per-RT term, anchored
+  // through dataset rows 1 and 86 — see t1Snapshot) × evaporator-reset lift ×
+  // condenser lift. COP is the Q/P identity on delivered cooling — never a
+  // separate estimate.
   const { kwFactor } = chwsSetpointModifiers(chwsSp);
   const liftCws = STATIC_MODE ? cwsAchievable : internals.cwsActual;
-  const chKw = REF_CHILLER_KW * (loadPct / REF_CHILLER_LOAD) * kwFactor * condenserLiftFactor(liftCws);
+  const chKw =
+    (CH_KW_INTERCEPT + CH_KW_SLOPE_PER_PCT * loadPct) * kwFactor * condenserLiftFactor(liftCws);
   const deliveredRtPerChiller = Math.min(rtPerChiller, CHILLER_CAPACITY_RT);
 
   // CHWS lags toward setpoint (instant in static mode); rises if plant cannot meet load
@@ -1015,6 +1023,8 @@ function runControlStep(): PlantState {
   });
   lastKpiSnapshot = kpiList;
 
+  const calibration = assessCalibrationEnvelope(getControl, runningChCount);
+
   return {
     equipment,
     headers,
@@ -1032,6 +1042,8 @@ function runControlStep(): PlantState {
       simTimeSec: internals.tick * SIM_DT_SEC,
       lastTrigger: lastCascadeTrigger,
       lastControlId: lastControlId ?? undefined,
+      scenarioId: lastScenarioId ?? undefined,
+      calibration,
       cascadeTrace,
       cascadeRows,
       beforeKpis: lastBeforeKpis ?? undefined,
@@ -1062,6 +1074,7 @@ export function updatePlantControl(controlId: string, value: number): void {
   controls = controls.map((c) => (c.id === controlId ? { ...c, value: next } : c));
   const label = ctrl?.label || controlId;
   lastControlId = controlId;
+  if (changed) lastScenarioId = null;
   lastCascadeTrigger = `Operator set ${label}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
   const constrainedNote = next !== value ? ` (constrained from ${value})` : '';
   lastCascadeTrigger = `Operator set ${label}: ${prev} -> ${next}${ctrl?.unit ? ` ${ctrl.unit}` : ''}${constrainedNote}`;
@@ -1109,7 +1122,10 @@ export function applyPlantChanges(
       controls = controls.map((c) => (c.id === ch.controlId ? { ...c, value: ch.newValue } : c));
     }
   }
-  if (list.length) lastControlId = list[list.length - 1].controlId;
+  if (list.length) {
+    lastControlId = list[list.length - 1].controlId;
+    lastScenarioId = null;
+  }
   const n = Math.max(1, Math.floor(seconds / SIM_DT_SEC));
   let state = runControlStep();
   for (let i = 1; i < n; i++) state = runControlStep();
@@ -1150,6 +1166,8 @@ function applyChillerScenarioInternal(scenario: {
   label: string;
   reset?: boolean;
   controls?: Record<string, number>;
+  precise?: boolean;
+  duty?: Record<string, number[]>;
   advanceSec?: number;
 }): PlantState {
   if (scenario.reset) {
@@ -1164,13 +1182,25 @@ function applyChillerScenarioInternal(scenario: {
     for (const [id, value] of Object.entries(scenario.controls)) {
       const ctrl = controls.find((c) => c.id === id);
       if (ctrl) {
-        controls = controls.map((c) => (c.id === id ? { ...c, value: constrainControlValue(ctrl, value) } : c));
+        // Dataset-replay scenarios (precise) keep measured values exact —
+        // clamp to the operating range but skip the UI step-grid snapping.
+        const fallback = typeof ctrl.value === 'number' ? ctrl.value : ctrl.min;
+        const applied = scenario.precise
+          ? round(clamp(Number.isFinite(value) ? value : fallback, ctrl.min, ctrl.max), 4)
+          : constrainControlValue(ctrl, value);
+        controls = controls.map((c) => (c.id === id ? { ...c, value: applied } : c));
+      }
+    }
+    if (scenario.duty) {
+      for (const cat of Object.keys(dutyOrders) as DutyCategory[]) {
+        if (scenario.duty[cat]) dutyOrders[cat] = [...scenario.duty[cat]];
       }
     }
     snapPlantDynamics();
   }
 
   lastControlId = `scenario:${scenario.id}`;
+  lastScenarioId = scenario.id;
   lastBeforeCtx = null;
   lastBeforeKpis = null;
   lastChanges = null;
@@ -1203,6 +1233,8 @@ export function applyChillerScenario(scenarioId: string): PlantState {
     label: scenario.label,
     reset: scenario.reset,
     controls: scenario.controls,
+    precise: scenario.precise,
+    duty: scenario.duty,
     advanceSec: scenario.advanceSec,
   });
 }
@@ -1212,6 +1244,8 @@ export function applyChillerScenarioPayload(payload: {
   label?: string;
   reset?: boolean;
   controls?: Record<string, number>;
+  precise?: boolean;
+  duty?: Record<string, number[]>;
   advanceSec?: number;
 }): PlantState {
   return applyChillerScenarioInternal({
@@ -1219,6 +1253,8 @@ export function applyChillerScenarioPayload(payload: {
     label: payload.label ?? 'Custom scenario',
     reset: payload.reset,
     controls: payload.controls,
+    precise: payload.precise,
+    duty: payload.duty,
     advanceSec: payload.advanceSec,
   });
 }
@@ -1233,6 +1269,7 @@ export function resetPlantControls(): void {
   };
   lastCascadeTrigger = 'Plant reset to baseline setpoints';
   lastControlId = null;
+  lastScenarioId = null;
   lastBeforeCtx = null;
   lastBeforeKpis = null;
   lastChanges = null;

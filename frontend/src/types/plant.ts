@@ -179,6 +179,9 @@ export interface PlantSimulationMeta {
   };
   /** Active preset scenario (operator what-if) */
   scenarioId?: string;
+  /** Whether current inputs sit inside the data-calibrated envelope; outside it
+   *  the twin extrapolates physics assumptions (low confidence for ML/MPC). */
+  calibration?: { status: 'calibrated' | 'extrapolated'; reasons: string[] };
 }
 
 export interface PlantState {

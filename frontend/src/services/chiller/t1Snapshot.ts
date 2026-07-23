@@ -177,3 +177,18 @@ export const RISERS = RISER_META.map((m, i) => {
 
 /** The five wet-bulb sensors' offsets vs the Stull estimate at default weather. */
 export const WST_OFFSET = WST.map((v) => v - estimateWetBulbC(REF_AMBIENT_TEMP, REF_HUMIDITY_RH));
+
+/* --------------------- Chiller part-load curve (affine) --------------------
+ * Real chiller kW is AFFINE in load, not proportional: measured efficiency
+ * improves as load rises. Constants are the LEAST-SQUARES fit of per-chiller
+ * base kW (= running mean ÷ evaporator-reset factor; CWS held 29 °C so the
+ * condenser-lift factor is 1) against per-chiller load %, over ALL 133 M&V
+ * rows (2025-12-01 00:00–02:12, loadPct 82.9–87.2, kW/RT 0.5997–0.6106).
+ * Residual scatter of the data around this line is ±0.29 % (max 1 %) — the
+ * dataset's own minute-to-minute noise, so no row is exact but every row is
+ * unbiased (rows 1 / 11 / 86 sit at +3.0 / +1.6 / −2.0 kW residuals).
+ * OPERATOR DECISION 2026-07-17: best-fit across the window was chosen over
+ * the previous rows-1&86-exact anchoring.
+ * Regenerate via scratchpad gen_mv_rows.py (LSQ over the M&V window). */
+export const CH_KW_SLOPE_PER_PCT = 6.884050406145565; // kW per % chiller load
+export const CH_KW_INTERCEPT = -44.10764912166405; // kW per running chiller

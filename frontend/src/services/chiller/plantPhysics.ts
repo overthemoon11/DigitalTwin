@@ -23,9 +23,11 @@ export const REF_CHWS_SP = 7.5;
  * month-wide norm runs ~3.4% lower (0.588); replaying the whole month therefore
  * over-reads by about that margin. */
 export const REF_CHILLER_LOAD = 85; // % chiller load at which REF_CHILLER_KW applies
-/** Full-precision so boot per-chiller kW = row-1 running mean 537.0533 exactly
- *  (at load 3151.04 RT / 3 chillers, CHWS 7.52 ⇒ kwFactor 0.9994). */
-export const REF_CHILLER_KW = 543.59362; // kW/chiller at 85% load (M&V level; month norm ≈ 532)
+/** @deprecated The engine now uses the AFFINE part-load curve CH_KW_INTERCEPT +
+ *  CH_KW_SLOPE_PER_PCT × loadPct from t1Snapshot.ts (anchored through dataset
+ *  rows 1 AND 86, so efficiency improves with load like the real plant).
+ *  Kept as the single-point reference: kW/chiller at 85% load, M&V level. */
+export const REF_CHILLER_KW = 543.59362;
 /** Reference COP is the Q/P identity at the reference point. */
 export const REF_CHILLER_COP = 6.87;
 
@@ -133,12 +135,17 @@ export function chwsSetpointModifiers(chwsSetpoint: number): {
 }
 
 /**
- * Condenser-lift effect on compressor power: ≈ ±2.5% kW per °C of condenser
- * water above/below the 29 °C reference. Symmetric — warmer condenser water
- * always costs energy, colder always saves (until the wet-bulb floor).
+ * Condenser-lift effect on compressor power per °C of condenser water above /
+ * below the 29 °C reference. Symmetric — warmer condenser water always costs
+ * energy, colder always saves (until the wet-bulb floor).
+ * 5.23 %/°C is FITTED from the Dec-2025 trend (44,410 3-chiller minutes,
+ * joint regression of chiller kW on load AND achieved CWS 27.4–28.9 °C) —
+ * roughly double the 2.5 %/°C literature value used previously. CWS and load
+ * are weather-correlated (r = 0.68), so confirm with a CWS step test before
+ * closed-loop use.
  */
 export function condenserLiftFactor(cwsActualC: number): number {
-  return clamp(1 + 0.025 * (cwsActualC - REF_CWS_SP), 0.85, 1.2);
+  return clamp(1 + 0.0523 * (cwsActualC - REF_CWS_SP), 0.85, 1.2);
 }
 
 /** @deprecated COP is now derived from Q/P in the engine. Symmetric inverse of the lift factor. */

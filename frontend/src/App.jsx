@@ -62,6 +62,7 @@ function App() {
     advancePlantSimulation,
     applyPlantChanges,
     applyChillerScenario,
+    applyChillerScenarioPayload,
     togglePlantDuty,
     computeMpcMove,
     mpcAuto,
@@ -373,6 +374,9 @@ function App() {
                       <ChillerPointsList
                         plantState={plantState}
                         onToggleDuty={togglePlantDuty}
+                        onApplyScenario={applyChillerScenario}
+                        onApplyScenarioPayload={applyChillerScenarioPayload}
+                        onSetControl={updatePlantControl}
                       />
                     )}
                   </div>

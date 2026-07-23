@@ -4,17 +4,31 @@
  * Control IDs match controlEngine defaultControls().
  */
 
+import { ROW86_SCENARIO_ID, ROW86_CONTROLS, ROW86_DUTY } from './t1Row86';
+
 /** @typedef {{
  *   id: string;
  *   label: string;
  *   description: string;
  *   reset?: boolean;
  *   controls?: Record<string, number>;
+ *   precise?: boolean;
+ *   duty?: Record<string, number[]>;
  *   advanceSec?: number;
  * }} ChillerScenario */
 
 /** @type {ChillerScenario[]} */
 export const CHILLER_SCENARIOS = [
+  {
+    id: ROW86_SCENARIO_ID,
+    label: 'Dataset row 86 (Dec-1 01:24)',
+    description:
+      'Replays the measured operator inputs of dataset row 86 — 3212.15 RT, CHWS 7.5°C, CW ΔT 4.43°C, measured riser shares — and lets the physics compute everything else. Open the BMS Points tab to compare every simulated point against the real readings (1936.09 kW · 0.6027 kW/RT).',
+    controls: ROW86_CONTROLS,
+    duty: ROW86_DUTY,
+    precise: true,
+    advanceSec: 0,
+  },
   {
     id: 'baseline',
     label: 'Design baseline',

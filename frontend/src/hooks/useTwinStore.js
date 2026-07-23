@@ -261,6 +261,11 @@ export const useTwinStore = create((set, get) => ({
     set({ plantState: applyChillerScenarioEngine(scenarioId) });
   },
 
+  /** Replay an ad-hoc scenario payload (e.g. a dataset-row replay). */
+  applyChillerScenarioPayload: (payload) => {
+    set({ plantState: applyChillerScenarioPayloadEngine(payload) });
+  },
+
   /** Compute the MPC control move (minimising predicted kW/RT) for the current
    *  plant state. Pure read — does not commit; the panel stages the first move
    *  as pending drafts for the operator to Apply. */

@@ -77,17 +77,25 @@ interface CostResult {
   hasCritical: boolean;
 }
 
-/** All grid values for a control from its own min/max/step. */
+/** MPC search resolution — decoupled from the UI input step (which may be as
+ *  fine as 0.01): never more than ~21 candidates per control, so coordinate
+ *  descent stays fast no matter how fine manual typing is allowed to be. */
+function searchStep(c: PlantControl): number {
+  const inputStep = c.step && c.step > 0 ? c.step : 1;
+  return Math.max(inputStep, (c.max - c.min) / 20);
+}
+
+/** All grid values for a control from its own min/max at the search step. */
 function gridValues(c: PlantControl): number[] {
   const out: number[] = [];
-  const step = c.step && c.step > 0 ? c.step : 1;
+  const step = searchStep(c);
   for (let v = c.min; v <= c.max + 1e-9; v += step) out.push(round(v, 3));
   return out;
 }
 
-/** Snap a value to the control's grid and clamp to its range. */
+/** Snap a value to the control's search grid and clamp to its range. */
 function snapToGrid(v: number, c: PlantControl): number {
-  const step = c.step && c.step > 0 ? c.step : 1;
+  const step = searchStep(c);
   const snapped = Math.round((v - c.min) / step) * step + c.min;
   return round(clamp(snapped, c.min, c.max), 3);
 }

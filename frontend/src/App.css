@@ -2478,6 +2478,137 @@ input[type="range"]:active::-moz-range-thumb {
   font-size: 0.56rem;
   color: var(--text-muted);
 }
+/* Dataset-replay validation (Row 86): measured value + sim − dataset delta. */
+.pts-scenario {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.pts-scenario.active {
+  border-color: var(--accent, #3b82f6);
+}
+.pts-scenario-btn {
+  width: 100%;
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text);
+  cursor: pointer;
+}
+.pts-scenario-btn:hover {
+  border-color: var(--accent, #3b82f6);
+}
+.pts-scenario-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.6rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+.pts-row-select {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover);
+  color: var(--text);
+  cursor: pointer;
+}
+.pts-row-select:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+}
+.pts-replay-summary {
+  margin-top: 0.4rem;
+  padding: 0.25rem 0.35rem;
+  border: 1px solid var(--bg-hover);
+  border-radius: var(--radius-sm);
+}
+.pts-summary-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.1rem 0;
+}
+.pts-summary-line .pts-exp {
+  flex-basis: auto;
+}
+.pts-row--cmp {
+  flex-wrap: wrap;
+}
+.pts-exp {
+  flex-basis: 100%;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.58rem;
+  line-height: 1.3;
+}
+.pts-exp em {
+  font-style: normal;
+  font-weight: 700;
+}
+.pts-exp.ok {
+  color: #22c55e;
+}
+.pts-exp.warn {
+  color: #f59e0b;
+}
+.pts-exp.bad {
+  color: #ef4444;
+}
+.pts-row--edit .pts-name {
+  color: var(--accent-light, #60a5fa);
+}
+.pts-edit-input {
+  width: 78px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-align: right;
+  color: var(--text);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.08rem 0.25rem;
+}
+.pts-edit-input:focus {
+  outline: none;
+  border-color: var(--accent, #3b82f6);
+}
+/* Calibration-envelope badge (data-validated vs extrapolated inputs). */
+.scada-calib {
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.45;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid;
+}
+.scada-calib.calibrated {
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.08);
+}
+.scada-calib.extrapolated {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+.scada-calib ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1rem;
+  font-weight: 400;
+}
 .ctrl-pending-hint {
   font-size: 0.7rem;
   color: var(--accent-light);

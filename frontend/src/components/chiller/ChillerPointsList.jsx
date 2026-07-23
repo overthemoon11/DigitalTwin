@@ -1,18 +1,29 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { HL_CP_RATIO, CHWP_VSD_RATIO, CWP_VSD_RATIO } from '../../services/chiller/t1Snapshot';
+import { ROW86_EXPECTED, ROW86_SCENARIO_ID } from '../../services/chiller/t1Row86';
+import { T1_MV_ROWS, mvRowById, buildRowReplayPayload } from '../../services/chiller/t1MvRows';
 
 /**
  * Live BMS point list mirroring every column of T1_MVrawDataR2_2025_12
  * (exact dataset point names, including their original naming quirks), with the
  * simulator's current value for each. Unit chips at the top toggle duty ↔
  * standby (which units serve the load-driven staging count).
+ *
+ * When a dataset-replay scenario (Row 86) is active, every row also shows the
+ * measured dataset value and the sim − dataset delta, colour-coded.
  */
 
 const fmt = (v, d = 2) =>
   typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '—';
 
+/** Measured dataset values for the active replay scenario (null = none). */
+const ExpectedContext = React.createContext(null);
+
 function Group({ title, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+  // While a dataset comparison is active all groups start open (the list is
+  // remounted on scenario change, so the initial state re-evaluates).
+  const comparing = useContext(ExpectedContext) != null;
+  const [open, setOpen] = useState(defaultOpen || comparing);
   return (
     <div className="pts-group">
       <button type="button" className="pts-group-head" onClick={() => setOpen((o) => !o)}>
@@ -25,12 +36,95 @@ function Group({ title, children, defaultOpen = false }) {
 }
 
 function Row({ name, value, unit }) {
+  const expectedMap = useContext(ExpectedContext);
+  const expected = expectedMap ? expectedMap[name] : undefined;
+  let comparison = null;
+  if (typeof expected === 'number') {
+    const sim = parseFloat(value);
+    if (Number.isFinite(sim)) {
+      const decimals = (String(value).split('.')[1] || '').length;
+      const delta = sim - expected;
+      const okTol = Math.max(0.05, Math.abs(expected) * 0.005);
+      const warnTol = Math.max(0.2, Math.abs(expected) * 0.02);
+      const cls =
+        Math.abs(delta) <= okTol ? 'ok' : Math.abs(delta) <= warnTol ? 'warn' : 'bad';
+      comparison = (
+        <span className={`pts-exp ${cls}`}>
+          dataset {expected.toFixed(decimals)}
+          <em>
+            {' '}
+            Δ {delta >= 0 ? '+' : '-'}
+            {Math.abs(delta).toFixed(decimals)}
+          </em>
+        </span>
+      );
+    }
+  }
   return (
-    <div className="pts-row">
+    <div className={`pts-row ${comparison ? 'pts-row--cmp' : ''}`}>
       <span className="pts-name">{name}</span>
       <span className="pts-value">
         {value}
         {unit ? <em> {unit}</em> : null}
+      </span>
+      {comparison}
+    </div>
+  );
+}
+
+/** Editable point — a dataset point that IS an operator input (load, CHWS SP).
+ *  Commits on Enter / blur through the same constrained control path as the
+ *  SCADA panel; all other points stay read-only because they are calculated. */
+function EditRow({ name, control, unit, onSet }) {
+  const [draft, setDraft] = useState(null);
+  if (!control) return null;
+  const commit = () => {
+    const v = parseFloat(draft);
+    if (draft != null && draft !== '' && Number.isFinite(v) && v !== control.value) {
+      onSet(control.id, v);
+    }
+    setDraft(null);
+  };
+  return (
+    <div className="pts-row pts-row--edit">
+      <span className="pts-name" title={`Operator input → ${control.label}`}>
+        {name} ✎
+      </span>
+      <span className="pts-value">
+        <input
+          className="pts-edit-input"
+          type="number"
+          min={control.min}
+          max={control.max}
+          step={control.step}
+          value={draft ?? String(control.value)}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+        />
+        {unit ? <em> {unit}</em> : null}
+      </span>
+    </div>
+  );
+}
+
+/** Headline sim-vs-dataset line for the active row replay. */
+function SummaryLine({ label, sim, expected, decimals }) {
+  if (!Number.isFinite(sim)) return null;
+  const pct = expected !== 0 ? (100 * (sim - expected)) / Math.abs(expected) : 0;
+  const cls = Math.abs(pct) <= 0.5 ? 'ok' : Math.abs(pct) <= 2 ? 'warn' : 'bad';
+  return (
+    <div className="pts-summary-line">
+      <span className="pts-name">{label}</span>
+      <span className={`pts-exp ${cls}`}>
+        sim {sim.toFixed(decimals)} · dataset {expected.toFixed(decimals)}
+        <em>
+          {' '}
+          ({pct >= 0 ? '+' : ''}
+          {pct.toFixed(2)}%)
+        </em>
       </span>
     </div>
   );
@@ -60,8 +154,17 @@ function DutyChips({ label, category, units, runSet, onToggleDuty }) {
   );
 }
 
-export default function ChillerPointsList({ plantState, onToggleDuty }) {
+export default function ChillerPointsList({
+  plantState,
+  onToggleDuty,
+  onApplyScenario,
+  onApplyScenarioPayload,
+  onSetControl,
+}) {
+  const validating = plantState?.simulation?.scenarioId === ROW86_SCENARIO_ID;
+  const activeRow = mvRowById(plantState?.simulation?.scenarioId);
   const eq = plantState?.equipment ?? {};
+  const ctrl = (id) => (plantState?.controls ?? []).find((c) => c.id === id);
   const headers = plantState?.headers ?? {};
   const kpis = plantState?.kpis ?? [];
   const risers = plantState?.risers ?? [];
@@ -101,8 +204,53 @@ export default function ChillerPointsList({ plantState, onToggleDuty }) {
   const ctVsdB = (i) => (i === 4 ? 'CT_4_VSD_246_kW' : `CT_${i}_VSD_B_kW`);
 
   return (
-    <div className="pts-list">
+    <ExpectedContext.Provider value={validating ? ROW86_EXPECTED : null}>
+    <div className="pts-list" key={validating ? 'validate' : 'live'}>
       <div className="pts-title">BMS POINTS — T1 DATASET</div>
+
+      {onApplyScenarioPayload && (
+        <div className={`pts-scenario ${activeRow ? 'active' : ''}`}>
+          <select
+            className="pts-row-select"
+            value={activeRow ? `row-${activeRow.row}` : ''}
+            onChange={(e) => {
+              const meta = T1_MV_ROWS.find((r) => `row-${r.row}` === e.target.value);
+              if (meta) onApplyScenarioPayload(buildRowReplayPayload(meta));
+            }}
+            title="Replay the measured operator inputs (load, CHWS, CW ΔT, riser shares, duty) of a dataset row and let the physics compute every other point"
+          >
+            <option value="" disabled>
+              ▶ Replay dataset row… (M&amp;V window 00:00–02:12)
+            </option>
+            {T1_MV_ROWS.map((r) => (
+              <option key={r.row} value={`row-${r.row}`}>
+                Row {r.row} — {r.time} · {r.loadRt.toFixed(0)} RT · {r.kwRt.toFixed(4)} kW/RT
+              </option>
+            ))}
+          </select>
+          {activeRow && (
+            <div className="pts-replay-summary">
+              <SummaryLine label="kW" sim={kval('kpi-kw')} expected={activeRow.kw} decimals={2} />
+              <SummaryLine
+                label="kW/RT"
+                sim={headers.buildingLoadRt > 0 ? kval('kpi-kw') / headers.buildingLoadRt : NaN}
+                expected={activeRow.kwRt}
+                decimals={4}
+              />
+              <SummaryLine label="ΔT" sim={kval('kpi-chw-dt')} expected={activeRow.deltaT} decimals={2} />
+            </div>
+          )}
+          {activeRow && (
+            <p className="pts-scenario-hint">
+              Inputs = measured row {activeRow.row} ({activeRow.time}); every point below is
+              computed by the physics. Row 86 additionally shows per-point dataset deltas:
+              <span className="pts-exp ok"> ≤0.5 %</span> ·
+              <span className="pts-exp warn"> ≤2 %</span> ·
+              <span className="pts-exp bad"> &gt;2 %</span>. Editing any control exits the replay.
+            </p>
+          )}
+        </div>
+      )}
 
       {runSets && onToggleDuty && (
         <div className="pts-duty">
@@ -123,7 +271,11 @@ export default function ChillerPointsList({ plantState, onToggleDuty }) {
             4
           )}
         />
-        <Row name="rt" value={fmt(headers.buildingLoadRt, 2)} unit="RT" />
+        {onSetControl ? (
+          <EditRow name="rt" control={ctrl('ctrl-building-load')} unit="RT" onSet={onSetControl} />
+        ) : (
+          <Row name="rt" value={fmt(headers.buildingLoadRt, 2)} unit="RT" />
+        )}
         <Row name="deltaT" value={fmt(kval('kpi-chw-dt'), 2)} unit="°C" />
       </Group>
 
@@ -230,7 +382,11 @@ export default function ChillerPointsList({ plantState, onToggleDuty }) {
 
       <Group title="Headers">
         <Row name="Header-hcwf" value={fmt((headers.condFlowM3h ?? 0) / 3.6, 2)} unit="L/s" />
-        <Row name="Header-hcwst" value={fmt(headers.chws)} unit="°C" />
+        {onSetControl ? (
+          <EditRow name="Header-hcwst" control={ctrl('ctrl-chws-sp')} unit="°C" onSet={onSetControl} />
+        ) : (
+          <Row name="Header-hcwst" value={fmt(headers.chws)} unit="°C" />
+        )}
         <Row name="Header-hcwrt" value={fmt(headers.chwr)} unit="°C" />
       </Group>
 
@@ -240,5 +396,6 @@ export default function ChillerPointsList({ plantState, onToggleDuty }) {
         ))}
       </Group>
     </div>
+    </ExpectedContext.Provider>
   );
 }

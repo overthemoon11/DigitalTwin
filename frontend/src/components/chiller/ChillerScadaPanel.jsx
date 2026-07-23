@@ -206,8 +206,29 @@ export default function ChillerScadaPanel({ plantState, onSet }) {
     },
   ];
 
+  const calibration = plantState?.simulation?.calibration;
+
   return (
     <div className="scada-panel">
+      {calibration && (
+        <div
+          className={`scada-calib ${calibration.status}`}
+          title="Whether the current inputs sit inside the operating region covered by the real T1 dataset. Outside it, outputs are physics extrapolations — treat as low-confidence."
+        >
+          {calibration.status === 'calibrated' ? (
+            <span>● Calibrated region — outputs data-validated (±0.3%)</span>
+          ) : (
+            <>
+              <span>▲ Extrapolating — outside the dataset&apos;s operating region:</span>
+              <ul>
+                {calibration.reasons.map((r) => (
+                  <li key={r}>{r}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
       <div className="scada-grid">
         {boxes.map((b) => (
           <ScadaBox key={b.title} title={b.title} rows={b.rows} onSet={onSet} />
