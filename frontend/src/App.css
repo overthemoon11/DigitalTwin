@@ -749,6 +749,54 @@ input[type="range"]:active::-moz-range-thumb {
   position: relative;
 }
 
+/* 3D (three.js) plant view — overlays the SVG, below the toolbar/metrics (z 2+) */
+.chiller-plant-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  cursor: grab;
+}
+.chiller-plant-3d:active {
+  cursor: grabbing;
+}
+.chiller-plant-3d canvas {
+  display: block;
+}
+/* Status legend on the 3D scene (light theme, matches the SCADA plates) */
+.plant3d-legend {
+  position: absolute;
+  top: 44px;
+  left: 10px;
+  z-index: 2;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text);
+}
+.plant3d-legend-title {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+  color: var(--text-muted);
+}
+.plant3d-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+}
+.plant3d-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
 .ets-station-2d {
   width: 100%;
   height: 100%;
@@ -2583,6 +2631,21 @@ input[type="range"]:active::-moz-range-thumb {
 .pts-edit-input:focus {
   outline: none;
   border-color: var(--accent, #3b82f6);
+}
+/* Header links to the in-app docs (status brief + user guide) */
+.header-doc-link {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  white-space: nowrap;
+}
+.header-doc-link:hover {
+  color: var(--accent-light, #60a5fa);
+  border-color: var(--accent-light, #60a5fa);
 }
 /* Calibration-envelope badge (data-validated vs extrapolated inputs). */
 .scada-calib {

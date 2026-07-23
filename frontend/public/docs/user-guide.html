@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>T1 Chiller Plant — User Guide</title>
+<style>
+  :root {
+    --ground: #eef3f6; --surface: #ffffff; --surface-2: #f5f8fa;
+    --ink: #0f1b22; --ink-2: #40535d; --ink-3: #6f828c;
+    --line: #d9e2e7; --line-2: #e7edf0;
+    --accent: #0c7d93; --accent-soft: #0c7d9316;
+    --good: #1f9d63; --warn: #b9791a; --bad: #c8443a;
+    --good-soft: #1f9d6318; --warn-soft: #b9791a1c; --bad-soft: #c8443a18;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --shadow: 0 1px 2px rgba(15,27,34,0.05), 0 6px 20px rgba(15,27,34,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0c1319; --surface: #121e26; --surface-2: #17242d;
+      --ink: #e7eef2; --ink-2: #a7b7c0; --ink-3: #71838d;
+      --line: #22323c; --line-2: #1b2932;
+      --accent: #45c2da; --accent-soft: #45c2da1f;
+      --good: #37b877; --warn: #d69a33; --bad: #e0645a;
+      --good-soft: #37b8771f; --warn-soft: #d69a3320; --bad-soft: #e0645a1f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 26px rgba(0,0,0,0.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); line-height: 1.62; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 2rem) 4rem; }
+  .eyebrow { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 0.5rem; font-weight: 680; }
+  .lede { font-size: 1.06rem; color: var(--ink-2); max-width: 62ch; margin: 0 0 1.5rem; }
+  .toc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.2rem; margin: 1.6rem 0 2.4rem; box-shadow: var(--shadow); }
+  .toc p { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 0.6rem; }
+  .toc ol { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: 2rem; }
+  .toc li { padding: 0.22rem 0; font-size: 0.9rem; break-inside: avoid; }
+  .toc a { color: var(--ink-2); text-decoration: none; display: flex; gap: 0.6rem; }
+  .toc a:hover { color: var(--accent); }
+  .toc .tn { font-family: var(--mono); color: var(--accent); font-size: 0.8rem; }
+  @media (max-width: 620px) { .toc ol { columns: 1; } }
+  section { margin-top: 2.6rem; scroll-margin-top: 1rem; }
+  h2 { font-size: 1.3rem; letter-spacing: -0.01em; margin: 0 0 0.5rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  h2 .n { font-family: var(--mono); font-size: 0.9rem; color: var(--accent); font-weight: 600; }
+  h3 { font-size: 1rem; margin: 1.4rem 0 0.4rem; }
+  p { max-width: 66ch; }
+  .muted { color: var(--ink-2); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.4rem; box-shadow: var(--shadow); margin-top: 1rem; }
+  .screenmap { display: grid; grid-template-columns: 34px 150px 1fr 190px; grid-template-rows: 42px 210px; gap: 6px; margin-top: 1rem; font-family: var(--mono); font-size: 0.68rem; }
+  .sm { border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2); padding: 0.5rem; color: var(--ink-2); display: flex; flex-direction: column; gap: 0.2rem; }
+  .sm b { color: var(--ink); font-weight: 600; font-size: 0.72rem; }
+  .sm.header { grid-column: 1 / -1; background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); flex-direction: row; align-items: center; gap: 0.5rem; }
+  .sm.rail { align-items: center; justify-content: flex-start; padding: 0.5rem 0.2rem; text-align: center; }
+  .sm.canvas { background: var(--surface); align-items: center; justify-content: center; text-align: center; }
+  .sm .chip { display: inline-block; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 0.05rem 0.35rem; }
+  @media (max-width: 620px) { .screenmap { grid-template-columns: 28px 1fr 1fr; grid-template-rows: auto; } .sm.canvas { grid-column: 1 / -1; min-height: 90px; } }
+  ol.steps { counter-reset: s; list-style: none; margin: 1rem 0 0; padding: 0; }
+  ol.steps > li { counter-increment: s; position: relative; padding: 0 0 0 2.4rem; margin: 0 0 0.9rem; }
+  ol.steps > li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-family: var(--mono); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  ol.steps b { font-weight: 620; }
+  kbd { font-family: var(--mono); font-size: 0.78em; background: var(--surface-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0.05rem 0.4rem; color: var(--ink); white-space: nowrap; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--surface-2); padding: 0.1rem 0.35rem; border-radius: 5px; color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+  td b { font-weight: 620; }
+  .wrap-x { overflow-x: auto; }
+  .pill { display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; padding: 0.12rem 0.5rem; border-radius: 100px; }
+  .pill.g { background: var(--good-soft); color: var(--good); } .pill.w { background: var(--warn-soft); color: var(--warn); }
+  .edit-tag { font-family: var(--mono); color: var(--accent); font-weight: 700; }
+  .callout { border-radius: 12px; padding: 1rem 1.3rem; margin-top: 1.2rem; border: 1px solid; }
+  .callout.tip { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .callout.warn { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 32%, transparent); }
+  .callout h4 { margin: 0 0 0.4rem; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; }
+  .callout.tip h4 { color: var(--accent); } .callout.warn h4 { color: var(--warn); }
+  .callout p { margin: 0.3rem 0 0; color: var(--ink-2); font-size: 0.92rem; }
+  ul.clean { margin: 0.6rem 0 0; padding-left: 1.2rem; }
+  ul.clean li { margin: 0.3rem 0; color: var(--ink-2); }
+  ul.clean b { color: var(--ink); }
+  .foot { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">User Guide</p>
+  <h1>T1 Chiller Plant Digital Twin — How to Use</h1>
+  <p class="lede">A step-by-step guide to operating the web app: navigating the 2D and 3D plant views, changing setpoints, reading efficiency, and understanding how the model tracks real plant data. No prior training required — everything happens in the browser.</p>
+
+  <nav class="toc">
+    <p>Contents</p>
+    <ol>
+      <li><a href="#start"><span class="tn">1</span> Opening the app</a></li>
+      <li><a href="#screen"><span class="tn">2</span> The screen at a glance</a></li>
+      <li><a href="#navigate"><span class="tn">3</span> Moving around</a></li>
+      <li><a href="#diagram"><span class="tn">4</span> The 2D plant diagram</a></li>
+      <li><a href="#three-d"><span class="tn">5</span> The 3D plant view</a></li>
+      <li><a href="#controls"><span class="tn">6</span> Changing setpoints (Controls)</a></li>
+      <li><a href="#points"><span class="tn">7</span> The BMS Points tab</a></li>
+      <li><a href="#simulator"><span class="tn">8</span> Efficiency &amp; before→after</a></li>
+      <li><a href="#validate"><span class="tn">9</span> How it tracks real data</a></li>
+      <li><a href="#terms"><span class="tn">10</span> Key terms</a></li>
+      <li><a href="#faq"><span class="tn">11</span> Quick answers</a></li>
+    </ol>
+  </nav>
+
+  <section id="start">
+    <h2><span class="n">1</span> Opening the app</h2>
+    <p class="muted">The app runs in any modern browser. If it is already hosted for you, just open the link. To run it locally:</p>
+    <ol class="steps">
+      <li>Open a terminal in the project's <code>frontend</code> folder.</li>
+      <li>Run <code>npm install</code> once, then <b><code>npm run dev</code></b>.</li>
+      <li>Open the address it prints in your browser.</li>
+    </ol>
+    <div class="callout tip">
+      <h4>Good to know</h4>
+      <p>The twin is a self-contained physics model — it does <b>not</b> need a connection to the live plant. You can explore freely; nothing you change here affects any real equipment.</p>
+    </div>
+  </section>
+
+  <section id="screen">
+    <h2><span class="n">2</span> The screen at a glance</h2>
+    <p class="muted">Four regions. The plant view is in the middle; you read status on the left and drive the plant on the right.</p>
+    <div class="wrap-x">
+      <div class="screenmap" role="img" aria-label="Screen layout: top header bar; below it a narrow mode rail, left panel, central canvas, and right panel.">
+        <div class="sm header"><b>Top bar</b> <span class="chip">Chiller Plant</span><span class="chip">Heat Exchanger</span><span class="chip">AHU</span> · docs links · sidebar toggles</div>
+        <div class="sm rail"><b>Mode</b><span>Assets</span><span>Sim</span></div>
+        <div class="sm"><b>Left panel</b>Asset list, or the Virtual Simulator (efficiency &amp; before→after)</div>
+        <div class="sm canvas"><b>Plant view</b><span>2D P&amp;ID or 3D plant room · Σ Summary · ⬢ 3D toggle</span></div>
+        <div class="sm"><b>Right panel</b>Controls (setpoints) &amp; BMS Points</div>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Region</th><th>What it's for</th></tr></thead>
+      <tbody>
+        <tr><td><b>Top bar</b></td><td>Switch between the <b>Chiller Plant</b>, <b>Heat Exchanger</b> and <b>AHU</b> systems; open the docs; show/hide the side panels.</td></tr>
+        <tr><td><b>Left panel</b></td><td>Two modes (icons on the far-left rail): <b>Assets</b> — a list of equipment; <b>Virtual Simulator</b> — live efficiency and the before→after effect of your last change.</td></tr>
+        <tr><td><b>Plant view</b></td><td>The live plant — as a 2D schematic or an interactive 3D plant room. Click any item to inspect it.</td></tr>
+        <tr><td><b>Right panel</b></td><td>Two tabs: <b>Controls</b> (change setpoints) and <b>BMS Points</b> (every sensor value + duty selection).</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="navigate">
+    <h2><span class="n">3</span> Moving around</h2>
+    <ul class="clean">
+      <li><b>Switch system</b> — use the three tabs in the top bar. This guide covers the <b>Chiller Plant</b>; Heat Exchanger and AHU work similarly.</li>
+      <li><b>Hide / show the left panel</b> — the ☰ button at the top-left.</li>
+      <li><b>Hide / show the right panel</b> — the ⋮ button at the top-right (handy for a bigger plant view).</li>
+      <li><b>Switch the left panel's content</b> — the two icons on the thin rail: <b>Assets</b> (boxes icon) and <b>Virtual Simulator</b> (building icon).</li>
+      <li><b>Switch 2D ↔ 3D</b> — the <b>⬢ 3D / ◱ 2D</b> button beside <b>Σ Summary</b> at the top of the plant view.</li>
+    </ul>
+  </section>
+
+  <section id="diagram">
+    <h2><span class="n">4</span> The 2D plant diagram</h2>
+    <p class="muted">The default view is the whole plant drawn to match the real T1 layout: 5 chillers, 6 chilled-water pumps, 6 condenser-water pumps and 5 cooling towers.</p>
+    <ul class="clean">
+      <li><b>Flow arrows</b> on the pipes show the direction water is moving — chilled water to the building, condenser water to the towers.</li>
+      <li><b>Faceplate labels</b> on each machine show its key live readings (power, temperatures, status), just like a BMS graphic.</li>
+      <li><b>Click any equipment</b> to select it; it is also highlighted in the left-panel asset list, and vice-versa.</li>
+      <li><b>Scroll to zoom · drag to pan</b> — the + / − / ⊡ buttons at the top-right do the same.</li>
+    </ul>
+  </section>
+
+  <section id="three-d">
+    <h2><span class="n">5</span> The 3D plant view</h2>
+    <p class="muted">Click <b>⬢ 3D</b> (beside Σ Summary) to walk the plant room in 3D. Every machine is modelled on its real-world counterpart — centrifugal chillers with bolted tube-sheet covers, two-cell crossflow cooling towers with spinning fans, end-suction pump sets, pressure tanks and bypass valves — and every unit carries a live BMS data tile.</p>
+    <div class="wrap-x"><table>
+      <thead><tr><th>Action</th><th>How</th></tr></thead>
+      <tbody>
+        <tr><td><b>Orbit</b> (rotate around the plant)</td><td>Hold the left mouse button and drag</td></tr>
+        <tr><td><b>Zoom</b></td><td>Scroll the mouse wheel</td></tr>
+        <tr><td><b>Pan</b> (slide the view)</td><td>Hold the right mouse button and drag</td></tr>
+        <tr><td><b>Select equipment</b></td><td>Click a machine or its data tile — a blue ring marks it and the sidebar follows</td></tr>
+        <tr><td><b>Back to 2D</b></td><td>Click <b>◱ 2D</b></td></tr>
+      </tbody>
+    </table></div>
+    <ul class="clean">
+      <li><b>Data tiles</b> show the same readings as the 2D faceplates — chillers: CHWS/CHWR/CHWF/CHW Ton/kW/kW-per-Ton; pumps: VSD %, Hz, kW; towers: per-cell fan kW and leaving temperature.</li>
+      <li><b>Status at a glance</b> — the dot on each tile (green running · grey standby · red alarm; legend at the top-left). Tower fans visibly spin at their live VSD speed.</li>
+      <li><b>Pipes are colour-coded</b> like the 2D view — light/deep blue chilled water, greens condenser water — with arrows showing flow direction into and out of the correct machine nozzles.</li>
+      <li>The <b>Σ Summary</b> popup, efficiency metrics bar and calibration badge all keep working in 3D.</li>
+    </ul>
+  </section>
+
+  <section id="controls">
+    <h2><span class="n">6</span> Changing setpoints — the Controls tab</h2>
+    <p class="muted">Open the right panel's <b>Controls</b> tab. Settings are grouped into boxes that mirror a real SCADA screen: Outdoor Condition, CHWP / CWP / CT Control, Cooling Load, Heat Rejected, Heat Balance, and CHW Riser load shares.</p>
+    <h3>How to change a value</h3>
+    <ol class="steps">
+      <li>Editable settings appear as <b>input boxes</b>; read-only sensor values are plain text.</li>
+      <li>Click the box, type a value, then press <kbd>Enter</kbd> or click away to <b>apply</b>. Press <kbd>Esc</kbd> to cancel.</li>
+      <li>The whole plant recomputes instantly — power, temperatures, flows and efficiency all update to the new steady state, in both 2D and 3D.</li>
+    </ol>
+    <p class="muted" style="margin-top:0.8rem">Values are automatically kept within each machine's safe operating range.</p>
+    <h3>What you can set vs. what is calculated</h3>
+    <div class="wrap-x"><table>
+      <thead><tr><th>You set <span class="edit-tag">(editable)</span></th><th>The twin calculates (read-only)</th></tr></thead>
+      <tbody>
+        <tr><td><b>Cooling Load</b> (building demand, RT)</td><td>All power figures (chiller / pump / fan kW)</td></tr>
+        <tr><td><b>Outdoor Temp &amp; Humidity</b></td><td>Wet-bulb, tower approach</td></tr>
+        <tr><td><b>CHWP VSD command</b>, Med/High-rise DP setpoints</td><td>Header temperatures &amp; ΔT (CHWS/CHWR, CWS/CWR)</td></tr>
+        <tr><td><b>CWP VSD command</b>, CW differential-temp setpoint</td><td>Loop flows (CHWF, CWF), condenser flow</td></tr>
+        <tr><td><b>CT VSD command</b>, CWS header setpoint</td><td>COP, efficiency (kW/RT), heat balance</td></tr>
+        <tr><td><b>CHW riser load shares</b> (4 risers)</td><td>Everything downstream of the above</td></tr>
+      </tbody>
+    </table></div>
+    <div class="callout warn">
+      <h4>Watch the calibration badge</h4>
+      <p>At the top of the Controls tab a badge shows whether your inputs are inside the range the model was validated against:
+      <span class="pill g">● Calibrated</span> means the result is data-backed;
+      <span class="pill w">▲ Extrapolating</span> means you've gone outside the real data (e.g. a very high load or an unusual setpoint) and the numbers are a physics estimate — it lists exactly which inputs are out of range. Trust calibrated results; treat extrapolated ones as indicative.</p>
+    </div>
+  </section>
+
+  <section id="points">
+    <h2><span class="n">7</span> The BMS Points tab</h2>
+    <p class="muted">This tab lists every sensor point in the dataset with the twin's current value — the same point names as the real BMS. It also holds two interactive tools.</p>
+    <h3>Duty chips — choose which units run</h3>
+    <p class="muted">At the top, each category (CH, CHWP, CWP, CT) shows numbered chips. A highlighted chip is <b>on duty (running)</b>; click it to send that unit to <b>standby</b>, and another unit takes its place.</p>
+    <div class="callout tip">
+      <h4>Note</h4>
+      <p><b>How many</b> units run is decided automatically by the cooling load. The chips only choose <b>which</b> specific units serve that count — exactly like duty rotation on the real plant.</p>
+    </div>
+    <h3>Inline edits</h3>
+    <p class="muted">Two points marked with a pencil <span class="edit-tag">✎</span> — the cooling load (<code>rt</code>) and the chilled-water supply setpoint (<code>Header-hcwst</code>) — can be typed directly here, the same way as on the Controls tab.</p>
+  </section>
+
+  <section id="simulator">
+    <h2><span class="n">8</span> Efficiency &amp; the before→after effect</h2>
+    <p class="muted">Switch the left panel to <b>Virtual Simulator</b> (the building icon on the rail). It shows the impact of whatever you last changed.</p>
+    <ul class="clean">
+      <li><b>Performance &amp; efficiency</b> — the headline numbers: building load, <b>Plant kW/RT</b> (the efficiency metric), total plant kW, Plant COP, CHW ΔT, tower approach, header DP, and units online.</li>
+      <li><b>Before → after</b> — when you apply a change, each affected figure shows its previous value beside the new one, so you can see the knock-on ("domino") effect of your setpoint move.</li>
+      <li><b>Parameters affected</b> — a short note on what your last input drives.</li>
+    </ul>
+    <div class="callout tip">
+      <h4>The number that matters</h4>
+      <p><b>Plant kW/RT</b> is the plant's efficiency — kilowatts of electricity per ton of cooling. <b>Lower is better.</b> Your goal when tuning setpoints is to reduce it without tripping any alarm.</p>
+    </div>
+  </section>
+
+  <section id="validate">
+    <h2><span class="n">9</span> How the twin tracks real data</h2>
+    <p class="muted">The model is calibrated to a month of real 1-minute BMS trend data from the T1 plant and validated by <b>blind replay</b>: feeding it only the measured operator inputs of real minutes and comparing everything it computes against the recorded readings.</p>
+    <ul class="clean">
+      <li>Across the full validation window it reproduces the plant's measured efficiency with an average error of <b>0.28%</b> — which is the plant's own minute-to-minute noise level, the best any model can achieve.</li>
+      <li>The remaining small differences are real sensor noise and control hunting, not model error: the plant itself records slightly different power at identical settings.</li>
+      <li>The full validation (per-point replay of 133 real minutes) can be rerun by the engineering team at any time via the bundled scripts (<code>validateRow86</code>, <code>validateMvWindow</code>). An in-app row-replay comparison view also exists and can be enabled for engineering builds.</li>
+    </ul>
+  </section>
+
+  <section id="terms">
+    <h2><span class="n">10</span> Key terms</h2>
+    <div class="wrap-x"><table>
+      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><b>kW/RT</b></td><td>Plant efficiency — electrical power per ton of cooling. The main metric; lower is better.</td></tr>
+        <tr><td><b>COP</b></td><td>Coefficient of performance — cooling delivered per unit of power. Higher is better (the inverse view of kW/RT).</td></tr>
+        <tr><td><b>RT</b></td><td>Refrigeration ton — a unit of cooling load / capacity.</td></tr>
+        <tr><td><b>CHWS / CHWR</b></td><td>Chilled-water supply / return temperature (to and from the building).</td></tr>
+        <tr><td><b>CWS / CWR</b></td><td>Condenser-water supply / return temperature (to and from the towers).</td></tr>
+        <tr><td><b>ΔT</b></td><td>Temperature difference across a loop — drives how much heat the flow carries.</td></tr>
+        <tr><td><b>DP</b></td><td>Differential pressure across the header — the target the pumps chase.</td></tr>
+        <tr><td><b>VSD command</b></td><td>Variable-speed drive setting (%) for a pump or fan.</td></tr>
+        <tr><td><b>Duty / standby</b></td><td>Whether a unit is running (duty) or held in reserve (standby).</td></tr>
+        <tr><td><b>Calibrated / extrapolating</b></td><td>Whether current inputs are inside the range the model was validated against.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section id="faq">
+    <h2><span class="n">11</span> Quick answers</h2>
+    <ul class="clean">
+      <li><b>I changed a value — how do I undo it?</b> Re-type the original value, or reload the page — everything resets to the plant's reference operating point.</li>
+      <li><b>Why did my typed number change slightly?</b> Values are clamped to the equipment's safe range; if you exceed a limit it snaps to the nearest allowed value.</li>
+      <li><b>Nothing seems to animate.</b> That's intended for the process — this is a steady-state model, so each change jumps straight to the new stable operating point. (The 3D tower fans do spin, purely as a running/standby indicator.)</li>
+      <li><b>The 3D view feels slow.</b> It uses your GPU via WebGL; close other heavy tabs, or switch back to ◱ 2D — both views drive the identical model.</li>
+      <li><b>A value looks wrong / off.</b> Check the calibration badge — if it says <span class="pill w">▲ Extrapolating</span>, you're outside the validated range and the figure is a physics estimate.</li>
+    </ul>
+  </section>
+
+  <p class="foot">T1 Chiller Plant Digital Twin — offline physics model calibrated to Dec-2025 BMS data. This guide covers the Chiller Plant tab; the Heat Exchanger and AHU tabs follow the same panel layout. See also the <a href="/docs/status.html">project status brief</a>.</p>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>T1 Chiller Plant — Digital Twin Status</title>
+<style>
+  :root {
+    --ground: #eef3f6; --surface: #ffffff; --surface-2: #f5f8fa;
+    --ink: #0f1b22; --ink-2: #40535d; --ink-3: #6f828c;
+    --line: #d9e2e7; --line-2: #e7edf0;
+    --accent: #0c7d93; --accent-soft: #0c7d9316;
+    --good: #1f9d63; --warn: #b9791a; --bad: #c8443a;
+    --good-soft: #1f9d6318; --warn-soft: #b9791a1c; --bad-soft: #c8443a18;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --shadow: 0 1px 2px rgba(15, 27, 34, 0.05), 0 6px 20px rgba(15, 27, 34, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #0c1319; --surface: #121e26; --surface-2: #17242d;
+      --ink: #e7eef2; --ink-2: #a7b7c0; --ink-3: #71838d;
+      --line: #22323c; --line-2: #1b2932;
+      --accent: #45c2da; --accent-soft: #45c2da1f;
+      --good: #37b877; --warn: #d69a33; --bad: #e0645a;
+      --good-soft: #37b8771f; --warn-soft: #d69a3320; --bad-soft: #e0645a1f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 26px rgba(0, 0, 0, 0.35);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 2rem) 4rem; }
+  .eyebrow { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.6rem; }
+  h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; margin: 0 0 0.5rem; font-weight: 680; }
+  .lede { font-size: 1.08rem; color: var(--ink-2); max-width: 60ch; margin: 0 0 1.4rem; }
+  .meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); padding-top: 1rem; border-top: 1px solid var(--line); }
+  .meta b { color: var(--ink-2); font-weight: 600; }
+  .status-chip { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--mono); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 100px; background: var(--good-soft); color: var(--good); border: 1px solid color-mix(in srgb, var(--good) 30%, transparent); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 2rem 0; }
+  .metric { background: var(--surface); padding: 1.1rem 1rem; }
+  .metric .v { font-family: var(--mono); font-size: clamp(1.15rem, 2.6vw, 1.6rem); font-weight: 640; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+  .metric .l { font-size: 0.72rem; color: var(--ink-3); margin-top: 0.25rem; line-height: 1.35; }
+  @media (max-width: 720px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+  section { margin-top: 2.6rem; }
+  h2 { font-size: 1.25rem; letter-spacing: -0.01em; margin: 0 0 0.4rem; display: flex; align-items: baseline; gap: 0.6rem; }
+  h2 .n { font-family: var(--mono); font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+  .section-note { color: var(--ink-2); max-width: 64ch; margin: 0 0 1.2rem; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.3rem 1.4rem; box-shadow: var(--shadow); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .kv { font-family: var(--mono); font-size: 0.82rem; }
+  .kv div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid var(--line-2); }
+  .kv div:last-child { border-bottom: none; }
+  .kv .k { color: var(--ink-3); }
+  .kv .val { color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; }
+  .ladder { display: flex; flex-direction: column; gap: 0.5rem; }
+  .step { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.9rem; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem 1rem; }
+  .step .num { font-family: var(--mono); font-size: 0.78rem; color: var(--accent); font-weight: 600; }
+  .step .body { min-width: 0; }
+  .step .t { font-weight: 600; font-size: 0.95rem; }
+  .step .d { color: var(--ink-2); font-size: 0.85rem; }
+  .tag { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 6px; white-space: nowrap; }
+  .tag.good { background: var(--good-soft); color: var(--good); }
+  .tag.done { background: var(--accent-soft); color: var(--accent); }
+  .chart { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.4rem; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 0.8rem; }
+  .bar-label { font-family: var(--mono); font-size: 0.76rem; color: var(--ink-2); text-align: right; }
+  .bar-track { position: relative; background: var(--surface-2); border-radius: 5px; height: 26px; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem; min-width: 42px; }
+  .bar-fill span { font-family: var(--mono); font-size: 0.72rem; font-weight: 640; color: #fff; font-variant-numeric: tabular-nums; }
+  .bar-fill.g { background: var(--good); } .bar-fill.w { background: var(--warn); } .bar-fill.b { background: var(--bad); }
+  .floor-line { position: absolute; top: -6px; bottom: -6px; border-left: 2px dashed var(--ink-3); }
+  .chart-scale { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.66rem; color: var(--ink-3); margin-left: 138px; margin-top: 0.3rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-2); margin-top: 0.9rem; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
+  .callout { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 32%, transparent); border-radius: 12px; padding: 1.1rem 1.3rem; }
+  .callout h3 { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--warn); font-family: var(--mono); letter-spacing: 0.02em; }
+  .callout ul { margin: 0; padding-left: 1.1rem; color: var(--ink-2); font-size: 0.9rem; }
+  .callout li { margin: 0.25rem 0; }
+  ul.clean { list-style: none; margin: 0; padding: 0; }
+  ul.clean li { padding: 0.55rem 0; border-bottom: 1px solid var(--line-2); font-size: 0.92rem; color: var(--ink-2); }
+  ul.clean li:last-child { border-bottom: none; }
+  ul.clean b { color: var(--ink); font-weight: 620; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--surface-2); padding: 0.1rem 0.35rem; border-radius: 5px; color: var(--ink); }
+  .foot { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Digital Twin · Status Brief</p>
+  <h1>T1 Chiller Plant — Physics Digital Twin</h1>
+  <p class="lede">A steady-state, physics-based twin of the T1 central cooling plant, calibrated to real BMS trend data and validated to the dataset's own noise floor — with interactive 2D SCADA and 3D plant views, and a scoring API for optimisation and ML.</p>
+  <span class="status-chip"><span class="dot"></span>Calibrated &amp; validated · ready for shadow-mode trial</span>
+
+  <div class="meta">
+    <span><b>Plant</b> 5 chillers · 6 CHWP · 6 CWP · 5 towers</span>
+    <span><b>Data</b> T1_MVrawDataR2 · Dec-2025 · 1-min BMS</span>
+    <span><b>Objective</b> kW/RT (not COP)</span>
+    <span><b>Model</b> steady-state · deterministic</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="v">0.28%</div><div class="l">Replay error (MAE) across all 133 M&amp;V rows</div></div>
+    <div class="metric"><div class="v">+0.03%</div><div class="l">Average bias — effectively unbiased</div></div>
+    <div class="metric"><div class="v">133/133</div><div class="l">Rows reproduced within 1%</div></div>
+    <div class="metric"><div class="v">1.03×</div><div class="l">Best model vs. irreducible noise floor</div></div>
+    <div class="metric"><div class="v">44,410</div><div class="l">Plant-minutes analysed (month-wide)</div></div>
+  </div>
+
+  <section>
+    <h2><span class="n">01</span> What the twin is</h2>
+    <p class="section-note">A digital replica of the real plant's physics — not a recording of it. Feed it the operator's decisions (load, setpoints, which units run) and it computes every consequence: power, temperatures, flows, and efficiency. Operators work it through a 2D SCADA P&amp;ID or a fully modelled interactive 3D plant room.</p>
+    <div class="grid-2">
+      <div class="card">
+        <div class="kv">
+          <div><span class="k">Chillers</span><span class="val">5 × 2-compressor</span></div>
+          <div><span class="k">Pumps</span><span class="val">6 CHWP · 6 CWP</span></div>
+          <div><span class="k">Cooling towers</span><span class="val">5 × 2-cell</span></div>
+          <div><span class="k">Model type</span><span class="val">steady-state grey-box</span></div>
+          <div><span class="k">Determinism</span><span class="val">same in → same out</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <ul class="clean">
+          <li><b>Exact where physics is exact.</b> Energy balances, heat rejection and the COP identity carry zero fitted parameters — they cannot drift.</li>
+          <li><b>Fitted where the plant is empirical.</b> Only the chiller part-load curve and condenser-lift sensitivity are learned from data.</li>
+          <li><b>Honest about its limits.</b> Every output is flagged calibrated or extrapolated against the region the data actually covers.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">02</span> How it was calibrated</h2>
+    <p class="section-note">A grey-box approach: keep the physics structure fixed and exact, and fit the smallest possible set of coefficients from the BMS trend. The chiller curve is an affine (fixed-loss + per-load) fit; the condenser sensitivity was extracted from the plant's natural weather variation across the month.</p>
+    <div class="grid-2">
+      <div class="card">
+        <p class="eyebrow" style="color:var(--ink-3)">Live chiller-power model</p>
+        <div class="kv">
+          <div><span class="k">Form</span><span class="val">affine in load %</span></div>
+          <div><span class="k">Fit method</span><span class="val">least-squares (133 rows)</span></div>
+          <div><span class="k">Slope</span><span class="val">6.884 kW / %load</span></div>
+          <div><span class="k">Condenser lift</span><span class="val">5.23 %/°C (fitted)</span></div>
+          <div><span class="k">CHWS reset</span><span class="val">3 %/°C (literature)</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <ul class="clean">
+          <li><b>Not black-box ML.</b> A linear regression — chosen because the physics is near-linear over the operating band and stays interpretable and safe to extrapolate.</li>
+          <li><b>Load-dependent efficiency.</b> The affine curve reproduces the real plant getting more efficient as load rises — a proportional model could not.</li>
+          <li><b>One known gap.</b> CHWS sensitivity can't be learned from this data (the setpoint never moved); it needs a step test.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">03</span> How it was validated</h2>
+    <p class="section-note">Seven methods, from internal consistency up to independent cross-validation. The strictest is blind replay: feed only the ~8 operator inputs of a real dataset minute and check the twin's computed outputs against the other ~120 measured readings.</p>
+    <div class="ladder">
+      <div class="step"><span class="num">01</span><div class="body"><div class="t">Formula audit</div><div class="d">Every equation made internally consistent — energy balances, COP as a Q/P identity.</div></div><span class="tag done">structural</span></div>
+      <div class="step"><span class="num">02</span><div class="body"><div class="t">Reference-minute match</div><div class="d">Boot state reproduces dataset row 1 — temps, flows and ΔT exact.</div></div><span class="tag done">exact</span></div>
+      <div class="step"><span class="num">03</span><div class="body"><div class="t">Single-row blind replay</div><div class="d">Inputs only → 133 computed points checked against measured readings per-point.</div></div><span class="tag good">≤0.5% on most</span></div>
+      <div class="step"><span class="num">04</span><div class="body"><div class="t">Full M&amp;V window sweep</div><div class="d">All 133 rows replayed: +0.03% bias, 0.28% MAE, every row within 1%.</div></div><span class="tag good">passed</span></div>
+      <div class="step"><span class="num">05</span><div class="body"><div class="t">Noise-floor analysis</div><div class="d">The plant gives different outputs at identical inputs — ±0.29% is irreducible.</div></div><span class="tag done">bound set</span></div>
+      <div class="step"><span class="num">06</span><div class="body"><div class="t">Method bake-off (block CV)</div><div class="d">Grey-box linear beats polynomials and Gaussian process on held-out data.</div></div><span class="tag good">winner proven</span></div>
+      <div class="step"><span class="num">07</span><div class="body"><div class="t">Month-wide regression</div><div class="d">44,410 minutes cross-check the fitted coefficients and sensitivities.</div></div><span class="tag done">independent</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why the simplest model wins</h2>
+    <p class="section-note">Block cross-validation (holding out contiguous chunks so nothing leaks) on the 133 rows. Bars show prediction error on <b>unseen</b> data; the dashed line is the irreducible noise floor. Flexible models fit the noise and generalise worse — the low-parameter grey-box sits right on the floor.</p>
+    <div class="card">
+      <div class="chart" id="chart"></div>
+      <div class="chart-scale"><span>0</span><span>1.0</span><span>2.0</span><span>3.0 kW</span></div>
+      <div class="legend">
+        <span><i style="background:var(--good)"></i>at noise floor (best)</span>
+        <span><i style="background:var(--warn)"></i>mild overfit</span>
+        <span><i style="background:var(--bad)"></i>strong overfit</span>
+        <span>┆ noise floor 1.60 kW</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">04</span> What's built</h2>
+    <div class="grid-2">
+      <div class="card">
+        <ul class="clean">
+          <li><b>2D SCADA view.</b> BMS-style P&amp;ID with faceplates, editable setpoints, duty rotation, before→after impact, plant summary.</li>
+          <li><b>3D plant view.</b> Full three.js plant room — reference-modelled centrifugal chillers, two-cell crossflow towers, end-suction pump sets, tanks and valves — live data tiles on every unit, orbit/zoom, click-to-select.</li>
+          <li><b>Calibration guard.</b> Live badge flags whether current inputs sit inside the data-validated region or are being extrapolated.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="clean">
+          <li><b>Scoring API.</b> <code>npm run api</code> exposes stateless, deterministic endpoints: POST control inputs → efficiency + full state + confidence flag. Batch mode for ML sweeps.</li>
+          <li><b>Validation suite.</b> Replay scripts (<code>validateRow86</code>, <code>validateMvWindow</code>) rerun the full evidence chain on demand — a regression gate for any model change.</li>
+          <li><b>ML-ready.</b> Every response carries the calibration status so an optimiser can't chase savings outside the validated envelope.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">05</span> Roadmap to airport deployment</h2>
+    <p class="section-note">Accuracy at today's operating point is maxed — it sits at the plant's own noise floor. The remaining gains are about <b>widening the validated envelope</b>, and they need data, not a fancier algorithm. In order:</p>
+    <div class="ladder">
+      <div class="step"><span class="num">01</span><div class="body"><div class="t">Step tests</div><div class="d">Deliberately move CHWS / CWS / DP and hold — identifies the setpoint sensitivities passive data can't.</div></div><span class="tag good">highest value</span></div>
+      <div class="step"><span class="num">02</span><div class="body"><div class="t">Wider trend data</div><div class="d">Multi-month export covering more load, weather and staging to widen the calibrated band.</div></div><span class="tag done">data</span></div>
+      <div class="step"><span class="num">03</span><div class="body"><div class="t">Component curves</div><div class="d">Per-chiller performance curves, effectiveness-NTU towers, per-tower fan control.</div></div><span class="tag done">model</span></div>
+      <div class="step"><span class="num">04</span><div class="body"><div class="t">Online recalibration</div><div class="d">Auto-refit as live BMS streams in — tracks fouling, ageing and seasons; doubles as fault detection.</div></div><span class="tag done">on-prem</span></div>
+      <div class="step"><span class="num">05</span><div class="body"><div class="t">Shadow → advisory → closed-loop</div><div class="d">Run beside the BMS, publish accuracy, let operators apply suggestions, then automate with guardrails.</div></div><span class="tag done">rollout</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="callout">
+      <h3>⚠ Honest limits — state these upfront</h3>
+      <ul>
+        <li><b>Can't beat the noise floor.</b> At the current operating point the twin is as accurate as the data allows (±0.29%); the plant itself doesn't repeat exactly.</li>
+        <li><b>Narrow calibrated band.</b> Confident within RT ≈ 2600–3470, CHWS ≈ 7.5, CWS ≈ 29. Outside, outputs are physics extrapolations, flagged as such.</li>
+        <li><b>CHWS sensitivity unproven.</b> The setpoint never moved in the data — a step test is required before trusting CHWS-reset recommendations in closed loop.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="foot">Physics engine + calibration validated offline (replay &amp; block cross-validation scripts, rerunnable). Figures from the Dec-2025 M&amp;V window of T1_MVrawDataR2. Prepared as a plant-team status update.</p>
+
+</div>
+
+<script>
+  const data = [
+    { name: "Grey-box linear", cv: 1.65, cls: "g", ratio: "1.03×" },
+    { name: "Robust linear", cv: 1.66, cls: "g", ratio: "1.04×" },
+    { name: "Polynomial deg-2", cv: 1.83, cls: "w", ratio: "1.14×" },
+    { name: "Gaussian process", cv: 2.27, cls: "b", ratio: "1.42×" },
+    { name: "Polynomial deg-3", cv: 2.56, cls: "b", ratio: "1.60×" },
+    { name: "Polynomial deg-5", cv: 2.98, cls: "b", ratio: "1.87×" },
+  ];
+  const MAX = 3.2, FLOOR = 1.60;
+  const chart = document.getElementById("chart");
+  data.forEach((d) => {
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML =
+      '<div class="bar-label">' + d.name + '</div>' +
+      '<div class="bar-track" title="' + d.name + ': ' + d.cv.toFixed(2) + ' kW block-CV RMSE (' + d.ratio + ' the noise floor)">' +
+        '<div class="floor-line" style="left:' + (FLOOR / MAX * 100) + '%"></div>' +
+        '<div class="bar-fill ' + d.cls + '" style="width:' + (d.cv / MAX * 100) + '%">' +
+          '<span>' + d.cv.toFixed(2) + '  ·  ' + d.ratio + '</span>' +
+        '</div>' +
+      '</div>';
+    chart.appendChild(row);
+  });
+</script>
+</body>
+</html>

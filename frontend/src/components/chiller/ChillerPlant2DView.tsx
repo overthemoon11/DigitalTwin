@@ -9,6 +9,7 @@ import { ScadaPipe } from './ScadaPipe';
 import { ScadaLegend } from './ScadaLegend';
 import { PipeLoopLabel } from './PipeLoopLabel';
 import { ScadaZonePanel, ScadaZoneTitle } from './ScadaZone';
+import ChillerPlant3DView from './ChillerPlant3DView';
 import { EquipLabel } from './EquipLabel';
 import { EquipSprite } from './EquipSprite';
 import { EQUIP_IMG } from './equipmentImages';
@@ -144,6 +145,8 @@ export default function ChillerPlant2DView({ equipment, headers, kpis, selectedI
 
   // Plant summary + per-subsystem efficiency (kW/Ton) for the pop-up panel.
   const [showSummary, setShowSummary] = useState(false);
+  // 3D (three.js) plant view — overlays the SVG; same selection + live data.
+  const [view3d, setView3d] = useState(false);
   const kNum = (id: string) => Number(kpi(id)?.value ?? NaN);
   const sumFlowM3h = (cat: string) =>
     Object.values(equipment)
@@ -181,11 +184,36 @@ export default function ChillerPlant2DView({ equipment, headers, kpis, selectedI
         >
           Σ Summary
         </button>
-        <button type="button" onClick={() => zoomStep(true)} title="Zoom in">+</button>
-        <button type="button" onClick={() => zoomStep(false)} title="Zoom out">−</button>
-        <button type="button" onClick={clearSelection} title="Fit full plant">⊡</button>
+        <button
+          type="button"
+          className={`scada-summary-btn ${view3d ? 'active' : ''}`}
+          onClick={() => setView3d((v) => !v)}
+          title={view3d ? 'Back to 2D P&ID view' : 'Switch to 3D plant view'}
+        >
+          {view3d ? '◱ 2D' : '⬢ 3D'}
+        </button>
+        {!view3d && (
+          <>
+            <button type="button" onClick={() => zoomStep(true)} title="Zoom in">+</button>
+            <button type="button" onClick={() => zoomStep(false)} title="Zoom out">−</button>
+            <button type="button" onClick={clearSelection} title="Fit full plant">⊡</button>
+          </>
+        )}
       </div>
-      <p className="scada-viewport-hint">Scroll to zoom · drag background to pan · click equipment to focus · click again to unfocus</p>
+      <p className="scada-viewport-hint">
+        {view3d
+          ? 'Drag to orbit · scroll to zoom · right-drag to pan · click equipment to select'
+          : 'Scroll to zoom · drag background to pan · click equipment to focus · click again to unfocus'}
+      </p>
+
+      {view3d && (
+        <ChillerPlant3DView
+          equipment={equipment}
+          headers={headers}
+          selectedId={selectedId}
+          onSelect={onSelect}
+        />
+      )}
 
       {showSummary && (
         <div className="scada-summary" role="dialog">

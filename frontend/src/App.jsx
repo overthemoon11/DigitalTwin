@@ -163,6 +163,25 @@ function App() {
         </div>
         <div className="header-info">
           {/* <span className="plant-mode-badge">Physics · offline</span> */}
+          {/* Status brief link hidden — page still served at /docs/status.html
+          <a
+            className="header-doc-link"
+            href="/docs/status.html"
+            target="_blank"
+            rel="noreferrer"
+            title="Digital twin status brief — calibration, validation & roadmap"
+          >
+            📊 Status
+          </a> */}
+          <a
+            className="header-doc-link"
+            href="/docs/user-guide.html"
+            target="_blank"
+            rel="noreferrer"
+            title="User manual — how to use this app"
+          >
+            📖 Guide
+          </a>
           <span
             className={`connection-status ${isConnected ? "connected" : "disconnected"}`}
           >
