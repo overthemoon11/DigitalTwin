@@ -257,7 +257,7 @@ export default function ChillerPlant2DView({ equipment, headers, kpis, selectedI
         <ScadaZonePanel x={ZONE.TOWERS.x} y={ZONE.TOWERS.y} width={ZONE.TOWERS.w} height={ZONE.TOWERS.h} fill={LOOP.cws.fill} />
         <ScadaZonePanel x={ZONE.MAKEUP.x} y={ZONE.MAKEUP.y} width={ZONE.MAKEUP.w} height={ZONE.MAKEUP.h} fill={LOOP.cws.fill} />
         <ScadaZonePanel x={ZONE.CHILLERS.x} y={ZONE.CHILLERS.y} width={ZONE.CHILLERS.w} height={ZONE.CHILLERS.h} fill="rgba(226,232,240,0.55)" />
-        <ScadaZonePanel x={188} y={ZONE.CHW_LOOP.y} width={860} height={ZONE.CHW_LOOP.h} fill={LOOP.chws.fill} />
+        <ScadaZonePanel x={ZONE.CHW_LOOP.x} y={ZONE.CHW_LOOP.y} width={ZONE.CHW_LOOP.w} height={ZONE.CHW_LOOP.h} fill={LOOP.chws.fill} />
 
         {/* —— PIPING —— */}
         {condPaths.map((p, i) => (

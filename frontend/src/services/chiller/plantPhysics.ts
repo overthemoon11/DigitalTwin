@@ -1,14 +1,24 @@
 /** Physical constants and deterministic plant calculations. */
 
 /* Plant inventory + reference constants calibrated to the real T1 plant from
- * the Dec-2025 BMS trend (T1_MVrawDataR2), MONTH-WIDE (29,412 valid minutes;
- * RT reconstructed from riser flows × ΔT, verified to 0.13% against the
- * 133-row M&V window — the only rows where the RT column is populated):
- *   per-row kW/RT ≈ 0.588 (p10 0.577 / p90 0.600) · kW = −261 + 0.669·RT (3 chillers)
- *   ΔT ≈ 6.9–7.1 °C · condenser rise 4.43 °C · CWS 28.6 · wet-bulb 25.2 · approach 3.4
- *   per running unit: chiller ≈ 532 kW · CHWP ≈ 19.4 · CWP ≈ 54 · CT fan ≈ 14
- *   staging locked 3 chillers / 3 CHWP / 3 CWP across the band; CT count floats ~4.
- * (The M&V snapshot alone runs ~3% less efficient, 0.605 kW/RT — 2.2 h of the month.) */
+ * the Dec-2025 BMS trend (T1_MVrawDataR2). RT is reconstructed from riser
+ * flows × ΔT (verified to 0.13% against the 133-row M&V window — the only rows
+ * where the dataset's RT column is populated).
+ *
+ * LIVE CHILLER-kW MODEL (the one the engine evaluates, controlEngine.ts):
+ *   chKw = (CH_KW_INTERCEPT + CH_KW_SLOPE_PER_PCT × loadPct)
+ *          × kwFactor(CHWS) × condenserLiftFactor(CWS)
+ * an AFFINE part-load curve in per-chiller load %, least-squares fit over the
+ * 133 M&V rows (constants in t1Snapshot.ts: intercept −44.11 kW, slope 6.884
+ * kW/%load); efficiency improves with load like the real plant. Replay of all
+ * 133 rows lands at +0.03% bias / 0.28% MAE — the dataset's own noise floor.
+ * The condenser-lift 5.23%/°C is FITTED from month-wide CWS variation; the
+ * CHWS 3%/°C is literature (the setpoint never moved in the data).
+ *
+ * Descriptive band statistics (for reference, not used directly):
+ *   per-row kW/RT ≈ 0.60–0.61 across the M&V window
+ *   ΔT ≈ 6.5–6.8 °C · condenser rise ≈ 4.4 °C · CWS ≈ 28.6 · wet-bulb ≈ 25.5
+ *   staging locked at 3 chillers / 3 CHWP / 3 CWP; CT count floats 3–5. */
 export const CHILLER_CAPACITY_RT = 1250;
 export const CHILLER_COUNT = 5;
 export const CHWP_COUNT = 6;

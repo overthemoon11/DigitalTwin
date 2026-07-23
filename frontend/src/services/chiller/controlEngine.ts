@@ -1394,6 +1394,154 @@ export function predictPlant(
   }
 }
 
+/** Compact, deterministic evaluation of the plant at one set of control inputs. */
+export interface PlantEvaluation {
+  /** Resolved control values actually used (after clamping to each range). */
+  inputs: Record<string, number>;
+  efficiency: { kwPerRt: number; cop: number };
+  power: { totalKw: number; chillerKw: number; chwpKw: number; cwpKw: number; ctKw: number };
+  thermal: {
+    buildingLoadRt: number;
+    deltaT: number;
+    chws: number;
+    chwr: number;
+    cws: number;
+    cwr: number;
+    condFlowM3h: number;
+    towerApproach: number;
+    wetBulb: number;
+  };
+  staging: { chillers: number; chwp: number; cwp: number; ct: number };
+  /** Data-calibration status of these inputs (low confidence if extrapolated). */
+  calibration: { status: 'calibrated' | 'extrapolated'; reasons: string[] };
+  alarms: number;
+}
+
+/**
+ * Stateless, deterministic scoring of the plant at a set of control inputs —
+ * the evaluation function for external optimisers / ML pipelines. Like
+ * predictPlant, every mutable module global is snapshotted and restored, so
+ * concurrent calls never interfere and the live simulator is untouched.
+ *
+ * Inputs are clamped to each control's operating range but NOT snapped to the
+ * UI step grid, so the response surface stays continuous for gradient-based
+ * search. Dynamics are snapped to the inputs, so the returned steady state is a
+ * pure function of `overrides` (+ optional duty) — same input → same output.
+ */
+export function evaluatePlant(
+  overrides: Record<string, number>,
+  opts: { duty?: Partial<Record<DutyCategory, number[]>> } = {}
+): PlantEvaluation {
+  const savedControls = controls;
+  const savedInternals = internals;
+  const savedDuty = dutyOrders;
+  const savedTrigger = lastCascadeTrigger;
+  const savedCtrlId = lastControlId;
+  const savedScenario = lastScenarioId;
+  const savedCtx = lastCascadeCtx;
+  const savedBefore = lastBeforeCtx;
+  const savedChanges = lastChanges;
+  const savedKpiSnap = lastKpiSnapshot;
+  const savedBeforeKpis = lastBeforeKpis;
+  try {
+    controls = savedControls.map((c) => {
+      if (overrides[c.id] == null) return { ...c };
+      const raw = overrides[c.id];
+      const fallback = typeof c.value === 'number' ? c.value : c.min;
+      // Clamp to range, keep continuous (no step snap), round off float noise.
+      return { ...c, value: round(clamp(Number.isFinite(raw) ? raw : fallback, c.min, c.max), 4) };
+    });
+    dutyOrders = {
+      chiller: [...(opts.duty?.chiller ?? savedDuty.chiller)],
+      chwp: [...(opts.duty?.chwp ?? savedDuty.chwp)],
+      cwp: [...(opts.duty?.cwp ?? savedDuty.cwp)],
+      ct: [...(opts.duty?.ct ?? savedDuty.ct)],
+    };
+    internals = cloneInternals(savedInternals);
+    // Snap dynamics so the steady state depends only on the inputs.
+    internals.chwsActual = getControl('ctrl-chws-sp') || 7;
+    internals.cwsActual = getControl('ctrl-cws-sp') || 29;
+    internals.cwrActual = getControl('ctrl-cwr-sp') || REF_CWR_SP;
+    internals.ctFanSpeed = getControl('ctrl-ct-fan') > 0 ? getControl('ctrl-ct-fan') : REF_CT_FAN;
+    internals.bypassPercent = 0;
+
+    const state = runControlStep();
+    const kv = (id: string) => {
+      const k = state.kpis.find((x) => x.id === id);
+      return typeof k?.value === 'number' ? k.value : NaN;
+    };
+    const h = state.headers;
+    return {
+      inputs: Object.fromEntries(
+        controls.map((c) => [c.id, typeof c.value === 'number' ? c.value : NaN])
+      ),
+      efficiency: { kwPerRt: kv('kpi-eff'), cop: kv('kpi-cop') },
+      power: {
+        totalKw: kv('kpi-kw'),
+        chillerKw: kv('kpi-ch-kw'),
+        chwpKw: kv('kpi-chwp-kw'),
+        cwpKw: kv('kpi-cwp-kw'),
+        ctKw: kv('kpi-ct-kw'),
+      },
+      thermal: {
+        buildingLoadRt: h.buildingLoadRt,
+        deltaT: kv('kpi-chw-dt'),
+        chws: h.chws,
+        chwr: h.chwr,
+        cws: h.cws,
+        cwr: h.cwr,
+        condFlowM3h: h.condFlowM3h ?? NaN,
+        towerApproach: kv('kpi-approach'),
+        wetBulb: kv('kpi-wetbulb'),
+      },
+      staging: {
+        chillers: kv('kpi-rch'),
+        chwp: kv('kpi-rchwp'),
+        cwp: kv('kpi-rcwp'),
+        ct: kv('kpi-rct'),
+      },
+      calibration: state.simulation.calibration ?? { status: 'calibrated', reasons: [] },
+      alarms: state.alerts.filter((a) => a.severity === 'critical').length,
+    };
+  } finally {
+    controls = savedControls;
+    internals = savedInternals;
+    dutyOrders = savedDuty;
+    lastCascadeTrigger = savedTrigger;
+    lastControlId = savedCtrlId;
+    lastScenarioId = savedScenario;
+    lastCascadeCtx = savedCtx;
+    lastBeforeCtx = savedBefore;
+    lastChanges = savedChanges;
+    lastKpiSnapshot = savedKpiSnap;
+    lastBeforeKpis = savedBeforeKpis;
+  }
+}
+
+/**
+ * The manipulable control input space — id, label, unit, default, operating
+ * bounds and step. Lets an API client discover the input schema programmatically.
+ */
+export function getPlantInputSchema(): Array<{
+  id: string;
+  label: string;
+  unit: string;
+  default: number;
+  min: number;
+  max: number;
+  step: number;
+}> {
+  return defaultControls().map((c) => ({
+    id: c.id,
+    label: c.label,
+    unit: c.unit ?? '',
+    default: typeof c.value === 'number' ? c.value : c.min,
+    min: c.min,
+    max: c.max,
+    step: c.step,
+  }));
+}
+
 export const EQUIPMENT_DEFS = [
   'ct-1', 'ch-1', 'cwp-1', 'chwp-1', 'cwmutnk-41-1',
 ];

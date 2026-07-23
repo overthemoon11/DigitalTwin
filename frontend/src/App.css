@@ -1207,7 +1207,7 @@ input[type="range"]:active::-moz-range-thumb {
 .scada-metrics {
   position: absolute;
   left: 8px;
-  bottom: 100px;
+  bottom: 40px;
   z-index: 2;
   display: flex;
   background: rgba(255, 255, 255, 0.96);

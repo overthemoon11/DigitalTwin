@@ -13,6 +13,10 @@ import { T1_MV_ROWS, mvRowById, buildRowReplayPayload } from '../../services/chi
  * measured dataset value and the sim − dataset delta, colour-coded.
  */
 
+/** Show the "Replay dataset row…" validation picker in the BMS Points tab.
+ *  Set to true to re-enable it. */
+const SHOW_ROW_REPLAY = false;
+
 const fmt = (v, d = 2) =>
   typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '—';
 
@@ -208,7 +212,7 @@ export default function ChillerPointsList({
     <div className="pts-list" key={validating ? 'validate' : 'live'}>
       <div className="pts-title">BMS POINTS — T1 DATASET</div>
 
-      {onApplyScenarioPayload && (
+      {SHOW_ROW_REPLAY && onApplyScenarioPayload && (
         <div className={`pts-scenario ${activeRow ? 'active' : ''}`}>
           <select
             className="pts-row-select"

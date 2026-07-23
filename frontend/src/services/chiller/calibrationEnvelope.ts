@@ -15,7 +15,10 @@ export interface CalibrationCheck {
   reasons: string[];
 }
 
-const BOUNDS: Record<string, { min: number; max: number; label: string; unit: string }> = {
+export const CALIBRATION_BOUNDS: Record<
+  string,
+  { min: number; max: number; label: string; unit: string }
+> = {
   'ctrl-building-load': { min: 2600, max: 3470, label: 'Cooling load', unit: 'RT' },
   'ctrl-chws-sp': { min: 7.4, max: 7.7, label: 'CHWS setpoint', unit: '°C' },
   'ctrl-cws-sp': { min: 27.4, max: 29.5, label: 'CWS setpoint', unit: '°C' },
@@ -36,7 +39,7 @@ export function assessCalibrationEnvelope(
   runningChillers: number,
 ): CalibrationCheck {
   const reasons: string[] = [];
-  for (const [id, b] of Object.entries(BOUNDS)) {
+  for (const [id, b] of Object.entries(CALIBRATION_BOUNDS)) {
     const v = getControl(id);
     if (Number.isFinite(v) && (v < b.min || v > b.max)) {
       reasons.push(`${b.label} ${v} ${b.unit} outside calibrated ${b.min}–${b.max} ${b.unit}`);
