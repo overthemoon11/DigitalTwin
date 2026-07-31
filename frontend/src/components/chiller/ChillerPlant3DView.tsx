@@ -404,9 +404,23 @@ export default function ChillerPlant3DView({ equipment, headers, selectedId, onS
      * suction flange facing the header + top discharge flange, coupling guard,
      * finned motor on mounting blocks. `flip` turns the set 180° so front-row
      * (CHWP) suctions face their header. */
-    const buildEndSuctionPump = (opts: { body: number; motor: number; guard: number; flip?: boolean }) =>
+    const buildEndSuctionPump = (opts: {
+      body: number;
+      motor: number;
+      guard: number;
+      flip?: boolean;
+      scale?: number;
+      labelRows?: number;
+      labelW?: number;
+    }) =>
       (g: THREE.Group, mats: THREE.MeshStandardMaterial[]) => {
       if (opts.flip) g.rotation.y = Math.PI;
+      const s = opts.scale ?? 1;
+      /* all pump geometry goes in an inner group so `scale` shrinks the whole
+       * skid without touching the (readable) data-tile sprite on the outer group */
+      const p = new THREE.Group();
+      p.scale.setScalar(s);
+      g.add(p);
       const blue = new THREE.MeshStandardMaterial({ color: opts.body, roughness: 0.35, metalness: 0.15 });
       const skidBlue = new THREE.MeshStandardMaterial({ color: 0x2559a8, roughness: 0.5 });
       const red = new THREE.MeshStandardMaterial({ color: opts.guard, roughness: 0.4 });
@@ -416,65 +430,67 @@ export default function ChillerPlant3DView({ equipment, headers, selectedId, onS
 
       const skid = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.35, 5.0), skidBlue);
       skid.position.y = 0.35;
-      g.add(skid);
+      p.add(skid);
 
       /* volute on pedestal, axial suction flange, top discharge flange */
       const volute = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.85, 20), blue);
       volute.rotation.x = Math.PI / 2;
       volute.position.set(0, AX, -1.7);
-      g.add(volute);
+      p.add(volute);
       const pedestal = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.5), blue);
       pedestal.position.set(0, 0.8, -1.7);
-      g.add(pedestal);
+      p.add(pedestal);
       const suction = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.5, 14), blue);
       suction.rotation.x = Math.PI / 2;
       suction.position.set(0, AX, -2.35);
-      g.add(suction);
+      p.add(suction);
       const sucFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.14, 16), blue);
       sucFlange.rotation.x = Math.PI / 2;
       sucFlange.position.set(0, AX, -2.62);
-      g.add(sucFlange);
+      p.add(sucFlange);
       const discharge = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.62, 12), blue);
       discharge.position.set(0, AX + 0.72, -1.7);
-      g.add(discharge);
+      p.add(discharge);
       const disFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.12, 16), blue);
       disFlange.position.set(0, 2.32, -1.7);
-      g.add(disFlange);
+      p.add(disFlange);
 
-      /* red coupling guard on a leg */
+      /* coupling guard on a leg */
       const guard = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.85, 14), red);
       guard.rotation.x = Math.PI / 2;
       guard.position.set(0, AX, -0.85);
-      g.add(guard);
+      p.add(guard);
       const guardLeg = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.85, 0.1), red);
       guardLeg.position.set(0, 0.85, -0.85);
-      g.add(guardLeg);
+      p.add(guardLeg);
 
-      /* finned motor + fan cowl + terminal box on mounting blocks */
+      /* finned TEFC motor + fan cowl + terminal box on mounting blocks */
       const block = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 1.5), navy);
       block.position.set(0, 0.6, 0.75);
-      g.add(block);
+      p.add(block);
       const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 2.0, 18), navy);
       motor.rotation.x = Math.PI / 2;
       motor.position.set(0, AX, 0.75);
-      g.add(motor);
+      p.add(motor);
       for (let f = 0; f < 4; f++) {
         const fin = new THREE.Mesh(new THREE.TorusGeometry(0.63, 0.035, 6, 18), navy);
         fin.position.set(0, AX, 0.3 + f * 0.32);
-        g.add(fin);
+        p.add(fin);
       }
       const cowl = new THREE.Mesh(new THREE.CylinderGeometry(0.67, 0.67, 0.4, 18), navy);
       cowl.rotation.x = Math.PI / 2;
       cowl.position.set(0, AX, 1.95);
-      g.add(cowl);
+      p.add(cowl);
       const tbox = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.42, 0.62), navy);
       tbox.position.set(0, AX + 0.72, 0.75);
-      g.add(tbox);
+      p.add(tbox);
 
-      return { labelY: 3.2, labelRows: 3, labelW: 5.6 };
+      return { labelY: 3.2 * s + 0.4, labelRows: opts.labelRows ?? 3, labelW: opts.labelW ?? 5.6 };
     };
     const cwPump = () => buildEndSuctionPump({ body: 0x2f6cb5, motor: 0x2e3d51, guard: 0xd23327 });
     const chwPump = () => buildEndSuctionPump({ body: 0x2565c0, motor: 0x2565c0, guard: 0xf0c419, flip: true });
+    /* make-up pumps — same end-suction set, scaled down, blue TEFC (reference) */
+    const mupPump = () => buildEndSuctionPump({ body: 0x2565c0, motor: 0x33517a, guard: 0x2565c0, scale: 0.6, labelRows: 1, labelW: 5 });
     CH_XS.forEach((x, i) => addUnit(`cwp-${i + 1}`, x, CWP_Z, 'default', cwPump()));
     addUnit('cwp-6', STANDBY_X, CWP_Z, 'default', cwPump());
     /* chilled-water pumps — royal blue with yellow coupling guard (reference),
@@ -744,21 +760,7 @@ export default function ChillerPlant3DView({ equipment, headers, selectedId, onS
     addUnit('exptnk-01', EXPTNK_X[0], EXPTNK_Z, 'default', buildExpTank());
     addUnit('exptnk-02', EXPTNK_X[1], EXPTNK_Z, 'default', buildExpTank());
     addUnit('cwmutnk-41-1', TANK.x, TANK.z, 'default', buildLeggedTank(0x2f7fd6, 1.9, 4.0, 1));
-    MUP_X.forEach((x, i) => {
-      addUnit(`cwmup-${i + 1}`, x, -24, 'default', (g, mats) => {
-        const body = new THREE.MeshStandardMaterial({ color: COLOR.pumpBody, roughness: 0.45 });
-        mats.push(body);
-        const volute = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 1, 14), body);
-        volute.rotation.x = Math.PI / 2;
-        volute.position.y = 0.8;
-        g.add(volute);
-        const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 1.7, 14), new THREE.MeshStandardMaterial({ color: COLOR.pumpMotor }));
-        motor.rotation.x = Math.PI / 2;
-        motor.position.set(0, 0.8, 1.3);
-        g.add(motor);
-        return { labelY: 2.2, labelRows: 1, labelW: 5 };
-      });
-    });
+    MUP_X.forEach((x, i) => addUnit(`cwmup-${i + 1}`, x, -24, 'default', mupPump()));
     /* bypass valves — chrome inline pressure-bypass valve (reference style):
      * body with compression nuts on both ends, rising bonnet, black knurled
      * lock ring and graduated adjustment cap. Sits inline on the bypass run. */

@@ -101,7 +101,7 @@ export const EXPTNK_SLOT = 72;
 export const EXPTNK_X = [PLANT_WIDTH - 360, PLANT_WIDTH - 360 + 30 + EXPTNK_SLOT];
 
 /** Bypass valves — between M / H rise branches */
-export const BYPASS_X = PLANT_WIDTH - 420;
+export const BYPASS_X = PLANT_WIDTH - 725;
 export const BYPASS_Y = [610, 655];
 
 /** Medium / High rise */
