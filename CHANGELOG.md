@@ -4,6 +4,56 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **Chiller twin recalibrated to the whole Dec-2025 trend.** Every reference
+  level was previously anchored to dataset row 1 (Dec-1 00:00). That row is an
+  outlier — its CHWP and CT meters read ~22% above the month norm — and the twin
+  carried that bias into every other minute. Month-wide plant-kW replay improves
+  from **3.86% MAE / +3.45% bias to 0.97% MAE / +0.02% bias** across 43,026
+  minutes. The trade is a looser M&V window (0.28% → 0.95% on those 133 rows),
+  which is the intended direction: that window is 2.2 hours of the outlier day.
+- **Staging thresholds taken from observed behaviour.** Three chillers carry T1
+  to its monthly peak; the previous 90%-of-nameplate rule (1125 RT/unit) started
+  a fourth several hundred RT early. Now 1184 RT/unit, measured.
+- **Condenser lift de-confounded**, 5.23 → 4.52 %/°C. Load and CWS correlate at
+  r = 0.67, so the joint fit attributes load to CWS; the shipped value is the
+  pooled within-load-bin slope. Still above the literature range, so it stays
+  flagged for a CWS step test before closed-loop use.
+- **Tower fan law rewritten** to key off approach (CWS − wet-bulb) instead of
+  the CWS setpoint alone, which conflated "the operator asked for colder water"
+  with "the weather got cooler". Tower kW MAE 29% → 8%.
+- **Reference weather corrected**: default RH 65 → 59.37 %, so the engine's
+  Stull estimate lands on the plant's median measured wet-bulb (24.8 °C rather
+  than 25.7 °C). The tower model depends on this.
+- API `/health` and `/schema` now report the calibration basis, the blocked-CV
+  score, and the known limits of the fit.
+
+### Added
+
+- `frontend/scripts/calibrateFromDataset.py` — staged grey-box calibration:
+  exclusion masks, an identifiability audit that refuses to fit parameters the
+  data cannot determine, a changepoint scan, per-component fits, and blocked
+  cross-validation. Emits the generated `t1MonthCalibration.ts`, `t1MvRows.ts`
+  and `t1Row86.ts`.
+- `frontend/scripts/validateMonth.ts` — replays all 43,026 usable minutes
+  through the real engine (not a re-implementation) and fails above a 1.5% gate.
+- Replay payloads can now pin measured **CWS, wet-bulb and staging counts**.
+  Staging is a BMS decision, so on a historical replay it is an input;
+  `--stage-model` scores the twin's own staging heuristics instead.
+
+### Notes
+
+- Machine-learning surrogates were benchmarked and rejected: on identical
+  blocked folds, gradient-boosted trees scored 1.18–1.20% against 0.83% for
+  physics-structured least squares, and got the CWS counterfactual sign
+  asymmetric. See §8 of `docs/chiller-plant-controls-and-physics.md`.
+- The twin no longer reproduces dataset row 1 exactly at boot; it now boots at
+  the month's median operating point. `validateRow86.ts`'s boot guard was
+  updated to match.
+
 ## [2.0.0] - 2026-03-12
 
 ### Added

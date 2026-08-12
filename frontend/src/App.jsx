@@ -150,7 +150,7 @@ function App() {
               className={`app-view-tab ${activeAppTab === "chiller_plant" && isEtsScenario ? "active" : ""}`}
               onClick={() => openPlantScenario("ets")}
             >
-              Heat Exchanger
+              Distrinct Cooling
             </button>
             <button
               type="button"

@@ -10,42 +10,46 @@
 import { applyChillerScenario, stepPlantSimulation } from '../src/services/chiller/controlEngine';
 import { HL_CP_RATIO, CHWP_VSD_RATIO, CWP_VSD_RATIO } from '../src/services/chiller/t1Snapshot';
 import { ROW86_EXPECTED, ROW86_SCENARIO_ID } from '../src/services/chiller/t1Row86';
+import {
+  DEFAULT_LOAD_RT,
+  DEFAULT_CHWS_SP,
+  DEFAULT_CWS,
+  MEDIAN_LOOP_DELTA_T,
+  MEDIAN_PLANT_KW_PER_RT,
+} from '../src/services/chiller/t1MonthCalibration';
 
-/* Guard: the default boot vs dataset row 1. Since the least-squares part-load
- * calibration (2026-07-17), kW points sit within the window's ±1% scatter
- * (row 1 is a +0.56% outlier of the fit); temps/flows/ΔT must stay EXACT. */
+/* Guard: the default boot state.
+ *
+ * This USED to assert that boot reproduced dataset row 1 exactly. That anchor
+ * was dropped in the 2026-08-07 month-wide recalibration — row 1 is an outlier
+ * (its CHWP and CT meters read ~22% above the month norm), and matching it cost
+ * ~3.9% accuracy on every other minute. Boot now lands on the month's MEDIAN
+ * operating point, so that is what is guarded here. */
 const boot = stepPlantSimulation();
 const bootKval = (id: string) => {
   const k = boot.kpis.find((x: any) => x.id === id);
   return typeof k?.value === 'number' ? k.value : NaN;
 };
-const exact: Array<[string, string, string]> = [
-  ['deltaT', bootKval('kpi-chw-dt').toFixed(2), '6.55'],
-  ['Header-hcwrt', boot.headers.chwr.toFixed(2), '14.07'],
-  ['CH-2-ChwSt', ((boot.equipment as any)['ch-2'].supplyTemp as number).toFixed(2), '7.48'],
-  ['DPM-CHWP-2-kW', ((boot.equipment as any)['chwp-2'].powerKw as number).toFixed(2), '23.35'],
+const bootChecks: Array<[string, number, number, number]> = [
+  ['plant load RT', boot.headers.buildingLoadRt, DEFAULT_LOAD_RT, 0.1],
+  ['CHWS', boot.headers.chws, DEFAULT_CHWS_SP, 0.5],
+  ['CWS', boot.headers.cws, DEFAULT_CWS, 1],
+  ['loop ΔT', bootKval('kpi-chw-dt'), MEDIAN_LOOP_DELTA_T, 3],
+  // Median plant kW at the median operating point, from the same fit.
+  ['plant kW', bootKval('kpi-kw'), DEFAULT_LOAD_RT * MEDIAN_PLANT_KW_PER_RT, 2],
 ];
-const withinPct: Array<[string, number, number, number]> = [
-  ['total kW', bootKval('kpi-kw'), 1917.69, 1],
-  ['kW/RT', bootKval('kpi-kw') / boot.headers.buildingLoadRt, 0.60859, 1],
-  ['DPM-CH-2-CP-1-kW', (boot.equipment as any)['ch-2'].cp1Kw, 271.23, 1],
-];
-console.log('ROW-1 BOOT GUARD (temps/flows exact; kW within window scatter):');
+console.log('BOOT GUARD — default state vs the month median operating point:');
 let bootFail = 0;
-for (const [name, got, want] of exact) {
-  const pass = got === want;
-  if (!pass) bootFail++;
-  console.log(`  ${pass ? 'ok  ' : 'FAIL'}  ${name.padEnd(20)} sim ${got.padStart(9)}   dataset ${want.padStart(9)}   (exact)`);
-}
-for (const [name, got, want, tolPct] of withinPct) {
+for (const [name, got, want, tolPct] of bootChecks) {
   const pct = (100 * (got - want)) / want;
   const pass = Math.abs(pct) <= tolPct;
   if (!pass) bootFail++;
   console.log(
-    `  ${pass ? 'ok  ' : 'FAIL'}  ${name.padEnd(20)} sim ${got.toFixed(4).padStart(9)}   dataset ${want.toFixed(4).padStart(9)}   (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}% vs ±${tolPct}%)`,
+    `  ${pass ? 'ok  ' : 'FAIL'}  ${name.padEnd(14)} sim ${got.toFixed(3).padStart(10)}   ` +
+      `month median ${want.toFixed(3).padStart(10)}   (${pct >= 0 ? '+' : ''}${pct.toFixed(2)}% vs ±${tolPct}%)`,
   );
 }
-if (bootFail) console.log(`  *** ${bootFail} row-1 boot regressions ***`);
+if (bootFail) console.log(`  *** ${bootFail} boot regressions ***`);
 console.log('');
 
 const state = applyChillerScenario(ROW86_SCENARIO_ID);

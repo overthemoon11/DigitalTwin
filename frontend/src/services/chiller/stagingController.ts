@@ -1,9 +1,22 @@
-import { CHILLER_CAPACITY_RT, CHILLER_COUNT, CHWP_COUNT, CWP_COUNT, CT_COUNT, REF_CHWP_FLOW, clamp } from './plantPhysics';
+import {
+  CHILLER_CAPACITY_RT,
+  CHILLER_COUNT,
+  CHWP_COUNT,
+  CWP_COUNT,
+  CT_COUNT,
+  clamp,
+} from './plantPhysics';
+import { STAGE_RT_PER_CHILLER, STAGE_FLOW_PER_CHWP } from './t1MonthCalibration';
 
-/** Stage 1 chiller per ~90% of nameplate capacity (T1: 5 × 1250 RT). */
-const STAGE_RT_PER_CHILLER = CHILLER_CAPACITY_RT * 0.9;
-
-/** Stage chillers from total cooling load (RT). */
+/**
+ * Stage chillers from total cooling load (RT).
+ *
+ * STAGE_RT_PER_CHILLER is CALIBRATED, not assumed: it is the 99.9th percentile
+ * of the per-chiller load T1 actually sustained on three machines over
+ * Dec-2025. The previous rule (90% of nameplate = 1125 RT) started a fourth
+ * chiller several hundred RT before the real plant does, which showed up in
+ * replay as the twin running 4 units on rows where the plant ran 3.
+ */
 export function stageChillers(totalLoadRt: number, chillerEnabled: boolean): number {
   if (!chillerEnabled || totalLoadRt <= 0) return 0;
   return clamp(Math.ceil(totalLoadRt / STAGE_RT_PER_CHILLER), 1, CHILLER_COUNT);
@@ -20,12 +33,12 @@ export function chillerLoadPercent(rtPerChiller: number): number {
   return clamp((rtPerChiller / CHILLER_CAPACITY_RT) * 100, 0, 100);
 }
 
-/** Stage CHWP pumps from total chilled-water flow (m³/h) — one pump per
- *  ~110% of its reference delivery (pumps ride above nominal before the next
- *  stages on; the Dec-2025 trend holds 3 CHWP through the whole 3100–3275 RT band). */
+/** Stage CHWP pumps from total chilled-water flow (m³/h). Like the chiller
+ *  threshold, STAGE_FLOW_PER_CHWP is the highest per-pump delivery the plant
+ *  sustained on three pumps over Dec-2025, not a nominal-capacity guess. */
 export function stageChwp(totalFlowM3h: number): number {
   if (totalFlowM3h <= 0) return 0;
-  return clamp(Math.ceil(totalFlowM3h / (REF_CHWP_FLOW * 1.1)), 1, CHWP_COUNT);
+  return clamp(Math.ceil(totalFlowM3h / STAGE_FLOW_PER_CHWP), 1, CHWP_COUNT);
 }
 
 /** CWP count follows operating chillers (standby available). */

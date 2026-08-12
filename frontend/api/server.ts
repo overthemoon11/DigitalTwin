@@ -21,6 +21,7 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { evaluatePlant, getPlantInputSchema } from '../src/services/chiller/controlEngine';
 import { CALIBRATION_BOUNDS } from '../src/services/chiller/calibrationEnvelope';
+import { CALIBRATION_FIT } from '../src/services/chiller/t1MonthCalibration';
 
 const PORT = Number(process.env.PORT ?? 8787);
 const MAX_BATCH = 2000;
@@ -83,7 +84,16 @@ const server = createServer(async (req, res) => {
         status: 'ok',
         model: 'T1 chiller-plant digital twin',
         deterministic: true,
-        note: 'kW/RT calibrated to Dec-2025 M&V window; replay MAE 0.28%.',
+        calibration: {
+          basis: `whole Dec-2025 BMS trend, ${CALIBRATION_FIT.rowsUsed.toLocaleString()} usable minutes`,
+          blockedCvMaePct: CALIBRATION_FIT.blockedCvMaePct,
+          monthReplayMaePct: 0.97,
+          note:
+            'Grey-box: the physics equations are fixed and only their constants ' +
+            'are fitted. Pump affinity exponents and the evaporator-reset ' +
+            'sensitivity are NOT identifiable from this data and are held at ' +
+            'physical/literature values — see /schema.',
+        },
       });
     }
 
@@ -92,6 +102,25 @@ const server = createServer(async (req, res) => {
         inputs: getPlantInputSchema(),
         calibratedEnvelope: CALIBRATION_BOUNDS,
         note: 'Inputs outside calibratedEnvelope return calibration.status="extrapolated" (low confidence).',
+        knownLimits: {
+          pumpSpeed:
+            'CHWP/CWP flow varies only 3.3% / 1.5% (p5→p95) in the calibration data, ' +
+            'so the affinity exponent is unidentifiable and the cube law is retained ' +
+            'on physics grounds. Pump power is accurate at the observed operating ' +
+            'point but unvalidated for large commanded VSD changes.',
+          condenserLift:
+            'Fitted at 4.52 %/°C by stratifying on load to break the load↔CWS ' +
+            'correlation (r = 0.67); a naive joint fit returns 5.08 %/°C. Still above ' +
+            'the 1.5–3.0 %/°C literature range, so confirm with a CWS step test ' +
+            'before closed-loop setpoint optimisation.',
+          coolingTowers:
+            'Fan speed is not instrumented in the source data, only the resulting ' +
+            'VSD kW. Tower kW carries ~8% MAE — the weakest block, though only ' +
+            '~3.3% of plant kW.',
+          evaporatorReset:
+            'The CHWS setpoint moves 0.07 °C p5→p95 in the data, so the 3 %/°C ' +
+            'sensitivity is the literature value, not a fitted one.',
+        },
         outputs: {
           'efficiency.kwPerRt': 'plant efficiency (kW per RT) — the objective',
           'efficiency.cop': 'plant COP (Q/P identity)',

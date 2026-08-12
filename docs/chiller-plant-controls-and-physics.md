@@ -399,7 +399,84 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 
 ---
 
-## 8. Related files
+## 8. Calibration against the real plant
+
+The engine's constants are fitted to the complete Dec-2025 BMS trend
+(`T1_MVrawDataR2_2025_12_completed.xlsx`) — 43,026 usable minutes of 44,640,
+excluding Dec-31 (the workbook's own audit sheet flags `DPM_CT_04_kW` missing
+all day), off-nominal staging, and startup rows below 1500 RT.
+
+### Approach: grey-box, not machine learning
+
+The physics equations are fixed and only their constants re-estimated. This was
+a measured decision, not a default. On identical blocked folds:
+
+| model | plant kW MAE |
+|-------|--------------|
+| **physics-structured least squares** | **0.83%** |
+| flat linear fit on physics variables | 0.97% |
+| physics + gradient-boosted residual | 1.06% |
+| gradient-boosted trees, 100 trees | 1.18% |
+| gradient-boosted trees, 400 trees | 1.20% |
+
+Accuracy falls monotonically as model capacity rises: the relationship *is* the
+physics equation, and the residual is sensor noise plus thermal transients. A
+black-box fit also gets the counterfactuals wrong — because load and CWS are
+weather-correlated (r = 0.67), it implied −2.20%/+2.64% plant kW per ∓1 °C of
+CWS, an asymmetry no single physical mechanism can produce.
+
+### What is and is not identifiable
+
+Parameters the data cannot determine are held at physical or literature values
+rather than fitted:
+
+| parameter | excitation in the data | treatment |
+|-----------|------------------------|-----------|
+| CHWP affinity exponent | flow/pump spans 3.3% p5→p95 | cube law retained |
+| CWP affinity exponent | flow/pump spans 1.5%; free fit returns **−0.65** | cube law retained |
+| evaporator reset | CHWS setpoint moves 0.07 °C | literature 3 %/°C |
+| condenser lift | CWS 25.9–29.3 °C but confounded with load | stratified fit, 4.52 %/°C |
+
+The lift coefficient is fitted *within* 0.5%-wide load bins so load is held
+roughly constant; a naive joint regression returns 5.08 %/°C. Both sit above the
+1.5–3.0 %/°C literature range, so it remains observational — confirm with a
+deliberate CWS step test before closed-loop use.
+
+### Result
+
+Replaying all 43,026 rows through the engine, driven by measured load, CHWS,
+achieved CWS, wet-bulb, CW ΔT setpoint, riser shares and running units:
+
+| | bias | MAE |
+|---|---|---|
+| **plant kW** | **+0.02%** | **0.97%** |
+| chillers (84.3% of plant kW) | +0.20% | 0.92% |
+| CHWP (3.3%) | +0.39% | 2.09% |
+| CWP (9.0%) | −1.55% | 2.96% |
+| CT fans (3.3%) | +1.13% | 8.22% |
+
+Loop ΔT MAE 0.09 °C. 92.1% of minutes land within 2%.
+
+Cooling towers are the weakest block because fan speed is not instrumented
+anywhere in the source data — only the resulting VSD kW — so there is nothing to
+fit a fan law against. At 3.3% of plant kW they contribute ~0.27% to the total.
+
+### What changed on 2026-08-07
+
+Previously every reference level was anchored to dataset **row 1** (Dec-1
+00:00). That row is an outlier: its CHWP and CT meters read ~22% above the month
+norm, and the twin carried that bias into every other minute (+3.86% month-wide
+MAE). Re-fitting to the whole month traded a tighter M&V window (0.28% → 0.95%
+on those 133 rows) for a 4× better month (3.86% → 0.97%). The engine also now
+stages from observed behaviour — three chillers carry T1 to its monthly peak,
+where the old 90%-of-nameplate rule started a fourth.
+
+Regenerate with `python frontend/scripts/calibrateFromDataset.py`; verify with
+`npx tsx frontend/scripts/validateMonth.ts --folds`.
+
+---
+
+## 9. Related files
 
 | File | Role |
 |------|------|
@@ -407,6 +484,11 @@ These are **correct in direction** for a demonstrator twin; coefficients are tun
 | `frontend/src/components/chiller/chillerControlMeta.js` | Per-control formula hints |
 | `frontend/src/services/chiller/controlEngine.ts` | Simulation step |
 | `frontend/src/services/chiller/plantPhysics.ts` | Physical constants & laws |
+| `frontend/src/services/chiller/t1MonthCalibration.ts` | **Generated** month-wide constants |
+| `frontend/src/services/chiller/t1Snapshot.ts` | Per-unit naming layer over the calibration |
 | `frontend/src/services/chiller/stagingController.ts` | Equipment staging |
 | `frontend/src/services/chiller/plantCascade.ts` | Domino-effect trace text |
+| `frontend/scripts/calibrateFromDataset.py` | Fits the constants from the workbook |
+| `frontend/scripts/validateMonth.ts` | Replays all 43,026 rows through the engine |
+| `frontend/scripts/validateMvWindow.ts` | Replays the 133 measured-RT rows |
 | `tests/validation/physics/validate_physics.py` | M&V formula validation |

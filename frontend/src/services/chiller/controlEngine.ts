@@ -13,6 +13,7 @@ import {
   REF_CHWP_FLOW,
   REF_CHWP_KW,
   REF_CHWP_SPEED,
+  REF_LOOP_DELTA_T,
   REF_AMBIENT_TEMP,
   REF_CHWR_SP,
   REF_CWR_SP,
@@ -85,12 +86,13 @@ import {
   CHWP_STANDBY_KW,
   CWP_STANDBY_KW,
 } from './t1Snapshot';
+import { CT_FAN_SPEED_COEFF, DEFAULT_CWS } from './t1MonthCalibration';
 
 const SIM_DT_SEC = 2;
 /** Design ΔT used ONLY to size required flow for CHWP staging. Matches the
- *  measured T1 loop ΔT (6.85 °C); the displayed loop ΔT is computed from the
- *  energy balance over the actual pumped flow, not from this constant. */
-const DESIGN_DELTA_T_FLOW = 6.85;
+ *  measured T1 loop ΔT (month median 6.88 °C); the displayed loop ΔT is computed
+ *  from the energy balance over the actual pumped flow, not from this constant. */
+const DESIGN_DELTA_T_FLOW = REF_LOOP_DELTA_T;
 
 /**
  * Static (steady-state) model. When true, every state variable jumps straight to
@@ -178,7 +180,9 @@ function defaultControls(): PlantControl[] {
       id: 'ctrl-cws-sp',
       controlType: 'cwsSetpoint',
       label: 'Condenser Water Supply Temp',
-      value: 29,
+      // The plant's median achieved CWS, not the 29 °C lift reference — booting
+      // at 29 charged the chillers a condenser lift the real plant never pays.
+      value: DEFAULT_CWS,
       ...CHILLER_CONTROL_CONSTRAINTS['ctrl-cws-sp'],
       unit: '°C',
       group: 'condenser',
@@ -282,6 +286,14 @@ let lastControlId: string | null = null;
 // Active dataset-replay / preset scenario — persists across ticks so the UI can
 // keep showing the sim-vs-dataset comparison; cleared on any manual edit.
 let lastScenarioId: string | null = null;
+/**
+ * Explicit running COUNT per category, when the caller knows it. Staging is a
+ * BMS/operator decision, so when replaying history it is an INPUT — the twin
+ * should not have to re-derive from load which units the plant chose to run.
+ * null = the load-driven staging rules decide, which is the live behaviour.
+ * Cleared by any manual edit, scenario without staging, or reset.
+ */
+let stagingOverride: Partial<Record<DutyCategory, number>> | null = null;
 // Domino-effect before→after support: the most recent tick's context (used as the
 // "before" snapshot the moment an Apply commits) plus the operator edits applied.
 let lastCascadeCtx: CascadeContext | null = null;
@@ -335,6 +347,7 @@ export function togglePlantDutyUnit(category: DutyCategory, unit: number): void 
   }
   lastControlId = `duty:${category}-${unit}`;
   lastScenarioId = null;
+  stagingOverride = null;
   lastBeforeCtx = null;
   lastBeforeKpis = null;
   lastChanges = null;
@@ -515,7 +528,10 @@ function runControlStep(): PlantState {
     800,
     6000
   );
-  const runningChCount = stageChillers(buildingDemandRt, chillerEnabled);
+  const runningChCount =
+    stagingOverride?.chiller != null && chillerEnabled
+      ? clamp(Math.round(stagingOverride.chiller), 0, CHILLER_COUNT)
+      : stageChillers(buildingDemandRt, chillerEnabled);
 
   // Fault redistribution — a tripped unit inside the staged set drops out of the
   // energy math and the survivors pick up its share (loadPct clamps at 100).
@@ -566,7 +582,10 @@ function runControlStep(): PlantState {
 
   // CHWP staging & speed (affinity laws)
   const chwpSpeed = pumpOverride > 0 ? pumpOverride : chwpSpeedFromDpSetpoint(Math.max(dpSp, dpSpHigh));
-  const runningChwp = stageChwp(totalChwFlow);
+  const runningChwp =
+    stagingOverride?.chwp != null
+      ? clamp(Math.round(stagingOverride.chwp), 0, CHWP_COUNT)
+      : stageChwp(totalChwFlow);
   const chwpRunUnits = dutyOrders.chwp.slice(0, runningChwp);
   const chwpRunSet = new Set(chwpRunUnits);
   const trippedChwpIdx = internals.faults.pumpTripId
@@ -614,7 +633,10 @@ function runControlStep(): PlantState {
   // this way), so pump power responds to load and to the ΔT setpoint.
   const totalChKw = chKw * chTrimSum;
   const condenserHeatKw = rtToKw(buildingDemandRt) + totalChKw;
-  const runningCwp = stageCwp(runningChCount);
+  const runningCwp =
+    stagingOverride?.cwp != null
+      ? clamp(Math.round(stagingOverride.cwp), 0, CWP_COUNT)
+      : stageCwp(runningChCount);
   const cwpRunUnits = dutyOrders.cwp.slice(0, runningCwp);
   const cwpRunSet = new Set(cwpRunUnits);
   const cwpTrimSum = cwpRunUnits.reduce((s, u) => s + (CWP_TRIM[u - 1] ?? 1), 0);
@@ -631,12 +653,24 @@ function runControlStep(): PlantState {
   // Cooling tower control. In static mode the fan sits at the speed that holds
   // CWS at setpoint given the weather offset; chasing a setpoint below the
   // reference costs fan speed (and cubed fan power) before the wet-bulb floor.
+  //
+  // Fan speed is driven by the APPROACH the tower has to hold (CWS − wet-bulb),
+  // fitted month-wide (CT_FAN_SPEED_COEFF) with the cube fan law retained for
+  // power. Approach is the causally correct handle: a tighter approach needs
+  // more air, and a cool night — bigger approach at the same CWS — needs less.
+  //
+  // The previous law keyed off the CWS setpoint alone, which conflated "the
+  // operator asked for colder water" with "the weather got cooler". Driven by
+  // measured CWS it swung the fan between 62% and 96% and left tower kW at 29%
+  // MAE; this form lands at ~8%.
   const condenserOffset = weatherCondenserOffset(ambientTemp, humidityRh);
+  const towerApproachC = cwsAchievable - wetBulbC;
   if (ctFanOverride > 0) {
     internals.ctFanSpeed = ctFanOverride;
   } else if (STATIC_MODE) {
     internals.ctFanSpeed = clamp(
-      REF_CT_FAN + condenserOffset / 0.04 + 10 * (REF_CWS_SP - cwsSp),
+      REF_CT_FAN * (CT_FAN_SPEED_COEFF[0] + CT_FAN_SPEED_COEFF[1] * towerApproachC) +
+        condenserOffset / 0.04,
       30,
       100
     );
@@ -655,7 +689,10 @@ function runControlStep(): PlantState {
   const cwrTarget = internals.cwsActual + condDeltaT;
   internals.cwrActual = STATIC_MODE ? cwrTarget : lag(internals.cwrActual, cwrTarget, 40);
 
-  const runningCt = stageCoolingTowers(runningChCount);
+  const runningCt =
+    stagingOverride?.ct != null
+      ? clamp(Math.round(stagingOverride.ct), 0, CT_COUNT)
+      : stageCoolingTowers(runningChCount);
   const ctRunUnits = dutyOrders.ct.slice(0, runningCt);
   const ctRunSet = new Set(ctRunUnits);
   const ctTrimSum = ctRunUnits.reduce((s, u) => s + (CT_TRIM[u - 1] ?? 1), 0);
@@ -1074,7 +1111,10 @@ export function updatePlantControl(controlId: string, value: number): void {
   controls = controls.map((c) => (c.id === controlId ? { ...c, value: next } : c));
   const label = ctrl?.label || controlId;
   lastControlId = controlId;
-  if (changed) lastScenarioId = null;
+  if (changed) {
+    lastScenarioId = null;
+    stagingOverride = null;
+  }
   lastCascadeTrigger = `Operator set ${label}: ${prev} → ${value}${ctrl?.unit ? ` ${ctrl.unit}` : ''}`;
   const constrainedNote = next !== value ? ` (constrained from ${value})` : '';
   lastCascadeTrigger = `Operator set ${label}: ${prev} -> ${next}${ctrl?.unit ? ` ${ctrl.unit}` : ''}${constrainedNote}`;
@@ -1125,6 +1165,7 @@ export function applyPlantChanges(
   if (list.length) {
     lastControlId = list[list.length - 1].controlId;
     lastScenarioId = null;
+    stagingOverride = null;
   }
   const n = Math.max(1, Math.floor(seconds / SIM_DT_SEC));
   let state = runControlStep();
@@ -1168,6 +1209,7 @@ function applyChillerScenarioInternal(scenario: {
   controls?: Record<string, number>;
   precise?: boolean;
   duty?: Record<string, number[]>;
+  staging?: Partial<Record<DutyCategory, number>>;
   advanceSec?: number;
 }): PlantState {
   if (scenario.reset) {
@@ -1198,6 +1240,10 @@ function applyChillerScenarioInternal(scenario: {
     }
     snapPlantDynamics();
   }
+
+  // Set after the reset branch: resetPlantControls() clears the override, and a
+  // reset scenario must land on the plant's own load-driven staging.
+  stagingOverride = scenario.reset ? null : (scenario.staging ?? null);
 
   lastControlId = `scenario:${scenario.id}`;
   lastScenarioId = scenario.id;
@@ -1235,6 +1281,7 @@ export function applyChillerScenario(scenarioId: string): PlantState {
     controls: scenario.controls,
     precise: scenario.precise,
     duty: scenario.duty,
+    staging: scenario.staging,
     advanceSec: scenario.advanceSec,
   });
 }
@@ -1246,6 +1293,7 @@ export function applyChillerScenarioPayload(payload: {
   controls?: Record<string, number>;
   precise?: boolean;
   duty?: Record<string, number[]>;
+  staging?: Partial<Record<DutyCategory, number>>;
   advanceSec?: number;
 }): PlantState {
   return applyChillerScenarioInternal({
@@ -1255,6 +1303,7 @@ export function applyChillerScenarioPayload(payload: {
     controls: payload.controls,
     precise: payload.precise,
     duty: payload.duty,
+    staging: payload.staging,
     advanceSec: payload.advanceSec,
   });
 }
@@ -1270,6 +1319,7 @@ export function resetPlantControls(): void {
   lastCascadeTrigger = 'Plant reset to baseline setpoints';
   lastControlId = null;
   lastScenarioId = null;
+  stagingOverride = null;
   lastBeforeCtx = null;
   lastBeforeKpis = null;
   lastChanges = null;
@@ -1363,6 +1413,7 @@ export function predictPlant(
   const savedChanges = lastChanges;
   const savedKpiSnap = lastKpiSnapshot;
   const savedBeforeKpis = lastBeforeKpis;
+  const savedStaging = stagingOverride;
   try {
     controls = savedControls.map((c) =>
       overrides[c.id] != null ? { ...c, value: constrainControlValue(c, overrides[c.id]) } : { ...c }
@@ -1391,6 +1442,7 @@ export function predictPlant(
     lastChanges = savedChanges;
     lastKpiSnapshot = savedKpiSnap;
     lastBeforeKpis = savedBeforeKpis;
+    stagingOverride = savedStaging;
   }
 }
 
@@ -1443,7 +1495,12 @@ export function evaluatePlant(
   const savedChanges = lastChanges;
   const savedKpiSnap = lastKpiSnapshot;
   const savedBeforeKpis = lastBeforeKpis;
+  const savedStaging = stagingOverride;
   try {
+    // Scoring is load-driven by definition: a caller asking "what does the plant
+    // do at these inputs" must get the twin's own staging decision, not one
+    // left over from a replay.
+    stagingOverride = null;
     controls = savedControls.map((c) => {
       if (overrides[c.id] == null) return { ...c };
       const raw = overrides[c.id];
@@ -1515,6 +1572,7 @@ export function evaluatePlant(
     lastChanges = savedChanges;
     lastKpiSnapshot = savedKpiSnap;
     lastBeforeKpis = savedBeforeKpis;
+    stagingOverride = savedStaging;
   }
 }
 

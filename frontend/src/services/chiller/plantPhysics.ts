@@ -1,24 +1,43 @@
 /** Physical constants and deterministic plant calculations. */
+import {
+  CONDENSER_LIFT_PER_DEGC,
+  REF_CHWP_KW_MONTH,
+  REF_CWP_KW_MONTH,
+  REF_CT_KW_MONTH,
+  REF_CHWP_FLOW_MONTH,
+  REF_CWP_FLOW_MONTH,
+  REF_CHILLER_KW_MONTH,
+  DEFAULT_CWS,
+  DEFAULT_CHWS_SP,
+  DEFAULT_CW_DT_SP,
+  DEFAULT_HUMIDITY_RH,
+  MEDIAN_LOOP_DELTA_T,
+} from './t1MonthCalibration';
 
 /* Plant inventory + reference constants calibrated to the real T1 plant from
- * the Dec-2025 BMS trend (T1_MVrawDataR2). RT is reconstructed from riser
- * flows × ΔT (verified to 0.13% against the 133-row M&V window — the only rows
- * where the dataset's RT column is populated).
+ * the COMPLETE Dec-2025 BMS trend (T1_MVrawDataR2_..._completed.xlsx, 44,640
+ * minutes). RT is measured for the first 133 rows and reconstructed from riser
+ * flows × header ΔT thereafter (the workbook's own Calculation_Audit sheet puts
+ * that reconstruction at 0.105% MAPE against the 133 measured rows).
  *
  * LIVE CHILLER-kW MODEL (the one the engine evaluates, controlEngine.ts):
  *   chKw = (CH_KW_INTERCEPT + CH_KW_SLOPE_PER_PCT × loadPct)
  *          × kwFactor(CHWS) × condenserLiftFactor(CWS)
- * an AFFINE part-load curve in per-chiller load %, least-squares fit over the
- * 133 M&V rows (constants in t1Snapshot.ts: intercept −44.11 kW, slope 6.884
- * kW/%load); efficiency improves with load like the real plant. Replay of all
- * 133 rows lands at +0.03% bias / 0.28% MAE — the dataset's own noise floor.
- * The condenser-lift 5.23%/°C is FITTED from month-wide CWS variation; the
- * CHWS 3%/°C is literature (the setpoint never moved in the data).
+ * an AFFINE part-load curve in per-chiller load %, least-squares fit over all
+ * 43,026 usable month rows (constants in t1MonthCalibration.ts). Efficiency
+ * improves with load like the real plant.
+ *
+ * CALIBRATION BASIS CHANGED 2026-08-07 — every reference level below was
+ * previously taken from dataset row 1 (Dec-1 00:00). That row is an outlier:
+ * its CHWP and CT meters read ~22% above the month norm, which biased those
+ * blocks by the same margin on every other row (+3.86% month-wide plant-kW
+ * MAE). All levels are now month medians, taken from the current duty regime.
+ * Month-wide fit after the change: 0.83% blocked-CV MAE, −0.07% bias.
  *
  * Descriptive band statistics (for reference, not used directly):
- *   per-row kW/RT ≈ 0.60–0.61 across the M&V window
- *   ΔT ≈ 6.5–6.8 °C · condenser rise ≈ 4.4 °C · CWS ≈ 28.6 · wet-bulb ≈ 25.5
- *   staging locked at 3 chillers / 3 CHWP / 3 CWP; CT count floats 3–5. */
+ *   per-row kW/RT ≈ 0.55–0.62 across the month (0.60–0.61 in the M&V window)
+ *   ΔT ≈ 6.9 °C · condenser rise ≈ 4.3 °C · CWS ≈ 28.5 · wet-bulb ≈ 24.8
+ *   staging: 3 chillers / 3 CHWP / 3 CWP for 99.6% of the month; CT floats 3–5. */
 export const CHILLER_CAPACITY_RT = 1250;
 export const CHILLER_COUNT = 5;
 export const CHWP_COUNT = 6;
@@ -27,42 +46,57 @@ export const CT_COUNT = 5;
 
 /** Baseline reference at CHWS setpoint 7.5°C */
 export const REF_CHWS_SP = 7.5;
-/* kW calibration target (operator's choice, 2026-07-14): the DATASET'S VISIBLE
- * VALUES — the first rows / M&V window where the rt, kw and kw/rt columns are
- * populated (boot reproduces row 1: 1917.7 kW, 0.609 kW/RT). The reconstructed
- * month-wide norm runs ~3.4% lower (0.588); replaying the whole month therefore
- * over-reads by about that margin. */
+/* kW calibration target (operator's decision, 2026-08-07): the WHOLE MONTH.
+ * Previously the engine was pinned to the dataset's first visible rows so that
+ * boot reproduced row 1 exactly (1917.7 kW, 0.609 kW/RT). That is no longer the
+ * target — row 1 is unrepresentative, and matching it cost ~3.9% accuracy on
+ * every other minute of the month. Boot now sits at the median operating point
+ * and the month-wide replay is unbiased instead. */
 export const REF_CHILLER_LOAD = 85; // % chiller load at which REF_CHILLER_KW applies
-/** @deprecated The engine now uses the AFFINE part-load curve CH_KW_INTERCEPT +
- *  CH_KW_SLOPE_PER_PCT × loadPct from t1Snapshot.ts (anchored through dataset
- *  rows 1 AND 86, so efficiency improves with load like the real plant).
- *  Kept as the single-point reference: kW/chiller at 85% load, M&V level. */
-export const REF_CHILLER_KW = 543.59362;
+/** @deprecated The engine uses the AFFINE part-load curve CH_KW_INTERCEPT +
+ *  CH_KW_SLOPE_PER_PCT × loadPct from t1MonthCalibration.ts. Kept as the
+ *  single-point reference: median kW per running chiller over the month. */
+export const REF_CHILLER_KW = REF_CHILLER_KW_MONTH;
 /** Reference COP is the Q/P identity at the reference point. */
 export const REF_CHILLER_COP = 6.87;
 
 export const REF_DP_SP = 15;
 export const REF_CHWP_SPEED = 70;
-export const REF_CHWP_FLOW = 484.94; // m³/h per pump at 70% — 3 pumps ⇒ ΔT 6.55 at 3151 RT (row-1 deltaT)
-export const REF_CHWP_KW = 23.8866667; // row-1 mean per running pump (month norm ≈ 19.4)
+/** Median flow / kW per RUNNING pump over the current duty regime. The plant
+ *  holds these pumps at essentially fixed speed (flow/pump varies only 3.3%
+ *  p5→p95), so this reference is well determined even though the affinity
+ *  exponent is not — see the identifiability note in t1MonthCalibration.ts. */
+export const REF_CHWP_FLOW = REF_CHWP_FLOW_MONTH;
+export const REF_CHWP_KW = REF_CHWP_KW_MONTH;
 
 /** Condenser-water pump / cooling-tower fan reference kW (at REF speed 70%). */
-export const REF_CWP_KW = 30.4197585; // ⇒ 54.03 kW mean at the row-1 operating speed (84.8%)
-export const REF_CWP_FLOW = 690; // m³/h per pump at 70% — matches measured header CW flow ≈ 2507 m³/h
-export const REF_CT_KW = 17.5; // row-1 mean per running tower (month norm ≈ 14.2)
+export const REF_CWP_KW = REF_CWP_KW_MONTH;
+export const REF_CWP_FLOW = REF_CWP_FLOW_MONTH;
+export const REF_CT_KW = REF_CT_KW_MONTH;
 
+/** Measured loop ΔT at the reference point — sizes CHWP staging flow. */
+export const REF_LOOP_DELTA_T = MEDIAN_LOOP_DELTA_T;
+
+/** Condenser-lift reference — the curve fit divides by liftFactor(CWS) about
+ *  this point, so it must stay 29 °C to match t1MonthCalibration.ts. */
 export const REF_CWS_SP = 29;
-export const REF_CHWR_SP = 14.5;
-export const REF_CWR_SP = 33;
+/** Header return temps implied by the calibrated operating point — CHWS/CWS at
+ *  their month medians plus the month-median loop / condenser rise. */
+export const REF_CHWR_SP = round(DEFAULT_CHWS_SP + MEDIAN_LOOP_DELTA_T, 2);
+export const REF_CWR_SP = round(DEFAULT_CWS + DEFAULT_CW_DT_SP, 2);
 export const REF_CT_FAN = 70;
 
-/** A tower cannot make water colder than wet-bulb + approach (measured approach ≈ 3.4 °C). */
+/** A tower cannot make water colder than wet-bulb + approach (measured monthly
+ *  mean approach ≈ 3.5 °C; the tightest sustained hour ≈ 2.9 °C). */
 export const MIN_CONDENSER_APPROACH_C = 2.5;
 
-/** Reference outdoor conditions for load / condenser modifiers.
- *  RH 65 at 31 °C dry-bulb ⇒ Stull wet-bulb ≈ 25.5 °C, matching the measured 25.2. */
+/** Reference outdoor conditions for load / condenser modifiers. The dataset has
+ *  no OAT/RH columns, so these parameterise the measured wet-bulb rather than
+ *  measuring weather: RH 59.37 at 31 °C ⇒ Stull ≈ 24.8 °C, the plant's median
+ *  measured wet-bulb. (The old 65 %RH implied 25.7 °C — ~0.9 °C too humid,
+ *  which biased the tower approach and therefore fan power.) */
 export const REF_AMBIENT_TEMP = 31;
-export const REF_HUMIDITY_RH = 65;
+export const REF_HUMIDITY_RH = DEFAULT_HUMIDITY_RH;
 
 export const FLOW_COEFF = 1.163;
 export const RT_TO_KW = 3.517;
@@ -148,14 +182,20 @@ export function chwsSetpointModifiers(chwsSetpoint: number): {
  * Condenser-lift effect on compressor power per °C of condenser water above /
  * below the 29 °C reference. Symmetric — warmer condenser water always costs
  * energy, colder always saves (until the wet-bulb floor).
- * 5.23 %/°C is FITTED from the Dec-2025 trend (44,410 3-chiller minutes,
- * joint regression of chiller kW on load AND achieved CWS 27.4–28.9 °C) —
- * roughly double the 2.5 %/°C literature value used previously. CWS and load
- * are weather-correlated (r = 0.68), so confirm with a CWS step test before
- * closed-loop use.
+ *
+ * CONDENSER_LIFT_PER_DEGC (4.52 %/°C) is DE-CONFOUNDED: load and CWS are
+ * weather-correlated at r = +0.67, so a joint regression over the month
+ * attributes load to CWS and returns 5.08 %/°C (the old constant was 5.23%).
+ * The value used here is the pooled WITHIN-load-bin slope over 30 bins of 0.5%
+ * load each, which holds load ~constant while CWS varies.
+ *
+ * It is still above the 1.5–3.0 %/°C literature range for centrifugal machines,
+ * so residual confounding is likely — this remains observational. Confirm with
+ * a deliberate CWS step test before using it to drive closed-loop setpoint
+ * optimisation.
  */
 export function condenserLiftFactor(cwsActualC: number): number {
-  return clamp(1 + 0.0523 * (cwsActualC - REF_CWS_SP), 0.85, 1.2);
+  return clamp(1 + CONDENSER_LIFT_PER_DEGC * (cwsActualC - REF_CWS_SP), 0.85, 1.2);
 }
 
 /** @deprecated COP is now derived from Q/P in the engine. Symmetric inverse of the lift factor. */
