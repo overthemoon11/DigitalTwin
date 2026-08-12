@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Chiller-plant MPC optimisation simulator.** The plant page is now an
+  optimisation tool rather than a manual control panel: left sidebar = what
+  happened (Simulation Input, Optimal Control before→after, Simulation Result
+  before→after), centre = the unchanged digital twin, right = what the plant is
+  allowed to do (Constraint Input + MPC execution).
+  - `services/chiller/mpc/` — `ChillerPlantSimulator` (a typed adapter over the
+    calibrated engine, not a second physics model), `ConstraintValidator`,
+    `CandidateGenerator`, `ObjectiveFunction` and an `MpcOptimizer` interface
+    whose shipped strategy is a constrained coordinate search. Every candidate
+    is simulated then validated; infeasible candidates score `Infinity` and can
+    never win regardless of predicted power. Swapping the optimiser for a
+    nonlinear/SciPy/CasADi solver needs no UI change.
+  - Objective is Total Plant kW = chiller + CHWP + CWP + tower, with no target
+    efficiency baked in.
+  - Six manipulated variables: CHWST-SP, DP-SP, chiller staging, CHWP / CWP /
+    CT fan speed. Building load and wet bulb are disturbances.
+  - Baseline is captured at RUN and never mutated, so before/after is honest;
+    the optimum is committed to the live engine so the schematic and KPI tiles
+    move through the normal path.
+- **Tower fan ↔ condenser temperature coupling for optimisation.** The engine's
+  static mode fixes CWS at `max(setpoint, wet bulb + approach)`, so commanding a
+  fan speed alone would cut tower kW for free. The MPC simulator inverts the
+  fitted `CT_FAN_SPEED_COEFF` law to get the approach a commanded fan speed can
+  hold, making the tower↔chiller trade-off real.
+- `evaluatePlant` now accepts a `staging` override and reports a `hydraulic`
+  block (header flows, VSD speeds, measured DP, per-chiller load %) — the
+  quantities constraint checks need.
+
 ### Changed
 
 - **Chiller twin recalibrated to the whole Dec-2025 trend.** Every reference

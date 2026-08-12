@@ -15,6 +15,17 @@ import {
 } from '../services/chiller/plantSimulator';
 import { computeMpcMove as computeMpcMoveEngine } from '../services/chiller/plantMpc';
 import {
+  designConstraints,
+  validateConstraintConfig,
+  simulateCandidate,
+  readBaselineControl,
+  readSimulationInput,
+  defaultMpcOptimizer,
+  DEFAULT_MAX_CYCLES,
+  applyOptimalControl,
+  restoreControlState,
+} from '../services/chiller/mpc';
+import {
   parseChillerCopilotIntents,
   formatChillerControlConfirmation,
   formatChillerScenarioConfirmation,
@@ -76,6 +87,18 @@ import {
 
 const API_BASE = '/api';
 
+/** Immutable set of a dotted path inside the constraint config. */
+function setPath(obj, path, value) {
+  const [head, ...rest] = path.split('.');
+  const key = Array.isArray(obj) ? Number(head) : head;
+  const next = Array.isArray(obj) ? [...obj] : { ...obj };
+  next[key] = rest.length ? setPath(obj[key], rest.join('.'), value) : value;
+  return next;
+}
+
+/** Yield to the browser so the MPC status panel repaints mid-search. */
+const nextFrame = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 export const useTwinStore = create((set, get) => ({
   twinState: null,
   plantState: null,
@@ -85,6 +108,18 @@ export const useTwinStore = create((set, get) => ({
   activeAppTab: 'chiller_plant',
   activePlantScenario: 'chiller',
   mpcAuto: false,
+
+  /* MPC optimisation simulator slice */
+  mpcInput: null,
+  mpcConstraints: designConstraints(),
+  mpcConstraintErrors: [],
+  mpcResult: null,
+  mpcStatus: 'IDLE',
+  mpcProgress: null,
+  mpcError: null,
+  mpcApplied: false,
+  mpcCancelled: false,
+
   selectedAsset: null,
   isConnected: false,
   ws: null,
@@ -273,6 +308,181 @@ export const useTwinStore = create((set, get) => ({
 
   /** Toggle closed-loop MPC auto mode (applies the first move each tick). */
   setMpcAuto: (on) => set({ mpcAuto: !!on }),
+
+  /* ---------------------------------------------------------------------- */
+  /* MPC optimisation simulator                                             */
+  /*                                                                        */
+  /* `mpcBaseline` is captured the moment RUN is pressed and is never        */
+  /* mutated by the search — that immutability is what makes the left        */
+  /* sidebar's before/after honest. The optimised state is applied to the    */
+  /* live engine so the schematic and KPI tiles move through the normal      */
+  /* path; nothing renders from a parallel copy of the plant.                */
+  /* ---------------------------------------------------------------------- */
+
+  /** Seed the MPC disturbance input from the live twin, once. The BEFORE control
+   *  state is deliberately NOT cached here — it is read fresh from the plant the
+   *  moment RUN is pressed, so it can never go stale against manual edits. */
+  initMpcFromPlant: (force = false) => {
+    const { plantState, mpcInput, mpcStatus } = get();
+    if (!plantState || mpcStatus === 'RUNNING') return;
+    if (mpcInput && !force) return;
+    set({ mpcInput: readSimulationInput(plantState) });
+  },
+
+  setMpcInput: (patch) =>
+    set((s) => ({
+      mpcInput: { ...(s.mpcInput ?? { buildingLoadRt: 3100, wetBulbC: 24.8 }), ...patch },
+    })),
+
+  setMpcConstraint: (path, value) =>
+    set((s) => {
+      const next = setPath(s.mpcConstraints, path, value);
+      return { mpcConstraints: next, mpcConstraintErrors: validateConstraintConfig(next) };
+    }),
+
+  /** Apply one field to every chiller at once. The data model stays per-unit —
+   *  this is only the compact "common configuration" editor the sidebar shows. */
+  setMpcChillerFleet: (field, value) =>
+    set((s) => {
+      const next = {
+        ...s.mpcConstraints,
+        chiller: {
+          ...s.mpcConstraints.chiller,
+          units: s.mpcConstraints.chiller.units.map((u) => ({ ...u, [field]: value })),
+        },
+      };
+      return { mpcConstraints: next, mpcConstraintErrors: validateConstraintConfig(next) };
+    }),
+
+  /** First N machines available for staging, the rest out of service. */
+  setMpcAvailableChillers: (count) =>
+    set((s) => {
+      const n = Math.max(0, Math.round(count));
+      const next = {
+        ...s.mpcConstraints,
+        chiller: {
+          ...s.mpcConstraints.chiller,
+          units: s.mpcConstraints.chiller.units.map((u, i) => ({ ...u, available: i < n })),
+        },
+      };
+      return { mpcConstraints: next, mpcConstraintErrors: validateConstraintConfig(next) };
+    }),
+
+  resetMpcConstraints: () => {
+    const next = designConstraints();
+    set({ mpcConstraints: next, mpcConstraintErrors: validateConstraintConfig(next) });
+  },
+
+  cancelMpc: () => set({ mpcCancelled: true }),
+
+  /** Put the twin back on the control state that was captured as BEFORE. */
+  restoreMpcBaseline: () => {
+    const { mpcInput, mpcResult, mpcConstraints, plantState } = get();
+    const control = mpcResult?.baselineControl;
+    if (!mpcInput || !control) return;
+    const next = restoreControlState(mpcInput, control, {
+      dryBulbHintC: plantState?.headers?.ambientTemp ?? 31,
+      constraints: mpcConstraints,
+    });
+    set({ plantState: next, mpcApplied: false });
+  },
+
+  /** Re-apply the optimum found by the last completed run. */
+  reapplyMpcOptimum: () => {
+    const { mpcInput, mpcResult, mpcConstraints, plantState } = get();
+    const control = mpcResult?.optimalControl;
+    if (!mpcInput || !control) return;
+    const next = applyOptimalControl(mpcInput, control, {
+      dryBulbHintC: plantState?.headers?.ambientTemp ?? 31,
+      constraints: mpcConstraints,
+    });
+    set({ plantState: next, mpcApplied: true });
+  },
+
+  /**
+   * Full RUN MPC SIMULATION workflow: validate → snapshot baseline → search →
+   * apply the best feasible candidate to the twin.
+   */
+  runMpcSimulation: async () => {
+    const state = get();
+    if (state.mpcStatus === 'RUNNING') return;
+
+    const plantState = state.plantState;
+    if (!plantState) {
+      set({ mpcStatus: 'ERROR', mpcError: 'Plant simulator has not started yet.' });
+      return;
+    }
+
+    set({ mpcStatus: 'VALIDATING', mpcError: null, mpcProgress: null, mpcCancelled: false });
+
+    const constraints = state.mpcConstraints;
+    const errors = validateConstraintConfig(constraints);
+    if (errors.length) {
+      set({ mpcConstraintErrors: errors, mpcStatus: 'ERROR', mpcError: 'Constraint configuration is invalid.' });
+      return;
+    }
+    set({ mpcConstraintErrors: [] });
+
+    const input = state.mpcInput ?? readSimulationInput(plantState);
+    const dryBulbHintC = plantState.headers?.ambientTemp ?? 31;
+
+    // BEFORE = whatever the plant is doing right now, frozen for this run and
+    // never mutated by the search. Read fresh so manual edits are picked up.
+    const baselineControl = readBaselineControl(plantState);
+    let baselineResult;
+    try {
+      baselineResult = simulateCandidate(input, baselineControl, constraints, {
+        baseline: null,
+        dryBulbHintC,
+      });
+    } catch (err) {
+      set({ mpcStatus: 'ERROR', mpcError: `Baseline simulation failed: ${err?.message ?? err}` });
+      return;
+    }
+
+    set({ mpcStatus: 'RUNNING', mpcInput: input });
+
+    try {
+      const result = await defaultMpcOptimizer.optimize(
+        {
+          input,
+          constraints,
+          baselineControl,
+          baselineResult,
+          maxCycles: DEFAULT_MAX_CYCLES,
+          dryBulbHintC,
+        },
+        {
+          isCancelled: () => get().mpcCancelled === true,
+          onIteration: async (_iteration, progress) => {
+            set({ mpcProgress: progress });
+            // Repaint every few candidates — often enough to read as a live
+            // search, rare enough not to dominate the run with renders.
+            if (progress.cycle % 3 === 0) await nextFrame();
+          },
+        }
+      );
+
+      if (!result.solved || !result.optimalControl) {
+        set({ mpcResult: result, mpcStatus: 'INFEASIBLE', mpcProgress: null, mpcApplied: false });
+        return;
+      }
+
+      const nextPlant = applyOptimalControl(input, result.optimalControl, {
+        dryBulbHintC,
+        constraints,
+      });
+      set({
+        mpcResult: result,
+        mpcStatus: 'COMPLETED',
+        mpcProgress: null,
+        mpcApplied: true,
+        plantState: nextPlant,
+      });
+    } catch (err) {
+      set({ mpcStatus: 'ERROR', mpcError: err?.message ?? String(err), mpcProgress: null });
+    }
+  },
 
   loadTwinState: async () => {
     try {

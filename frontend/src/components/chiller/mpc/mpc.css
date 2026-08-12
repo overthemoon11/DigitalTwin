@@ -1,0 +1,437 @@
+/* =========================================================================
+   MPC OPTIMISATION SIMULATOR
+   Left = what happened. Centre = the physical twin. Right = what the plant is
+   allowed to do.
+
+   Deliberately reuses the app's existing design tokens, the .scada-box /
+   .scada-row numeric inputs and the .vsp-cascade-table before-after styling,
+   so this reads as the same application rather than a bolt-on.
+   ========================================================================= */
+
+/* --- Left sidebar -------------------------------------------------------- */
+.mpc-sidebar .mpc-section:last-of-type {
+  border-bottom: 1px solid var(--border);
+}
+.mpc-input-body {
+  padding: 0;
+}
+.mpc-compare td.vsp-ct-before,
+.mpc-compare td.vsp-ct-after {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.mpc-compare th:first-child,
+.mpc-compare td.vsp-ct-param {
+  width: 40%;
+}
+.mpc-arrow {
+  margin-left: 3px;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+.mpc-arrow--up {
+  color: var(--warning);
+}
+.mpc-arrow--down {
+  color: var(--success);
+}
+
+.mpc-saving {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.mpc-saving--gain {
+  border-color: rgba(22, 163, 74, 0.4);
+  background: rgba(22, 163, 74, 0.08);
+}
+.mpc-saving-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+.mpc-saving-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: right;
+  white-space: nowrap;
+}
+.mpc-saving--gain .mpc-saving-value {
+  color: var(--success);
+}
+.mpc-saving-value em {
+  display: block;
+  font-style: normal;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.mpc-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 0.55rem;
+}
+.mpc-detail {
+  padding: 5px 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  min-width: 0;
+}
+.mpc-detail span {
+  display: block;
+  font-size: 0.57rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.mpc-detail strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mpc-warn {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.63rem;
+  line-height: 1.35;
+  color: #92400e;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+  border-radius: var(--radius-sm);
+}
+
+.mpc-apply-row {
+  display: flex;
+  gap: 6px;
+  margin: 0.6rem 0 0.4rem;
+}
+.mpc-secondary-btn {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.mpc-secondary-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--accent-light);
+}
+.mpc-secondary-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* --- Shared numeric field ------------------------------------------------ */
+.mpc-field--invalid {
+  flex-wrap: wrap;
+}
+.mpc-field--invalid .scada-input-wrap {
+  border-color: var(--error);
+}
+.mpc-field-error {
+  flex-basis: 100%;
+  padding-top: 2px;
+  font-size: 0.6rem;
+  color: var(--error);
+}
+
+/* --- Right sidebar: constraints + run ------------------------------------ */
+.mpc-panel-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.mpc-right {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.mpc-right-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.6rem;
+}
+
+.mpc-constraint-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+.mpc-constraint-head h4 {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+}
+.mpc-reset-link {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.mpc-reset-link:hover:not(:disabled) {
+  color: var(--accent);
+}
+.mpc-reset-link:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.mpc-constraint-hint {
+  margin: 0 0 0.6rem;
+  font-size: 0.63rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.mpc-constraint-box {
+  margin-bottom: 0.5rem;
+}
+.mpc-constraint-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mpc-chevron {
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+.mpc-invalid-badge {
+  min-width: 15px;
+  margin-left: auto;
+  padding: 0 4px;
+  font-size: 0.58rem;
+  line-height: 15px;
+  color: #ffffff;
+  background: var(--error);
+  border-radius: 8px;
+  text-align: center;
+}
+.mpc-note {
+  margin: 0.4rem 0 0.1rem;
+  font-size: 0.6rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+.mpc-note--warn {
+  color: #92400e;
+}
+
+/* --- Run dock (sticky, so a long constraint form never hides it) --------- */
+.mpc-run-dock {
+  flex-shrink: 0;
+  padding: 0.55rem 0.6rem 0.65rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.06);
+}
+.mpc-run-btn {
+  width: 100%;
+  padding: 0.7rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.mpc-run-btn:hover:not(:disabled) {
+  box-shadow: var(--shadow-md);
+}
+.mpc-run-btn:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.mpc-cancel-btn {
+  width: 100%;
+  margin-top: 6px;
+}
+.mpc-run-blocked {
+  margin: 0 0 0.4rem;
+  font-size: 0.62rem;
+  color: var(--error);
+  text-align: center;
+}
+
+/* --- MPC status / cycle panel -------------------------------------------- */
+.mpc-status {
+  margin-top: 0.4rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+.mpc-status--running {
+  border-color: var(--accent-light);
+  background: var(--accent-soft);
+}
+.mpc-status--done {
+  border-color: rgba(22, 163, 74, 0.4);
+  background: rgba(22, 163, 74, 0.07);
+}
+.mpc-status--error {
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.06);
+}
+.mpc-status-title {
+  margin-bottom: 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+.mpc-status--done .mpc-status-title {
+  color: var(--success);
+}
+.mpc-status--error .mpc-status-title {
+  color: var(--error);
+}
+.mpc-status-line {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.mpc-status-line--muted {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+.mpc-subhead {
+  margin: 0.45rem 0 0.2rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.mpc-cycle-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.mpc-cycle-rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.66rem;
+}
+.mpc-cycle-rows span {
+  color: var(--text-muted);
+}
+.mpc-cycle-rows strong {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+.mpc-cycle-rows strong.ok {
+  color: var(--success);
+}
+.mpc-cycle-rows strong.bad {
+  color: var(--error);
+}
+.mpc-progress {
+  height: 6px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.1);
+  border-radius: 3px;
+}
+.mpc-progress-bar {
+  height: 100%;
+  background: var(--accent-gradient);
+  transition: width 90ms linear;
+}
+.mpc-progress-pct {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+.mpc-reject-list {
+  margin: 0;
+  padding-left: 1rem;
+  font-size: 0.64rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* --- Responsive ----------------------------------------------------------
+   The sidebars give ground before the schematic does: the digital twin stays
+   the visual focus down to a 1440-wide laptop. Both sidebars scroll
+   independently, so shrinking them costs no content.
+   ------------------------------------------------------------------------ */
+@media (max-width: 1600px) {
+  .right-panel.right-panel--scada {
+    width: 278px;
+    flex-basis: 278px;
+  }
+  .left-panel {
+    width: 274px;
+    flex: 0 0 274px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .right-panel.right-panel--scada {
+    width: 258px;
+    flex-basis: 258px;
+  }
+  .left-panel {
+    width: 256px;
+    flex: 0 0 256px;
+  }
+  .mpc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .scada-input-wrap {
+    width: 4.4rem;
+  }
+  .panel-tabs button {
+    padding: 0.6rem 0.25rem;
+    font-size: 0.72rem;
+  }
+}

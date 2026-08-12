@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { readBaselineControl } from "./services/chiller/mpc";
 import { useTwinStore } from "./hooks/useTwinStore";
 import { usePlantTelemetry } from "./hooks/usePlantTelemetry";
 import ChillerPlant2DView from "./components/chiller/ChillerPlant2DView";
@@ -18,6 +19,8 @@ import ChillerScadaPanel from "./components/chiller/ChillerScadaPanel";
 import ChillerPointsList from "./components/chiller/ChillerPointsList";
 import ChillerKPIPanel from "./components/chiller/ChillerKPIPanel";
 import VirtualSimulatorPanel from "./components/leftSidebar/VirtualSimulatorPanel";
+import MpcLeftSidebar from "./components/chiller/mpc/MpcLeftSidebar";
+import MpcRightSidebar from "./components/chiller/mpc/MpcRightSidebar";
 import DistrictCoolingControlPanel from "./components/districtcooling/DistrictCoolingControlPanel";
 import DistrictCoolingTwinTab from "./components/districtcooling/DistrictCoolingTwinTab";
 import KPIPanel from "./components/common/KPIPanel";
@@ -26,6 +29,7 @@ import CopilotChat from "./components/common/CopilotChat";
 import HeaderSidebarToggle from "./components/layout/HeaderSidebarToggle";
 import SidebarModeRail from "./components/layout/SidebarModeRail";
 import "./App.css";
+import "./components/chiller/mpc/mpc.css";
 
 function App() {
   const {
@@ -66,10 +70,30 @@ function App() {
     computeMpcMove,
     mpcAuto,
     setMpcAuto,
+    mpcInput,
+    mpcConstraints,
+    mpcConstraintErrors,
+    mpcResult,
+    mpcStatus,
+    mpcProgress,
+    mpcError,
+    mpcApplied,
+    initMpcFromPlant,
+    setMpcInput,
+    setMpcConstraint,
+    setMpcChillerFleet,
+    setMpcAvailableChillers,
+    resetMpcConstraints,
+    runMpcSimulation,
+    cancelMpc,
+    restoreMpcBaseline,
+    reapplyMpcOptimum,
   } = useTwinStore();
   const [activePanel, setActivePanel] = useState("controls");
-  const [scadaTab, setScadaTab] = useState("controls");
-  const [leftSidebarMode, setLeftSidebarMode] = useState("assets");
+  // Constraints is the chiller plant's primary right-hand panel now; the manual
+  // SCADA controls and the BMS point list stay available as secondary tabs.
+  const [scadaTab, setScadaTab] = useState("constraints");
+  const [leftSidebarMode, setLeftSidebarMode] = useState("mpc");
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [hxEtsBuildingId, setHxEtsBuildingId] = useState(null);
@@ -105,6 +129,17 @@ function App() {
 
   usePlantTelemetry();
 
+  // The live BEFORE control state, derived from the twin every tick. Kept out
+  // of the store on purpose: caching it is how a "before" column goes stale.
+  // Must sit above the loading early-return to keep hook order stable.
+  const mpcLiveBaseline = useMemo(
+    () =>
+      activePlantScenario === "chiller" && plantState
+        ? readBaselineControl(plantState)
+        : null,
+    [plantState, activePlantScenario],
+  );
+
   if (!twinState) {
     return (
       <div className="loading">
@@ -127,6 +162,10 @@ function App() {
   const scenarioAlerts = scenarioState?.alerts || twinState.alerts;
   const scenarioKpis = scenarioState?.kpis || twinState.kpis;
   const activeAlertCount = scenarioAlerts.filter((a) => !a.resolved).length;
+  // The MPC sidebar only exists for the chiller plant; other scenarios fall
+  // back to their asset tree rather than showing an empty rail slot.
+  const effectiveLeftMode =
+    leftSidebarMode === "mpc" && !isChillerScenario ? "assets" : leftSidebarMode;
 
   return (
     <div className="app">
@@ -239,9 +278,10 @@ function App() {
         <div className="main-content">
           {leftSidebarOpen && (
             <SidebarModeRail
-              mode={leftSidebarMode}
+              mode={effectiveLeftMode}
               sidebarOpen={leftSidebarOpen}
               onModeSelect={selectLeftSidebarMode}
+              showMpc={isChillerScenario}
             />
           )}
           <aside
@@ -249,7 +289,19 @@ function App() {
           >
             {leftSidebarOpen && (
               <>
-                {leftSidebarMode === "assets" ? (
+                {effectiveLeftMode === "mpc" ? (
+                  <MpcLeftSidebar
+                    input={mpcInput}
+                    baselineControl={mpcLiveBaseline}
+                    result={mpcResult}
+                    status={mpcStatus}
+                    applied={mpcApplied}
+                    onInit={initMpcFromPlant}
+                    onChangeInput={setMpcInput}
+                    onRestoreBaseline={restoreMpcBaseline}
+                    onReapplyOptimum={reapplyMpcOptimum}
+                  />
+                ) : effectiveLeftMode === "assets" ? (
                   <>
                     <h3>
                       {isChillerScenario
@@ -367,6 +419,13 @@ function App() {
                   <div className="panel-tabs">
                     <button
                       type="button"
+                      className={scadaTab === "constraints" ? "active" : ""}
+                      onClick={() => setScadaTab("constraints")}
+                    >
+                      Constraints
+                    </button>
+                    <button
+                      type="button"
                       className={scadaTab === "controls" ? "active" : ""}
                       onClick={() => setScadaTab("controls")}
                     >
@@ -380,8 +439,25 @@ function App() {
                       BMS Points
                     </button>
                   </div>
-                  <div className="panel-content scada-panel-content">
-                    {scadaTab === "controls" ? (
+                  <div
+                    className={`panel-content ${scadaTab === "constraints" ? "mpc-panel-content" : "scada-panel-content"}`}
+                  >
+                    {scadaTab === "constraints" ? (
+                      <MpcRightSidebar
+                        constraints={mpcConstraints}
+                        errors={mpcConstraintErrors}
+                        status={mpcStatus}
+                        progress={mpcProgress}
+                        result={mpcResult}
+                        error={mpcError}
+                        onSet={setMpcConstraint}
+                        onSetFleet={setMpcChillerFleet}
+                        onSetAvailable={setMpcAvailableChillers}
+                        onReset={resetMpcConstraints}
+                        onRun={runMpcSimulation}
+                        onCancel={cancelMpc}
+                      />
+                    ) : scadaTab === "controls" ? (
                       <ChillerScadaPanel
                         plantState={plantState}
                         onSet={updatePlantControl}

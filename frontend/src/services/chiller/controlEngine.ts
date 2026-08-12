@@ -1463,6 +1463,22 @@ export interface PlantEvaluation {
     towerApproach: number;
     wetBulb: number;
   };
+  /** Loop hydraulics + per-machine loading — what constraint checks need. */
+  hydraulic: {
+    /** Pumped chilled-water header flow, m³/h (sum of running CHWPs). */
+    chwFlowM3h: number;
+    /** Pumped condenser header flow, m³/h (sum of running CWPs). */
+    cwFlowM3h: number;
+    /** Commanded CHWP / CWP VSD speed, % (0 when that loop is stopped). */
+    chwpSpeedPct: number;
+    cwpSpeedPct: number;
+    /** Cooling-tower fan speed, %. */
+    ctFanSpeedPct: number;
+    /** Measured header differential pressure, psi. */
+    measuredDpPsi: number;
+    /** Per-chiller part-load, % of the 1250 RT nameplate. */
+    chillerLoadPct: number;
+  };
   staging: { chillers: number; chwp: number; cwp: number; ct: number };
   /** Data-calibration status of these inputs (low confidence if extrapolated). */
   calibration: { status: 'calibrated' | 'extrapolated'; reasons: string[] };
@@ -1478,11 +1494,21 @@ export interface PlantEvaluation {
  * Inputs are clamped to each control's operating range but NOT snapped to the
  * UI step grid, so the response surface stays continuous for gradient-based
  * search. Dynamics are snapped to the inputs, so the returned steady state is a
- * pure function of `overrides` (+ optional duty) — same input → same output.
+ * pure function of `overrides` (+ optional duty / staging) — same input → same
+ * output.
+ *
+ * `opts.staging` pins the running COUNT per category instead of letting the
+ * load-driven staging rules decide. Staging is a BMS decision, so an optimiser
+ * searching over "how many chillers should run" must be able to command it —
+ * without this the twin would always re-derive the count from load and the
+ * staging dimension would be unsearchable.
  */
 export function evaluatePlant(
   overrides: Record<string, number>,
-  opts: { duty?: Partial<Record<DutyCategory, number[]>> } = {}
+  opts: {
+    duty?: Partial<Record<DutyCategory, number[]>>;
+    staging?: Partial<Record<DutyCategory, number>>;
+  } = {}
 ): PlantEvaluation {
   const savedControls = controls;
   const savedInternals = internals;
@@ -1497,10 +1523,10 @@ export function evaluatePlant(
   const savedBeforeKpis = lastBeforeKpis;
   const savedStaging = stagingOverride;
   try {
-    // Scoring is load-driven by definition: a caller asking "what does the plant
+    // Scoring is load-driven by default: a caller asking "what does the plant
     // do at these inputs" must get the twin's own staging decision, not one
-    // left over from a replay.
-    stagingOverride = null;
+    // left over from a replay. An explicit `staging` opt overrides that.
+    stagingOverride = opts.staging ?? null;
     controls = savedControls.map((c) => {
       if (overrides[c.id] == null) return { ...c };
       const raw = overrides[c.id];
@@ -1528,6 +1554,19 @@ export function evaluatePlant(
       return typeof k?.value === 'number' ? k.value : NaN;
     };
     const h = state.headers;
+    // Header flows / speeds come off the equipment cards rather than re-deriving
+    // them, so they are exactly the numbers the twin reports on the schematic.
+    const running = (cat: string) =>
+      Object.values(state.equipment).filter((e) => e.category === cat && e.status === 'running');
+    const sumFlow = (cat: string) =>
+      running(cat).reduce((s, e) => s + (typeof e.flowRate === 'number' ? e.flowRate : 0), 0);
+    const meanSpeed = (cat: string) => {
+      const on = running(cat).filter((e) => typeof (e as { speedPercent?: number }).speedPercent === 'number');
+      if (!on.length) return 0;
+      return on.reduce((s, e) => s + ((e as { speedPercent?: number }).speedPercent ?? 0), 0) / on.length;
+    };
+    const firstRunningChiller = running('chiller')[0] as { loadPercent?: number } | undefined;
+    const firstRunningTower = running('cooling_tower')[0] as { fanSpeedPercent?: number } | undefined;
     return {
       inputs: Object.fromEntries(
         controls.map((c) => [c.id, typeof c.value === 'number' ? c.value : NaN])
@@ -1550,6 +1589,15 @@ export function evaluatePlant(
         condFlowM3h: h.condFlowM3h ?? NaN,
         towerApproach: kv('kpi-approach'),
         wetBulb: kv('kpi-wetbulb'),
+      },
+      hydraulic: {
+        chwFlowM3h: round(sumFlow('chwp'), 2),
+        cwFlowM3h: round(sumFlow('cwp'), 2),
+        chwpSpeedPct: round(meanSpeed('chwp'), 1),
+        cwpSpeedPct: round(meanSpeed('cwp'), 1),
+        ctFanSpeedPct: round(firstRunningTower?.fanSpeedPercent ?? 0, 1),
+        measuredDpPsi: kv('kpi-dp'),
+        chillerLoadPct: round(firstRunningChiller?.loadPercent ?? 0, 1),
       },
       staging: {
         chillers: kv('kpi-rch'),
