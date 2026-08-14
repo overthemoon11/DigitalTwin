@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import SimulationInputPanel from './SimulationInputPanel';
-import OptimalControlComparison from './OptimalControlComparison';
-import SimulationResultComparison from './SimulationResultComparison';
+import React, { useEffect } from "react";
+import SimulationInputPanel from "./SimulationInputPanel";
+import OptimalControlComparison from "./OptimalControlComparison";
+import SimulationResultComparison from "./SimulationResultComparison";
 
 /**
  * Left sidebar for the chiller-plant MPC simulator.
@@ -29,7 +29,7 @@ export default function MpcLeftSidebar({
     onInit?.();
   }, [onInit]);
 
-  const running = status === 'RUNNING' || status === 'VALIDATING';
+  const running = status === "RUNNING" || status === "VALIDATING";
   const before = result?.baselineControl ?? baselineControl;
   const optimal = result?.optimalControl ?? null;
 
@@ -39,7 +39,11 @@ export default function MpcLeftSidebar({
         <span className="vsp-badge">MPC Optimisation Simulator</span>
       </div>
 
-      <SimulationInputPanel input={input} onChange={onChangeInput} disabled={running} />
+      <SimulationInputPanel
+        input={input}
+        onChange={onChangeInput}
+        disabled={running}
+      />
 
       <OptimalControlComparison baseline={before} optimal={optimal} />
 
@@ -72,10 +76,6 @@ export default function MpcLeftSidebar({
           </button>
         </div>
       )}
-
-      <p className="vsp-footnote">
-        Offline physics model calibrated to the Dec-2025 T1 BMS trend — not live BMS points.
-      </p>
     </div>
   );
 }

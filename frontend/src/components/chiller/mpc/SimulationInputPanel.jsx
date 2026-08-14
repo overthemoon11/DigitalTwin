@@ -1,5 +1,5 @@
-import React from 'react';
-import NumberField from './NumberField';
+import React from "react";
+import NumberField from "./NumberField";
 
 /**
  * SECTION A — the disturbances. Building load and wet bulb are the conditions
@@ -33,9 +33,6 @@ export default function SimulationInputPanel({ input, onChange, disabled }) {
           onCommit={(v) => onChange({ wetBulbC: v })}
         />
       </div>
-      <p className="vsp-desc">
-        Operating conditions the optimiser must serve. Not manipulated variables.
-      </p>
     </section>
   );
 }
