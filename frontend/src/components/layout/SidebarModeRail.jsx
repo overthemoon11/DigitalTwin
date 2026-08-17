@@ -18,6 +18,44 @@ function SidebarModeIcon({ mode }) {
     );
   }
 
+  if (mode === "controls") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        className="bi bi-sliders"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3M2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3m-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1z"
+        />
+      </svg>
+    );
+  }
+
+  if (mode === "points") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        className="bi bi-list-columns-reverse"
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+      >
+        <path
+          fillRule="evenodd"
+          d="M0 .5A.5.5 0 0 1 .5 0h4a.5.5 0 0 1 0 1h-4A.5.5 0 0 1 0 .5m6 0a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 6 .5m-6 2A.5.5 0 0 1 .5 2h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m6 0a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-6 4A.5.5 0 0 1 .5 6h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m6 0a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-6 2A.5.5 0 0 1 .5 8h4a.5.5 0 0 1 0 1h-4A.5.5 0 0 1 0 8.5m6 0a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-6 4a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m6 0a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-6 2a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m6 0a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5"
+        />
+      </svg>
+    );
+  }
+
   if (mode === "assets") {
     return (
       <svg
@@ -50,10 +88,28 @@ function SidebarModeIcon({ mode }) {
   );
 }
 
-export default function SidebarModeRail({ mode, sidebarOpen, onModeSelect, showMpc = false }) {
+/**
+ * Left mode rail.
+ *
+ * With the chiller plant's right sidebar folded into the left column, the rail
+ * also carries what used to be the right-hand tabs (Controls, BMS Points) —
+ * otherwise consolidating the sidebars would simply lose them.
+ */
+export default function SidebarModeRail({
+  mode,
+  sidebarOpen,
+  onModeSelect,
+  showMpc = false,
+}) {
   const items = [
-    ...(showMpc ? [{ id: "mpc", label: "MPC Optimisation" }] : []),
-    { id: "assets", label: "Assets" },
+    ...(showMpc
+      ? [
+          { id: "mpc", label: "MPC Optimisation" },
+          { id: "assets", label: "Assets" },
+          { id: "controls", label: "Manual Controls" },
+          { id: "points", label: "BMS Points" },
+        ]
+      : [{ id: "assets", label: "Assets" }]),
     { id: "simulator", label: "Virtual Simulator" },
   ];
 
