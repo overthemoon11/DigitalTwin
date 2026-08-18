@@ -6,7 +6,9 @@ const fmt = (v, d = 1) => (typeof v === 'number' && Number.isFinite(v) ? v.toFix
 function stagingLabel(control) {
   if (!control) return '—';
   const ids = control.chillerIds;
-  if (ids?.length) return ids.join(', ');
+  // Non-breaking hyphen: a soft wrap is allowed after an ordinary "-", so a
+  // wrapped list would split "CH-4" across two lines as "CH-" / "4".
+  if (ids?.length) return ids.map((id) => id.replace(/-/g, '‑')).join(', ');
   return String(control.runningChillers);
 }
 
@@ -46,6 +48,7 @@ export default function OptimalControlComparison({ baseline, optimal }) {
           after: optimal ? stagingLabel(optimal) : '—',
           changed: !!optimal && optimal.runningChillers !== baseline.runningChillers,
           direction: optimal ? direction(baseline.runningChillers, optimal.runningChillers) : null,
+          wrap: true,
         },
         {
           label: 'CHWP Speed',

@@ -437,249 +437,103 @@
 }
 
 /* =========================================================================
-   CONSOLIDATED LEFT WORKSPACE (layout C)
+   BOTH SIDEBARS DOCKED LEFT, SIDE BY SIDE
 
-   Both former sidebars live in one column:
+       [rail] [ RESULTS ] [ CONSTRAINTS + RUN ] [ SCHEMATIC ]
 
-       SETUP      what the plant is allowed to do
-       ── RUN ──  the action that turns one into the other
-       RESULTS    what it produced
+   Reading left to right this is: what happened → what the plant is allowed to
+   do → the plant. The constraints rail sits against the schematic so the RUN
+   button and the equipment it commands are adjacent, and the results rail sits
+   against the mode rail where the eye starts.
 
-   Merging the two 300px rails is what actually gives the schematic room —
-   moving a sidebar from one edge to the other changes no widths at all, since
-   the same chrome is subtracted from the viewport either way. One 348px rail
-   in place of 300 + 300 returns ~252px to the twin.
+   Note this does not widen the schematic: the same 52 + 300 + 300 of chrome is
+   subtracted from the viewport wherever the panels are docked. What it buys is
+   a single uninterrupted edge for the drawing and no left-right eye travel
+   between the limits you set and the numbers they produced.
    ========================================================================= */
 
-.left-panel--workspace {
-  width: 348px;
-  flex: 0 0 348px;
+.right-panel--docked-left {
+  border-left: none;
+  border-right: 1px solid var(--border);
 }
 
-.mpc-workspace {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+.right-panel--docked-left.right-panel--collapsed {
+  border-right: none;
 }
 
-.mpc-ws-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-shrink: 0;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.mpc-ws-title {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.mpc-ws-title strong {
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text);
-}
-
-.mpc-ws-title span {
-  font-size: 0.62rem;
-  color: var(--text-muted);
-}
-
-/* Run state, readable without scrolling to the status panel. */
-.mpc-state-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border-strong);
+/* Two 300px panels adjacent read as one 600px slab unless they are separated.
+   The inner rail is very slightly recessed and carries a stronger divider, so
+   the boundary is legible without adding a heavy rule. */
+.right-panel--docked-left {
   background: var(--bg-card);
-  color: var(--text-muted);
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  box-shadow: inset -1px 0 0 var(--border-strong);
 }
 
-.mpc-state-chip::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
+.right-panel--docked-left .panel-tabs {
+  background: var(--bg-panel);
 }
 
-.mpc-state-chip[data-state="COMPLETED"] {
-  color: var(--success);
-  border-color: rgba(22, 163, 74, 0.45);
-  background: rgba(22, 163, 74, 0.1);
-}
-
-.mpc-state-chip[data-state="RUNNING"],
-.mpc-state-chip[data-state="VALIDATING"] {
-  color: var(--accent);
-  border-color: rgba(2, 132, 199, 0.45);
-  background: var(--accent-soft);
-}
-
-.mpc-state-chip[data-state="RUNNING"]::before {
-  animation: mpc-pulse 1.1s ease-in-out infinite;
-}
-
-.mpc-state-chip[data-state="INFEASIBLE"],
-.mpc-state-chip[data-state="ERROR"] {
-  color: var(--error);
-  border-color: rgba(220, 38, 38, 0.45);
-  background: rgba(220, 38, 38, 0.08);
-}
-
-@keyframes mpc-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.25;
-  }
-}
-
-/* --- The two panes ------------------------------------------------------
-   Each takes an equal share of the leftover height and scrolls itself, so a
-   long constraint form never pushes the results out of reach. A collapsed
-   pane shrinks to its header and hands its height to the other — the escape
-   valve for short viewports, where a fixed 50/50 split leaves ~420px each.
-   ------------------------------------------------------------------------ */
-.mpc-pane {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.mpc-pane--collapsed {
-  flex: 0 0 auto;
-}
-
-.mpc-pane-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  width: 100%;
-  padding: 7px 12px;
+/* The run dock is the primary action of the whole page; against the schematic
+   edge it needs a little more presence than it had tucked on the far right. */
+.right-panel--docked-left .mpc-run-dock {
   background: var(--bg-card);
-  border: none;
-  border-bottom: 1px solid var(--border);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background var(--transition);
-}
-
-.mpc-pane-head:hover {
-  background: var(--bg-hover);
-}
-
-.mpc-pane-caret {
-  font-size: 0.6rem;
-  color: var(--text-muted);
-}
-
-.mpc-pane-name {
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--text);
-}
-
-.mpc-pane-hint {
-  margin-left: auto;
-  font-size: 0.6rem;
-  color: var(--text-muted);
-}
-
-.mpc-pane-badge {
-  margin-left: auto;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(22, 163, 74, 0.12);
-  color: var(--success);
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 700;
-}
-
-.mpc-pane-body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 10px 12px 12px;
-}
-
-/* --- Run dock, sitting on the seam between cause and effect ------------- */
-.mpc-run-dock--seam {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border-strong);
-  border-bottom: 1px solid var(--border-strong);
-  background: var(--bg-card);
-  box-shadow: none;
-}
-
-/* The constraint panel no longer needs its own heading — the pane header
-   above it already says "Setup". Keep the reset action. */
-.mpc-workspace .mpc-constraint-head {
-  margin-top: 12px;
-}
-
-.mpc-workspace .mpc-constraint-hint {
-  display: none;
-}
-
-/* Status panel sits at the top of the Results pane: press RUN on the seam and
-   the trace appears directly below it. */
-.mpc-workspace .mpc-status {
-  margin-top: 0;
-  margin-bottom: 12px;
+  box-shadow: 0 -6px 16px rgba(15, 23, 42, 0.08);
 }
 
 /* --- Responsive ---------------------------------------------------------
-   One rail is far kinder to narrow screens than two: the twin keeps ~890px at
-   1280 where the old three-column layout left it 628px.
+   Two adjacent rails plus the mode rail is 652px of chrome. Below ~1500px the
+   schematic starts to suffer, so both rails narrow together; below 1200px the
+   layout can no longer carry two of them side by side and the constraints rail
+   is hidden by default (the header toggle still reopens it as an overlay).
    ------------------------------------------------------------------------ */
-@media (max-width: 1440px) {
-  .left-panel--workspace {
-    width: 324px;
-    flex: 0 0 324px;
+@media (max-width: 1500px) {
+  .left-panel {
+    width: 272px;
+    flex: 0 0 272px;
+  }
+  .right-panel.right-panel--docked-left {
+    width: 272px;
+    flex-basis: 272px;
   }
 }
 
-@media (max-width: 1280px) {
-  .left-panel--workspace {
-    width: 306px;
-    flex: 0 0 306px;
+@media (max-width: 1320px) {
+  .left-panel {
+    width: 252px;
+    flex: 0 0 252px;
+  }
+  .right-panel.right-panel--docked-left {
+    width: 252px;
+    flex-basis: 252px;
+  }
+  .mpc-detail-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-/* Short viewports: the split costs too much. Let the panes size to content and
-   scroll the column as a whole instead. */
-@media (max-height: 780px) {
-  .mpc-pane {
-    flex: 0 0 auto;
-    max-height: 46%;
+/* Below this the two rails would leave the plant unreadable. The constraints
+   rail floats over the schematic instead of stealing width from it. */
+@media (max-width: 1200px) {
+  .right-panel.right-panel--docked-left {
+    position: absolute;
+    left: 52px;
+    top: 0;
+    bottom: 0;
+    z-index: 20;
+    width: 300px;
+    flex-basis: 0;
+    box-shadow: var(--shadow-lg);
   }
-  .mpc-pane-body {
-    overflow-y: auto;
+  .main-content {
+    position: relative;
   }
+}
+
+/* A staged-chiller list is several unit ids long and does not fit a fixed
+   column; let those cells wrap instead of clipping to an ellipsis. Top-aligned
+   so before/after stay on the same baseline when one side is taller. */
+.mpc-compare td.mpc-c-wrap {
+  white-space: normal;
+  line-height: 1.35;
+  vertical-align: top;
 }

@@ -19,7 +19,8 @@ import ChillerScadaPanel from "./components/chiller/ChillerScadaPanel";
 import ChillerPointsList from "./components/chiller/ChillerPointsList";
 import ChillerKPIPanel from "./components/chiller/ChillerKPIPanel";
 import VirtualSimulatorPanel from "./components/leftSidebar/VirtualSimulatorPanel";
-import MpcWorkspace from "./components/chiller/mpc/MpcWorkspace";
+import MpcLeftSidebar from "./components/chiller/mpc/MpcLeftSidebar";
+import ChillerSidePanel from "./components/chiller/ChillerSidePanel";
 import DistrictCoolingControlPanel from "./components/districtcooling/DistrictCoolingControlPanel";
 import DistrictCoolingTwinTab from "./components/districtcooling/DistrictCoolingTwinTab";
 import KPIPanel from "./components/common/KPIPanel";
@@ -158,13 +159,10 @@ function App() {
   const scenarioAlerts = scenarioState?.alerts || twinState.alerts;
   const scenarioKpis = scenarioState?.kpis || twinState.kpis;
   const activeAlertCount = scenarioAlerts.filter((a) => !a.resolved).length;
-  // MPC, Controls and BMS Points are chiller-plant views; the other scenarios
-  // fall back to their asset tree rather than rendering an empty panel.
-  const CHILLER_ONLY_MODES = ["mpc", "controls", "points"];
+  // The MPC sidebar only exists for the chiller plant; other scenarios fall
+  // back to their asset tree rather than showing an empty rail slot.
   const effectiveLeftMode =
-    CHILLER_ONLY_MODES.includes(leftSidebarMode) && !isChillerScenario
-      ? "assets"
-      : leftSidebarMode;
+    leftSidebarMode === "mpc" && !isChillerScenario ? "assets" : leftSidebarMode;
 
   return (
     <div className="app">
@@ -228,10 +226,15 @@ function App() {
           <button
             type="button"
             className="header-right-sidebar-toggle"
-            hidden={isChillerScenario}
             onClick={() => setRightSidebarOpen((open) => !open)}
             aria-label={
-              rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"
+              isChillerScenario
+                ? rightSidebarOpen
+                  ? "Close constraints panel"
+                  : "Open constraints panel"
+                : rightSidebarOpen
+                  ? "Close right sidebar"
+                  : "Open right sidebar"
             }
             aria-expanded={rightSidebarOpen}
             title={
@@ -276,59 +279,31 @@ function App() {
         />
       ) : (
         <div className="main-content">
-          {/* The rail stays mounted even when the panel is collapsed. With the
-              plant's controls consolidated into a single column, hiding the
-              rail alongside it would strip the run button, constraints and
-              results in one click with no visible way back. */}
-          <SidebarModeRail
-            mode={effectiveLeftMode}
-            sidebarOpen={leftSidebarOpen}
-            onModeSelect={selectLeftSidebarMode}
-            showMpc={isChillerScenario}
-          />
+          {leftSidebarOpen && (
+            <SidebarModeRail
+              mode={effectiveLeftMode}
+              sidebarOpen={leftSidebarOpen}
+              onModeSelect={selectLeftSidebarMode}
+              showMpc={isChillerScenario}
+            />
+          )}
           <aside
-            className={`left-panel ${leftSidebarOpen ? "" : "left-panel--collapsed"} ${
-              leftSidebarOpen && effectiveLeftMode === "mpc" ? "left-panel--workspace" : ""
-            }`}
+            className={`left-panel ${leftSidebarOpen ? "" : "left-panel--collapsed"}`}
           >
             {leftSidebarOpen && (
               <>
                 {effectiveLeftMode === "mpc" ? (
-                  <MpcWorkspace
+                  <MpcLeftSidebar
                     input={mpcInput}
                     baselineControl={mpcLiveBaseline}
-                    onChangeInput={setMpcInput}
-                    onInit={initMpcFromPlant}
-                    constraints={mpcConstraints}
-                    errors={mpcConstraintErrors}
-                    onSet={setMpcConstraint}
-                    onSetFleet={setMpcChillerFleet}
-                    onSetAvailable={setMpcAvailableChillers}
-                    onReset={resetMpcConstraints}
-                    status={mpcStatus}
-                    progress={mpcProgress}
                     result={mpcResult}
-                    error={mpcError}
-                    onRun={runMpcSimulation}
-                    onCancel={cancelMpc}
+                    status={mpcStatus}
                     applied={mpcApplied}
+                    onInit={initMpcFromPlant}
+                    onChangeInput={setMpcInput}
                     onRestoreBaseline={restoreMpcBaseline}
                     onReapplyOptimum={reapplyMpcOptimum}
                   />
-                ) : effectiveLeftMode === "controls" ? (
-                  <div className="left-panel-scroll scada-panel-content">
-                    <ChillerScadaPanel plantState={plantState} onSet={updatePlantControl} />
-                  </div>
-                ) : effectiveLeftMode === "points" ? (
-                  <div className="left-panel-scroll scada-panel-content">
-                    <ChillerPointsList
-                      plantState={plantState}
-                      onToggleDuty={togglePlantDuty}
-                      onApplyScenario={applyChillerScenario}
-                      onApplyScenarioPayload={applyChillerScenarioPayload}
-                      onSetControl={updatePlantControl}
-                    />
-                  </div>
                 ) : effectiveLeftMode === "assets" ? (
                   <>
                     <h3>
@@ -377,6 +352,41 @@ function App() {
               </>
             )}
           </aside>
+
+          {/* Second docked panel. For the chiller plant both sidebars sit on
+              the left, side by side: results rail, then this constraints/run
+              rail, then the schematic. Mounted here rather than reordered with
+              CSS so DOM order matches visual order for keyboard and screen
+              readers. Other scenarios keep it on the right (below). */}
+          {isChillerScenario && (
+            <aside
+              className={`right-panel right-panel--scada right-panel--docked-left ${
+                rightSidebarOpen ? "" : "right-panel--collapsed"
+              }`}
+            >
+              {rightSidebarOpen && (
+                <ChillerSidePanel
+                  plantState={plantState}
+                  mpcConstraints={mpcConstraints}
+                  mpcConstraintErrors={mpcConstraintErrors}
+                  mpcStatus={mpcStatus}
+                  mpcProgress={mpcProgress}
+                  mpcResult={mpcResult}
+                  mpcError={mpcError}
+                  onSetConstraint={setMpcConstraint}
+                  onSetFleet={setMpcChillerFleet}
+                  onSetAvailable={setMpcAvailableChillers}
+                  onResetConstraints={resetMpcConstraints}
+                  onRun={runMpcSimulation}
+                  onCancel={cancelMpc}
+                  onUpdateControl={updatePlantControl}
+                  onToggleDuty={togglePlantDuty}
+                  onApplyScenario={applyChillerScenario}
+                  onApplyScenarioPayload={applyChillerScenarioPayload}
+                />
+              )}
+            </aside>
+          )}
 
           <main
             className={`viewer ${isChillerScenario || isEtsScenario || isAhuScenario ? "chiller-plant-viewer" : "hx-plant-viewer"}`}
@@ -436,15 +446,15 @@ function App() {
             )}
           </main>
 
-          {/* The chiller plant has no right panel: its Constraints, Controls and
-              BMS Points tabs are consolidated into the left column (Constraints
-              into the MPC workspace, the other two as mode-rail views). The
-              other scenarios keep their original right-hand tabs. */}
+          {/* Non-chiller scenarios keep their right-hand panel. The chiller
+              plant renders nothing here — `hidden` alone is not enough, since
+              .right-panel sets display:flex and a class selector beats the UA
+              [hidden] rule, leaving a 360px phantom column stealing width. */}
+          {!isChillerScenario && (
           <aside
-            className={`right-panel ${rightSidebarOpen && !isChillerScenario ? "" : "right-panel--collapsed"}`}
-            hidden={isChillerScenario}
+            className={`right-panel ${rightSidebarOpen ? "" : "right-panel--collapsed"}`}
           >
-            {rightSidebarOpen && !isChillerScenario && (
+            {rightSidebarOpen && (
               <>
                   <div className="panel-tabs">
                     <button
@@ -566,6 +576,7 @@ function App() {
               </>
             )}
           </aside>
+          )}
         </div>
       )}
     </div>
