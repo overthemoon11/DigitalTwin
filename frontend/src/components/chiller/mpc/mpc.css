@@ -537,3 +537,87 @@
   line-height: 1.35;
   vertical-align: top;
 }
+
+/* =========================================================================
+   MIN–MAX RANGE ROW
+
+   One quantity, one row, one label, one unit — the two bounds sit either side
+   of a dash so the row reads as the interval it actually is. Previously each
+   bound had its own full row, which doubled the panel's length and made
+   "Min Load" and "Max Load" look like two unrelated settings.
+   ========================================================================= */
+
+/* Match the emphasis of single-value editable rows: a range row is just as
+   editable, so its label should not read as secondary next to them. */
+.scada-row--range .scada-row-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.scada-row--range {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.mpc-range {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mpc-bound {
+  display: inline-flex;
+  align-items: center;
+  width: 3.5rem;
+  padding: 1px 5px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-light);
+  border-radius: var(--radius-sm);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.mpc-bound:focus-within {
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+.mpc-bound--invalid {
+  border-color: var(--error);
+}
+
+.mpc-bound .scada-input {
+  width: 100%;
+  text-align: right;
+}
+
+/* The dash is the whole reason this reads as a range rather than two boxes. */
+.mpc-range-sep {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Unit stated once, after the pair, so both bounds share it. */
+.mpc-range-unit {
+  min-width: 1.9rem;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Narrow rails: shrink the boxes before wrapping the row. */
+@media (max-width: 1440px) {
+  .mpc-bound {
+    width: 3.2rem;
+  }
+  .mpc-range-unit {
+    min-width: 1.6rem;
+  }
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import ConstraintSection from './ConstraintSection';
 import NumberField from './NumberField';
+import RangeField from './RangeField';
 
 /**
  * CONSTRAINT INPUT — the MPC's search boundaries.
@@ -8,6 +9,13 @@ import NumberField from './NumberField';
  * This is NOT a manual command panel: nothing here writes a setpoint to the
  * plant. Each field defines what the optimiser is ALLOWED to propose, and every
  * one of them is read by the candidate generator or the constraint validator.
+ *
+ * Bounds on the same quantity are ONE row, not two. A "Min Load / Max Load"
+ * pair is a single allowed band; listing them separately doubled the length of
+ * the panel and hid the fact that they belong together. Genuinely independent
+ * limits -- a tower approach floor vs a CWST ceiling, the two anti-cycle timers
+ * -- stay on their own rows, because pairing those would imply a range that
+ * does not exist.
  *
  * Fields that the constraint layer enforces but the physics does not yet
  * simulate (the anti-short-cycle timers) are labelled as such rather than
@@ -32,6 +40,7 @@ export default function ConstraintPanel({
   const availableCount = cfg.chiller.units.filter((x) => x.available).length;
 
   const field = (props) => <NumberField disabled={disabled} {...props} />;
+  const range = (props) => <RangeField disabled={disabled} {...props} />;
 
   return (
     <div className="mpc-constraint-panel">
@@ -63,67 +72,46 @@ export default function ConstraintPanel({
           error: errFor('chiller', 'units.0.ratedCapacityRt'),
           onCommit: (v) => onSetFleet('ratedCapacityRt', v),
         })}
-        {field({
-          label: 'Min Load',
-          value: u0.minLoadPct,
+        {range({
+          label: 'Load',
           unit: '%',
           step: 5,
           decimals: 0,
+          minValue: u0.minLoadPct,
+          maxValue: u0.maxLoadPct,
+          onCommitMin: (v) => onSetFleet('minLoadPct', v),
+          onCommitMax: (v) => onSetFleet('maxLoadPct', v),
           error: errFor('chiller', 'units.0.minLoadPct'),
-          onCommit: (v) => onSetFleet('minLoadPct', v),
         })}
-        {field({
-          label: 'Max Load',
-          value: u0.maxLoadPct,
-          unit: '%',
-          step: 5,
-          decimals: 0,
-          onCommit: (v) => onSetFleet('maxLoadPct', v),
-        })}
-        {field({
-          label: 'Min CHW Flow',
-          value: u0.minChwFlowLs,
+        {range({
+          label: 'CHW Flow',
           unit: 'L/s',
           step: 5,
+          minValue: u0.minChwFlowLs,
+          maxValue: u0.maxChwFlowLs,
+          onCommitMin: (v) => onSetFleet('minChwFlowLs', v),
+          onCommitMax: (v) => onSetFleet('maxChwFlowLs', v),
           error: errFor('chiller', 'units.0.minChwFlowLs'),
-          onCommit: (v) => onSetFleet('minChwFlowLs', v),
         })}
-        {field({
-          label: 'Max CHW Flow',
-          value: u0.maxChwFlowLs,
+        {range({
+          label: 'CW Flow',
           unit: 'L/s',
           step: 5,
-          onCommit: (v) => onSetFleet('maxChwFlowLs', v),
-        })}
-        {field({
-          label: 'Min CW Flow',
-          value: u0.minCwFlowLs,
-          unit: 'L/s',
-          step: 5,
+          minValue: u0.minCwFlowLs,
+          maxValue: u0.maxCwFlowLs,
+          onCommitMin: (v) => onSetFleet('minCwFlowLs', v),
+          onCommitMax: (v) => onSetFleet('maxCwFlowLs', v),
           error: errFor('chiller', 'units.0.minCwFlowLs'),
-          onCommit: (v) => onSetFleet('minCwFlowLs', v),
         })}
-        {field({
-          label: 'Max CW Flow',
-          value: u0.maxCwFlowLs,
-          unit: 'L/s',
-          step: 5,
-          onCommit: (v) => onSetFleet('maxCwFlowLs', v),
-        })}
-        {field({
-          label: 'Min CHWST',
-          value: cfg.chiller.minChwstC,
+        {range({
+          label: 'CHWST',
           unit: '°C',
           step: 0.1,
+          minValue: cfg.chiller.minChwstC,
+          maxValue: cfg.chiller.maxChwstC,
+          onCommitMin: (v) => onSet('chiller.minChwstC', v),
+          onCommitMax: (v) => onSet('chiller.maxChwstC', v),
           error: errFor('chiller', 'minChwstC'),
-          onCommit: (v) => onSet('chiller.minChwstC', v),
-        })}
-        {field({
-          label: 'Max CHWST',
-          value: cfg.chiller.maxChwstC,
-          unit: '°C',
-          step: 0.1,
-          onCommit: (v) => onSet('chiller.maxChwstC', v),
         })}
         <p className="mpc-note">
           One common configuration writes all {cfg.chiller.units.length} machines; the model
@@ -132,30 +120,83 @@ export default function ConstraintPanel({
       </ConstraintSection>
 
       <ConstraintSection title="CHWP Constraints" invalidCount={countIn('chwp')}>
-        {field({ label: 'Min Speed', value: cfg.chwp.minSpeedPct, unit: '%', step: 5, decimals: 0, error: errFor('chwp', 'minSpeedPct'), onCommit: (v) => onSet('chwp.minSpeedPct', v) })}
-        {field({ label: 'Max Speed', value: cfg.chwp.maxSpeedPct, unit: '%', step: 5, decimals: 0, onCommit: (v) => onSet('chwp.maxSpeedPct', v) })}
-        {field({ label: 'Min Flow', value: cfg.chwp.minFlowLs, unit: 'L/s', step: 5, error: errFor('chwp', 'minFlowLs'), onCommit: (v) => onSet('chwp.minFlowLs', v) })}
-        {field({ label: 'Max Flow', value: cfg.chwp.maxFlowLs, unit: 'L/s', step: 5, onCommit: (v) => onSet('chwp.maxFlowLs', v) })}
-        {field({ label: 'Min DP', value: cfg.chwp.minDpPsi, unit: 'psi', step: 1, error: errFor('chwp', 'minDpPsi'), onCommit: (v) => onSet('chwp.minDpPsi', v) })}
-        {field({ label: 'Max DP', value: cfg.chwp.maxDpPsi, unit: 'psi', step: 1, onCommit: (v) => onSet('chwp.maxDpPsi', v) })}
+        {range({
+          label: 'Speed',
+          unit: '%',
+          step: 5,
+          decimals: 0,
+          minValue: cfg.chwp.minSpeedPct,
+          maxValue: cfg.chwp.maxSpeedPct,
+          onCommitMin: (v) => onSet('chwp.minSpeedPct', v),
+          onCommitMax: (v) => onSet('chwp.maxSpeedPct', v),
+          error: errFor('chwp', 'minSpeedPct'),
+        })}
+        {range({
+          label: 'Flow',
+          unit: 'L/s',
+          step: 5,
+          minValue: cfg.chwp.minFlowLs,
+          maxValue: cfg.chwp.maxFlowLs,
+          onCommitMin: (v) => onSet('chwp.minFlowLs', v),
+          onCommitMax: (v) => onSet('chwp.maxFlowLs', v),
+          error: errFor('chwp', 'minFlowLs'),
+        })}
+        {range({
+          label: 'DP',
+          unit: 'psi',
+          step: 1,
+          minValue: cfg.chwp.minDpPsi,
+          maxValue: cfg.chwp.maxDpPsi,
+          onCommitMin: (v) => onSet('chwp.minDpPsi', v),
+          onCommitMax: (v) => onSet('chwp.maxDpPsi', v),
+          error: errFor('chwp', 'minDpPsi'),
+        })}
         {field({ label: 'Rated Power', value: cfg.chwp.ratedPowerKw, unit: 'kW', step: 1, onCommit: (v) => onSet('chwp.ratedPowerKw', v) })}
         {field({ label: 'Rated Flow', value: cfg.chwp.ratedFlowLs, unit: 'L/s', step: 5, onCommit: (v) => onSet('chwp.ratedFlowLs', v) })}
         {field({ label: 'Rated Head', value: cfg.chwp.ratedHeadM, unit: 'm', step: 1, onCommit: (v) => onSet('chwp.ratedHeadM', v) })}
       </ConstraintSection>
 
       <ConstraintSection title="CWP Constraints" invalidCount={countIn('cwp')}>
-        {field({ label: 'Min Speed', value: cfg.cwp.minSpeedPct, unit: '%', step: 5, decimals: 0, error: errFor('cwp', 'minSpeedPct'), onCommit: (v) => onSet('cwp.minSpeedPct', v) })}
-        {field({ label: 'Max Speed', value: cfg.cwp.maxSpeedPct, unit: '%', step: 5, decimals: 0, onCommit: (v) => onSet('cwp.maxSpeedPct', v) })}
-        {field({ label: 'Min Flow', value: cfg.cwp.minFlowLs, unit: 'L/s', step: 5, error: errFor('cwp', 'minFlowLs'), onCommit: (v) => onSet('cwp.minFlowLs', v) })}
-        {field({ label: 'Max Flow', value: cfg.cwp.maxFlowLs, unit: 'L/s', step: 5, onCommit: (v) => onSet('cwp.maxFlowLs', v) })}
+        {range({
+          label: 'Speed',
+          unit: '%',
+          step: 5,
+          decimals: 0,
+          minValue: cfg.cwp.minSpeedPct,
+          maxValue: cfg.cwp.maxSpeedPct,
+          onCommitMin: (v) => onSet('cwp.minSpeedPct', v),
+          onCommitMax: (v) => onSet('cwp.maxSpeedPct', v),
+          error: errFor('cwp', 'minSpeedPct'),
+        })}
+        {range({
+          label: 'Flow',
+          unit: 'L/s',
+          step: 5,
+          minValue: cfg.cwp.minFlowLs,
+          maxValue: cfg.cwp.maxFlowLs,
+          onCommitMin: (v) => onSet('cwp.minFlowLs', v),
+          onCommitMax: (v) => onSet('cwp.maxFlowLs', v),
+          error: errFor('cwp', 'minFlowLs'),
+        })}
         {field({ label: 'Rated Power', value: cfg.cwp.ratedPowerKw, unit: 'kW', step: 1, onCommit: (v) => onSet('cwp.ratedPowerKw', v) })}
         {field({ label: 'Rated Flow', value: cfg.cwp.ratedFlowLs, unit: 'L/s', step: 5, onCommit: (v) => onSet('cwp.ratedFlowLs', v) })}
         {field({ label: 'Rated Head', value: cfg.cwp.ratedHeadM, unit: 'm', step: 1, onCommit: (v) => onSet('cwp.ratedHeadM', v) })}
       </ConstraintSection>
 
       <ConstraintSection title="Cooling Tower Constraints" invalidCount={countIn('tower')}>
-        {field({ label: 'Min Fan Speed', value: cfg.tower.minFanSpeedPct, unit: '%', step: 5, decimals: 0, error: errFor('tower', 'minFanSpeedPct'), onCommit: (v) => onSet('tower.minFanSpeedPct', v) })}
-        {field({ label: 'Max Fan Speed', value: cfg.tower.maxFanSpeedPct, unit: '%', step: 5, decimals: 0, onCommit: (v) => onSet('tower.maxFanSpeedPct', v) })}
+        {range({
+          label: 'Fan Speed',
+          unit: '%',
+          step: 5,
+          decimals: 0,
+          minValue: cfg.tower.minFanSpeedPct,
+          maxValue: cfg.tower.maxFanSpeedPct,
+          onCommitMin: (v) => onSet('tower.minFanSpeedPct', v),
+          onCommitMax: (v) => onSet('tower.maxFanSpeedPct', v),
+          error: errFor('tower', 'minFanSpeedPct'),
+        })}
+        {/* Not a pair: an approach floor and a supply-temperature ceiling are
+            different quantities, so rendering them as a range would be a lie. */}
         {field({ label: 'Min Approach', value: cfg.tower.minApproachC, unit: '°C', step: 0.1, error: errFor('tower', 'minApproachC'), onCommit: (v) => onSet('tower.minApproachC', v) })}
         {field({ label: 'Max CWST', value: cfg.tower.maxCwstC, unit: '°C', step: 0.5, onCommit: (v) => onSet('tower.maxCwstC', v) })}
         {field({ label: 'Rated Heat Rejection', value: cfg.tower.ratedHeatRejectionRt, unit: 'RT', step: 100, decimals: 0, onCommit: (v) => onSet('tower.ratedHeatRejectionRt', v) })}
@@ -164,15 +205,32 @@ export default function ConstraintPanel({
       </ConstraintSection>
 
       <ConstraintSection title="System Constraints" invalidCount={countIn('system')}>
-        {field({ label: 'Min CHW DP', value: cfg.system.minChwDpPsi, unit: 'psi', step: 1, error: errFor('system', 'minChwDpPsi'), onCommit: (v) => onSet('system.minChwDpPsi', v) })}
-        {field({ label: 'Max CHW DP', value: cfg.system.maxChwDpPsi, unit: 'psi', step: 1, onCommit: (v) => onSet('system.maxChwDpPsi', v) })}
+        {range({
+          label: 'CHW DP',
+          unit: 'psi',
+          step: 1,
+          minValue: cfg.system.minChwDpPsi,
+          maxValue: cfg.system.maxChwDpPsi,
+          onCommitMin: (v) => onSet('system.minChwDpPsi', v),
+          onCommitMax: (v) => onSet('system.maxChwDpPsi', v),
+          error: errFor('system', 'minChwDpPsi'),
+        })}
         {field({ label: 'Max CHW Header Flow', value: cfg.system.maxChwHeaderFlowLs, unit: 'L/s', step: 50, decimals: 0, onCommit: (v) => onSet('system.maxChwHeaderFlowLs', v) })}
         {field({ label: 'Max CW Header Flow', value: cfg.system.maxCwHeaderFlowLs, unit: 'L/s', step: 50, decimals: 0, onCommit: (v) => onSet('system.maxCwHeaderFlowLs', v) })}
-        {field({ label: 'Min Running Chillers', value: cfg.system.minRunningChillers, step: 1, decimals: 0, error: errFor('system', 'minRunningChillers'), onCommit: (v) => onSet('system.minRunningChillers', v) })}
-        {field({ label: 'Max Running Chillers', value: cfg.system.maxRunningChillers, step: 1, decimals: 0, onCommit: (v) => onSet('system.maxRunningChillers', v) })}
+        {range({
+          label: 'Running Chillers',
+          step: 1,
+          decimals: 0,
+          minValue: cfg.system.minRunningChillers,
+          maxValue: cfg.system.maxRunningChillers,
+          onCommitMin: (v) => onSet('system.minRunningChillers', v),
+          onCommitMax: (v) => onSet('system.maxRunningChillers', v),
+          error: errFor('system', 'minRunningChillers'),
+        })}
         {field({ label: 'Required Standby', value: cfg.system.requiredStandbyChillers, step: 1, decimals: 0, error: errFor('system', 'requiredStandbyChillers'), onCommit: (v) => onSet('system.requiredStandbyChillers', v) })}
         {field({ label: 'Max CHWST Δ / Cycle', value: cfg.system.maxChwstChangePerCycleC, unit: '°C', step: 0.1, onCommit: (v) => onSet('system.maxChwstChangePerCycleC', v) })}
         {field({ label: 'Max DP Δ / Cycle', value: cfg.system.maxDpChangePerCyclePsi, unit: 'psi', step: 0.5, onCommit: (v) => onSet('system.maxDpChangePerCyclePsi', v) })}
+        {/* Two separate minimums, not a band -- deliberately kept apart. */}
         {field({ label: 'Min Chiller Runtime', value: cfg.system.minChillerRuntimeMin, unit: 'min', step: 5, decimals: 0, onCommit: (v) => onSet('system.minChillerRuntimeMin', v) })}
         {field({ label: 'Min Chiller Off Time', value: cfg.system.minChillerOffTimeMin, unit: 'min', step: 5, decimals: 0, onCommit: (v) => onSet('system.minChillerOffTimeMin', v) })}
         <p className="mpc-note mpc-note--warn">
