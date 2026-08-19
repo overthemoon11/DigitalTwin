@@ -18,6 +18,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { HVACSimulator } from './simulator/hvac-simulator.js';
+// Chiller Digital Twin + MPC. These are TypeScript and are loaded through tsx
+// (see package.json start/dev), which is why there is no build step.
+import { createApiRouter } from './api/routes/index.ts';
+import { subscribePlant, publishPlantState } from './websocket/plantChannel.ts';
 import { handleCopilotChat } from './services/copilot-service.js';
 import {
   initialize as initLlm,
@@ -87,7 +91,13 @@ function broadcastState(wss, update) {
   });
 }
 
-// ============ REST API Routes ============
+// ============ Digital Twin / MPC API ============
+// Chiller plant twin, MPC optimisation and simulation control. Mounted ahead of
+// the legacy building-twin routes below; the two use different path prefixes
+// (/api/simulation, /api/mpc vs /api/twin) and do not overlap.
+app.use('/api', createApiRouter());
+
+// ============ REST API Routes (legacy building twin) ============
 
 // GET /api/twin - Get current twin state
 app.get('/api/twin', (req, res) => {
@@ -485,6 +495,14 @@ wss.on('connection', (ws) => {
 
   // Send current state on connect
   ws.send(JSON.stringify({ type: 'state', data: twinState }));
+
+  // Stream the chiller plant twin. The backend owns the 2s tick now; the
+  // browser used to run this loop itself.
+  const unsubscribePlant = subscribePlant((payload) => {
+    if (ws.readyState === 1) ws.send(payload);
+  });
+  ws.on('close', unsubscribePlant);
+  ws.on('error', unsubscribePlant);
 
   ws.on('message', (message) => {
     try {

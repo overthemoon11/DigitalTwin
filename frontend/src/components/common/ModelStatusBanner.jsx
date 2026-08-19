@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTwinStore } from '../../hooks/useTwinStore';
+import { useTwinStore } from '../../store/useTwinStore';
 
 function ModelStatusBanner() {
   const { modelStatus } = useTwinStore();

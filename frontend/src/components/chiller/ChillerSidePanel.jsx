@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import MpcRightSidebar from "./mpc/MpcRightSidebar";
+import MpcRightSidebar from "../../features/mpc/components/MpcRightSidebar";
 import ChillerScadaPanel from "./ChillerScadaPanel";
 import ChillerPointsList from "./ChillerPointsList";
 

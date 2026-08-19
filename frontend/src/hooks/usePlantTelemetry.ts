@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useTwinStore } from './useTwinStore';
+import { useTwinStore } from '../store/useTwinStore';
 
 /** Starts 2s BMS control simulation and syncs into Zustand store. */
 export function usePlantTelemetry() {

@@ -3,7 +3,7 @@
 Physics-formula validation harness for the DigitalTwin project.
 
 Loads real plant Measurement & Verification (M&V) data
-(T1_MVrawDataR2_2025_12_new.xlsx) and checks that the deterministic
+(data/raw/T1_MVrawDataR2_2025_12_completed.xlsx) and checks that the deterministic
 physics formulas used in the codebase reproduce the measured / derived
 values that the plant's own metering produced.
 
@@ -12,7 +12,7 @@ used here are copied verbatim from frontend/src/services/plantPhysics.ts so
 that this script literally exercises the project's numbers.
 
 Usage:
-    python validate_physics.py [path/to/T1_MVrawDataR2_2025_12_new.xlsx] [--rows N]
+    python validate_physics.py [path/to/data/raw/T1_MVrawDataR2_2025_12_completed.xlsx] [--rows N]
 
 Exit code 0 if every validatable check passes, 1 otherwise.
 """
@@ -39,7 +39,7 @@ RT_TO_KW = 3.517        # 1 ton of refrigeration = 3.517 kW (thermal)
 CP_WATER = 4.1868       # kJ/(kg*K), specific heat of water (== 3.6 * FLOW_COEFF)
 
 SHEET = "T1_MVrawDataR2_2025_12"
-DEFAULT_XLSX = "T1_MVrawDataR2_2025_12_new.xlsx"
+DEFAULT_XLSX = "data/raw/T1_MVrawDataR2_2025_12_completed.xlsx"
 
 
 # ---------------------------------------------------------------------------

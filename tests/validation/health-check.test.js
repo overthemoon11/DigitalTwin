@@ -4,10 +4,13 @@
  * Validates system availability and basic functionality
  */
 
-const { test, describe, before } = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
+import { test, describe, before } from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const API_BASE = 'http://localhost:3003';
 const FRONTEND_URL = 'http://localhost:3002';
@@ -24,7 +27,7 @@ describe('System Health Checks', () => {
     test('frontend source files should exist', () => {
       const frontendDir = path.join(__dirname, '../../frontend/src');
       assert.ok(fs.existsSync(frontendDir), 'Frontend src directory should exist');
-      assert.ok(fs.existsSync(path.join(frontendDir, 'App.jsx')), 'Frontend App.jsx should exist');
+      assert.ok(fs.existsSync(path.join(frontendDir, 'app', 'App.jsx')), 'Frontend app/App.jsx should exist');
     });
 
     test('twin data files should exist', () => {

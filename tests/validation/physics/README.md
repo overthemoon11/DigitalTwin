@@ -1,7 +1,7 @@
 # Physics formula validation
 
 Validates the project's deterministic physics formulas against real plant
-M&V data (`T1_MVrawDataR2_2025_12_new.xlsx`, 1-minute data, Dec 2025).
+M&V data (`data/raw/T1_MVrawDataR2_2025_12_completed.xlsx`, 1-minute data, Dec 2025).
 
 ```bash
 # from repo root (uses pandas + openpyxl)
@@ -11,7 +11,7 @@ python tests/validation/physics/validate_physics.py
 python tests/validation/physics/validate_physics.py --rows 2000
 
 # explicit path
-python tests/validation/physics/validate_physics.py /path/to/T1_MVrawDataR2_2025_12_new.xlsx
+python tests/validation/physics/validate_physics.py /path/to/data/raw/T1_MVrawDataR2_2025_12_completed.xlsx
 ```
 
 Exit code `0` = all validatable checks pass, `1` = a check failed.

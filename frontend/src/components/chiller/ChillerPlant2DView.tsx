@@ -17,7 +17,7 @@ import { LOOP, SCADA } from './scadaTheme';
 import { PLANT_HEIGHT, PLANT_WIDTH } from './plantEquipmentLayout';
 import { PLANT_FOOTER_Y } from './plantTopology';
 import { usePlantViewport } from './usePlantViewport';
-import { CHWP_COUNT, CWP_COUNT } from '../../services/chiller/plantPhysics';
+import { CHWP_COUNT, CWP_COUNT } from './plantTopology';
 import {
   TRAIN_COUNT,
   BYPASS_X,

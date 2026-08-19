@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CHILLER_CONTROL_CONSTRAINTS } from '../../services/chiller/chillerConstraints';
+import { useTwinStore } from '../../store/useTwinStore';
 
 /** Format a number, or em-dash for non-finite. */
 const fmt = (v, d = 1) => (typeof v === 'number' && Number.isFinite(v) ? v.toFixed(d) : '—');
@@ -74,9 +74,11 @@ function ScadaBox({ title, rows, onSet }) {
   );
 }
 
-const edit = (controlId, extra = {}) => ({
+/** Input bounds come from the backend's plant config, not from a model import.
+ *  Until it has loaded the row still renders — just without min/max clamping. */
+const makeEdit = (bounds) => (controlId, extra = {}) => ({
   controlId,
-  ...CHILLER_CONTROL_CONSTRAINTS[controlId],
+  ...(bounds?.[controlId] ?? {}),
   ...extra,
 });
 
@@ -87,6 +89,8 @@ const edit = (controlId, extra = {}) => ({
  * a live reading.
  */
 export default function ChillerScadaPanel({ plantState, onSet }) {
+  const controlBounds = useTwinStore((s) => s.plantConfig?.controlConstraints);
+  const edit = makeEdit(controlBounds);
   const controls = plantState?.controls ?? [];
   const headers = plantState?.headers ?? {};
   const kpis = plantState?.kpis ?? [];

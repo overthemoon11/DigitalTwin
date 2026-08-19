@@ -4,10 +4,13 @@
  * Validates that twin state files conform to the defined JSON schema
  */
 
-const { test, describe, before } = require('node:test');
-const assert = require('node:assert');
-const fs = require('fs');
-const path = require('path');
+import { test, describe, before } from 'node:test';
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TWIN_DIR = path.join(__dirname, '../../twin');
 const STATE_FILE = path.join(TWIN_DIR, 'twin.state.json');

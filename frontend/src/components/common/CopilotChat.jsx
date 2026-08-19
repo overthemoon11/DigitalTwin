@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useTwinStore } from "../../hooks/useTwinStore";
+import { useTwinStore } from "../../store/useTwinStore";
 import { buildAhuChatSuggestions } from "../../services/ahu/ahuCopilotActions";
 import { buildEtsChatSuggestions } from "../../services/ets/etsCopilotActions";
-import { buildChillerChatSuggestions } from "../../services/chiller/chillerCopilotActions";
+
 
 // Simple Markdown-like renderer for chat messages
 function renderMarkdown(text) {
@@ -187,6 +187,9 @@ function CopilotChat() {
     etsState,
     plantState,
   } = useTwinStore();
+  // Chat starters come from the backend plant config; the copilot's
+  // suggestion logic moved server-side with the rest of the plant glue.
+  const chillerSuggestions = useTwinStore((st) => st.plantConfig?.chatSuggestions);
 
   const isEts = activePlantScenario === 'ets';
   const isAhu = activePlantScenario === 'ahu';
@@ -249,7 +252,7 @@ function CopilotChat() {
   const localSuggestions = useMemo(() => {
     if (isAhu) return buildAhuChatSuggestions(ahuState);
     if (isEts) return buildEtsChatSuggestions(etsState);
-    if (isChiller) return buildChillerChatSuggestions(plantState);
+    if (isChiller) return chillerSuggestions ?? [];
     return [];
   }, [isAhu, isEts, isChiller, ahuState, etsState, plantState]);
 

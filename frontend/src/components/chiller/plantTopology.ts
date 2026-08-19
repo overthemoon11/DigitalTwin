@@ -297,3 +297,9 @@ export function chilledPipes() {
 
   return paths;
 }
+
+/* Plant inventory, for LAYOUT ONLY — how many pump glyphs the schematic draws.
+   The authoritative counts live with the Digital Twin and are served at
+   /api/simulation/config under `inventory`; these must match it. */
+export const CHWP_COUNT = 6;
+export const CWP_COUNT = 6;

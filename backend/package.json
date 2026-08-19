@@ -6,21 +6,29 @@
   "main": "src/index.js",
   "scripts": {
     "prestart": "node --import ./src/load-env.js src/check-node-version.js",
-    "start": "node --import ./src/load-env.js src/index.js",
+    "start": "node --import ./src/load-env.js --import tsx src/index.js",
     "predev": "node --import ./src/load-env.js src/check-node-version.js",
-    "dev": "node --import ./src/load-env.js --watch src/index.js",
+    "dev": "node --import ./src/load-env.js --import tsx --watch src/index.js",
     "pretest": "node --import ./src/load-env.js src/check-node-version.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --import tsx --test tests/*.test.js"
   },
-  "keywords": ["hvac", "digital-twin", "simulation", "foundry-local"],
+  "keywords": [
+    "hvac",
+    "digital-twin",
+    "simulation",
+    "foundry-local"
+  ],
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "ws": "^8.14.2",
-    "foundry-local-sdk": "^0.9.0"
+    "express": "^4.18.2",
+    "foundry-local-sdk": "^0.9.0",
+    "ws": "^8.14.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  },
   "engines": {
     "node": ">=20.0.0"
   }

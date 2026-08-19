@@ -1,7 +1,6 @@
-import React, { useContext, useState } from 'react';
-import { HL_CP_RATIO, CHWP_VSD_RATIO, CWP_VSD_RATIO } from '../../services/chiller/t1Snapshot';
-import { ROW86_EXPECTED, ROW86_SCENARIO_ID } from '../../services/chiller/t1Row86';
-import { T1_MV_ROWS, mvRowById, buildRowReplayPayload } from '../../services/chiller/t1MvRows';
+import React, { useContext, useEffect, useState } from 'react';
+import { useTwinStore } from '../../store/useTwinStore';
+import * as simulationApi from '../../api/simulationApi';
 
 /**
  * Live BMS point list mirroring every column of T1_MVrawDataR2_2025_12
@@ -165,8 +164,31 @@ export default function ChillerPointsList({
   onApplyScenarioPayload,
   onSetControl,
 }) {
-  const validating = plantState?.simulation?.scenarioId === ROW86_SCENARIO_ID;
-  const activeRow = mvRowById(plantState?.simulation?.scenarioId);
+  // Calibration artefacts and the dataset row index come from the backend.
+  // The 133-row fixture with every measured channel is no longer shipped to
+  // the browser — only the summary the picker renders.
+  const meterRatios = useTwinStore((st) => st.plantConfig?.meterRatios);
+  const validationCfg = useTwinStore((st) => st.plantConfig?.validation);
+  const HL_CP_RATIO = meterRatios?.hlCp ?? [];
+  const CHWP_VSD_RATIO = meterRatios?.chwpVsd ?? [];
+  const CWP_VSD_RATIO = meterRatios?.cwpVsd ?? [];
+  const ROW86_EXPECTED = validationCfg?.row86Expected ?? null;
+
+  const [datasetRows, setDatasetRows] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    simulationApi
+      .fetchDatasetRows()
+      .then((d) => alive && setDatasetRows(d.rows))
+      .catch(() => alive && setDatasetRows([]));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const scenarioId = plantState?.simulation?.scenarioId;
+  const validating = scenarioId === validationCfg?.row86ScenarioId;
+  const activeRow = datasetRows.find((r) => r.scenarioId === scenarioId);
   const eq = plantState?.equipment ?? {};
   const ctrl = (id) => (plantState?.controls ?? []).find((c) => c.id === id);
   const headers = plantState?.headers ?? {};
@@ -216,18 +238,20 @@ export default function ChillerPointsList({
         <div className={`pts-scenario ${activeRow ? 'active' : ''}`}>
           <select
             className="pts-row-select"
-            value={activeRow ? `row-${activeRow.row}` : ''}
+            value={activeRow ? activeRow.scenarioId : ''}
             onChange={(e) => {
-              const meta = T1_MV_ROWS.find((r) => `row-${r.row}` === e.target.value);
-              if (meta) onApplyScenarioPayload(buildRowReplayPayload(meta));
+              const meta = datasetRows.find((r) => r.scenarioId === e.target.value);
+              // Replay is built server-side from the authoritative row so the
+              // payload cannot drift from the fixture it came from.
+              if (meta) simulationApi.replayDatasetRow(meta.row).catch(() => {});
             }}
             title="Replay the measured operator inputs (load, CHWS, CW ΔT, riser shares, duty) of a dataset row and let the physics compute every other point"
           >
             <option value="" disabled>
               ▶ Replay dataset row… (M&amp;V window 00:00–02:12)
             </option>
-            {T1_MV_ROWS.map((r) => (
-              <option key={r.row} value={`row-${r.row}`}>
+            {datasetRows.map((r) => (
+              <option key={r.row} value={r.scenarioId}>
                 Row {r.row} — {r.time} · {r.loadRt.toFixed(0)} RT · {r.kwRt.toFixed(4)} kW/RT
               </option>
             ))}

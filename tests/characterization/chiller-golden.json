@@ -1,0 +1,1585 @@
+{
+  "evaluatePlant": {
+    "default": {
+      "efficiency": {
+        "kwPerRt": 0.587,
+        "cop": 6
+      },
+      "power": {
+        "totalKw": 1814.95,
+        "chillerKw": 1539.2,
+        "chwpKw": 59.5,
+        "cwpKw": 156.2,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.74,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "calibrated",
+      "alarms": 0
+    },
+    "load-2400": {
+      "efficiency": {
+        "kwPerRt": 0.57,
+        "cop": 6.17
+      },
+      "power": {
+        "totalKw": 1367.08,
+        "chillerKw": 1175.1,
+        "chwpKw": 59.5,
+        "cwpKw": 72.5,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 2400,
+        "deltaT": 5.32,
+        "chws": 7.58,
+        "chwr": 12.9,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 1938.93,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 1938,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 54.1,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 64
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "load-3094": {
+      "efficiency": {
+        "kwPerRt": 0.587,
+        "cop": 6
+      },
+      "power": {
+        "totalKw": 1814.89,
+        "chillerKw": 1539.2,
+        "chwpKw": 59.5,
+        "cwpKw": 156.2,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.67,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "calibrated",
+      "alarms": 0
+    },
+    "load-4200": {
+      "efficiency": {
+        "kwPerRt": 0.584,
+        "cop": 6.03
+      },
+      "power": {
+        "totalKw": 2451.27,
+        "chillerKw": 2074,
+        "chwpKw": 78.4,
+        "cwpKw": 225,
+        "ctKw": 73.9
+      },
+      "thermal": {
+        "buildingLoadRt": 4200,
+        "deltaT": 6.98,
+        "chws": 7.58,
+        "chwr": 14.56,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 3397.37,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1820,
+        "cwFlowM3h": 3396,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 71.1,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 84
+      },
+      "staging": {
+        "chillers": 4,
+        "chwp": 4,
+        "cwp": 4,
+        "ct": 5
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "chws-6.0": {
+      "efficiency": {
+        "kwPerRt": 0.611,
+        "cop": 5.76
+      },
+      "power": {
+        "totalKw": 1890.72,
+        "chillerKw": 1612.2,
+        "chwpKw": 59.5,
+        "cwpKw": 158.9,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 6,
+        "chwr": 12.86,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2519.47,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2520,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 70.3,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "chws-9.0": {
+      "efficiency": {
+        "kwPerRt": 0.565,
+        "cop": 6.23
+      },
+      "power": {
+        "totalKw": 1746.87,
+        "chillerKw": 1473.6,
+        "chwpKw": 59.5,
+        "cwpKw": 153.7,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 9,
+        "chwr": 15.86,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2491.51,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2493,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 69.5,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "cws-26": {
+      "efficiency": {
+        "kwPerRt": 0.562,
+        "cop": 6.26
+      },
+      "power": {
+        "totalKw": 1737.36,
+        "chillerKw": 1456.1,
+        "chwpKw": 59.5,
+        "cwpKw": 153.1,
+        "ctKw": 68.7
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 27.3,
+        "cwr": 31.56,
+        "condFlowM3h": 2487.97,
+        "towerApproach": 2.6,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2487,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 69.5,
+        "ctFanSpeedPct": 74.4,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "cws-32": {
+      "efficiency": {
+        "kwPerRt": 0.664,
+        "cop": 5.3
+      },
+      "power": {
+        "totalKw": 2053.79,
+        "chillerKw": 1790.2,
+        "chwpKw": 59.5,
+        "cwpKw": 165.8,
+        "ctKw": 38.3
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 32,
+        "cwr": 36.26,
+        "condFlowM3h": 2555.35,
+        "towerApproach": 7.3,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2556,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 71.3,
+        "ctFanSpeedPct": 61.2,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "dp-10": {
+      "efficiency": {
+        "kwPerRt": 0.58,
+        "cop": 6.06
+      },
+      "power": {
+        "totalKw": 1794.84,
+        "chillerKw": 1539.2,
+        "chwpKw": 39.4,
+        "cwpKw": 156.2,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 7.87,
+        "chws": 7.58,
+        "chwr": 15.45,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.74,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1188,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 61,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 11.9,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "calibrated",
+      "alarms": 0
+    },
+    "dp-25": {
+      "efficiency": {
+        "kwPerRt": 0.623,
+        "cop": 5.64
+      },
+      "power": {
+        "totalKw": 1928.8,
+        "chillerKw": 1539.2,
+        "chwpKw": 173.4,
+        "cwpKw": 156.2,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 4.8,
+        "chws": 7.58,
+        "chwr": 12.38,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.74,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1950,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 100,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 25.5,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "calibrated",
+      "alarms": 0
+    },
+    "chwp-45": {
+      "efficiency": {
+        "kwPerRt": 0.572,
+        "cop": 6.14
+      },
+      "power": {
+        "totalKw": 1771.3,
+        "chillerKw": 1539.2,
+        "chwpKw": 15.9,
+        "cwpKw": 156.2,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 9,
+        "chws": 7.58,
+        "chwr": 16.58,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.74,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 876,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 45,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 6.3,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "cwp-55": {
+      "efficiency": {
+        "kwPerRt": 0.561,
+        "cop": 6.27
+      },
+      "power": {
+        "totalKw": 1734.83,
+        "chillerKw": 1539.2,
+        "chwpKw": 59.5,
+        "cwpKw": 76,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 33.89,
+        "condFlowM3h": 1970.29,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 1971,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 55,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "ctfan-60": {
+      "efficiency": {
+        "kwPerRt": 0.579,
+        "cop": 6.08
+      },
+      "power": {
+        "totalKw": 1790.99,
+        "chillerKw": 1539.2,
+        "chwpKw": 59.5,
+        "cwpKw": 156.2,
+        "ctKw": 36.1
+      },
+      "thermal": {
+        "buildingLoadRt": 3094.0816,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.74,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 60,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "hot-humid": {
+      "efficiency": {
+        "kwPerRt": 0.724,
+        "cop": 4.86
+      },
+      "power": {
+        "totalKw": 2655.4,
+        "chillerKw": 2209.1,
+        "chwpKw": 78.4,
+        "cwpKw": 162.4,
+        "ctKw": 205.5
+      },
+      "thermal": {
+        "buildingLoadRt": 3668.302148,
+        "deltaT": 6.1,
+        "chws": 7.58,
+        "chwr": 13.68,
+        "cws": 35.4,
+        "cwr": 39.66,
+        "condFlowM3h": 3047.44,
+        "towerApproach": 2.5,
+        "wetBulb": 32.9
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1820,
+        "cwFlowM3h": 3048,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 63.8,
+        "ctFanSpeedPct": 100,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 73.4
+      },
+      "staging": {
+        "chillers": 4,
+        "chwp": 4,
+        "cwp": 4,
+        "ct": 5
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "cool-dry": {
+      "efficiency": {
+        "kwPerRt": 0.553,
+        "cop": 6.36
+      },
+      "power": {
+        "totalKw": 1450.69,
+        "chillerKw": 1291.9,
+        "chwpKw": 59.5,
+        "cwpKw": 94.8,
+        "ctKw": 4.5
+      },
+      "thermal": {
+        "buildingLoadRt": 2622.672897,
+        "deltaT": 5.81,
+        "chws": 7.58,
+        "chwr": 13.39,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2120.45,
+        "towerApproach": 12.1,
+        "wetBulb": 16.4
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2121,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 59.2,
+        "ctFanSpeedPct": 30,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 69.9
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "combo": {
+      "efficiency": {
+        "kwPerRt": 0.588,
+        "cop": 5.98
+      },
+      "power": {
+        "totalKw": 2117.68,
+        "chillerKw": 1851,
+        "chwpKw": 54.5,
+        "cwpKw": 122,
+        "ctKw": 90.2
+      },
+      "thermal": {
+        "buildingLoadRt": 3600,
+        "deltaT": 6.76,
+        "chws": 8.2,
+        "chwr": 14.96,
+        "cws": 30,
+        "cwr": 34.5,
+        "condFlowM3h": 2770.35,
+        "towerApproach": 5.3,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1612,
+        "cwFlowM3h": 2772,
+        "chwpSpeedPct": 62,
+        "cwpSpeedPct": 58,
+        "ctFanSpeedPct": 76,
+        "measuredDpPsi": 12.2,
+        "chillerLoadPct": 72
+      },
+      "staging": {
+        "chillers": 4,
+        "chwp": 4,
+        "cwp": 4,
+        "ct": 5
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    }
+  },
+  "evaluatePlantStaged": {
+    "chillers-2": {
+      "efficiency": {
+        "kwPerRt": 0.54,
+        "cop": 6.51
+      },
+      "power": {
+        "totalKw": 1671.16,
+        "chillerKw": 1260.1,
+        "chwpKw": 59.5,
+        "cwpKw": 305,
+        "ctKw": 46.6
+      },
+      "thermal": {
+        "buildingLoadRt": 3094,
+        "deltaT": 6.86,
+        "chws": 7.88,
+        "chwr": 14.74,
+        "cws": 28.47,
+        "cwr": 32.84,
+        "condFlowM3h": 2388.23,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2388,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 100,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 100
+      },
+      "staging": {
+        "chillers": 2,
+        "chwp": 3,
+        "cwp": 2,
+        "ct": 3
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "chillers-3": {
+      "efficiency": {
+        "kwPerRt": 0.587,
+        "cop": 6
+      },
+      "power": {
+        "totalKw": 1814.89,
+        "chillerKw": 1539.2,
+        "chwpKw": 59.5,
+        "cwpKw": 156.2,
+        "ctKw": 60
+      },
+      "thermal": {
+        "buildingLoadRt": 3094,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2504.67,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2505,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 69.9,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 82.5
+      },
+      "staging": {
+        "chillers": 3,
+        "chwp": 3,
+        "cwp": 3,
+        "ct": 4
+      },
+      "calibration": "calibrated",
+      "alarms": 0
+    },
+    "chillers-4": {
+      "efficiency": {
+        "kwPerRt": 0.556,
+        "cop": 6.32
+      },
+      "power": {
+        "totalKw": 1720.64,
+        "chillerKw": 1498,
+        "chwpKw": 59.5,
+        "cwpKw": 89.3,
+        "ctKw": 73.9
+      },
+      "thermal": {
+        "buildingLoadRt": 3094,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2496.62,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2496,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 52.3,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 61.9
+      },
+      "staging": {
+        "chillers": 4,
+        "chwp": 3,
+        "cwp": 4,
+        "ct": 5
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    },
+    "chillers-5": {
+      "efficiency": {
+        "kwPerRt": 0.535,
+        "cop": 6.58
+      },
+      "power": {
+        "totalKw": 1653.93,
+        "chillerKw": 1463,
+        "chwpKw": 59.5,
+        "cwpKw": 57.6,
+        "ctKw": 73.9
+      },
+      "thermal": {
+        "buildingLoadRt": 3094,
+        "deltaT": 6.86,
+        "chws": 7.58,
+        "chwr": 14.44,
+        "cws": 28.47,
+        "cwr": 32.73,
+        "condFlowM3h": 2489.84,
+        "towerApproach": 3.8,
+        "wetBulb": 24.7
+      },
+      "hydraulic": {
+        "chwFlowM3h": 1365,
+        "cwFlowM3h": 2490,
+        "chwpSpeedPct": 70,
+        "cwpSpeedPct": 41.7,
+        "ctFanSpeedPct": 71.1,
+        "measuredDpPsi": 15,
+        "chillerLoadPct": 49.5
+      },
+      "staging": {
+        "chillers": 5,
+        "chwp": 3,
+        "cwp": 5,
+        "ct": 5
+      },
+      "calibration": "extrapolated",
+      "alarms": 0
+    }
+  },
+  "bootKpis": {
+    "kpi-load": 3094,
+    "kpi-kw": 1814.95,
+    "kpi-eff": 0.587,
+    "kpi-cop": 6,
+    "kpi-ch-kwrt": 0.497,
+    "kpi-ch-kw": 1539.2,
+    "kpi-chwp-kw": 59.5,
+    "kpi-cwp-kw": 156.2,
+    "kpi-ct-kw": 60,
+    "kpi-chw-dt": 6.86,
+    "kpi-chws": 7.58,
+    "kpi-chwr": 14.44,
+    "kpi-dp": 15,
+    "kpi-bypass": 0,
+    "kpi-cond-dt": 4.3,
+    "kpi-cws": 28.47,
+    "kpi-cwr": 32.73,
+    "kpi-approach": 3.8,
+    "kpi-ct-fan": 71,
+    "kpi-rch": 3,
+    "kpi-rchwp": 3,
+    "kpi-rcwp": 3,
+    "kpi-rct": 4,
+    "kpi-wetbulb": 24.7
+  },
+  "bootEquipment": {
+    "ch-1": {
+      "status": "stopped",
+      "powerKw": 1.33,
+      "loadPercent": 0,
+      "flowRate": 0
+    },
+    "ch-2": {
+      "status": "stopped",
+      "powerKw": 1.33,
+      "loadPercent": 0,
+      "flowRate": 0
+    },
+    "ch-3": {
+      "status": "running",
+      "powerKw": 522.06,
+      "loadPercent": 82.5,
+      "flowRate": 455.27
+    },
+    "ch-4": {
+      "status": "running",
+      "powerKw": 510.25,
+      "loadPercent": 82.5,
+      "flowRate": 454.4
+    },
+    "ch-5": {
+      "status": "running",
+      "powerKw": 504.27,
+      "loadPercent": 82.5,
+      "flowRate": 454.39
+    },
+    "chwp-1": {
+      "status": "stopped",
+      "powerKw": 0.01,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "chwp-2": {
+      "status": "stopped",
+      "powerKw": 0.01,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "chwp-3": {
+      "status": "running",
+      "powerKw": 20.19,
+      "speedPercent": 70,
+      "flowRate": 455
+    },
+    "chwp-4": {
+      "status": "running",
+      "powerKw": 19.87,
+      "speedPercent": 70,
+      "flowRate": 455
+    },
+    "chwp-5": {
+      "status": "running",
+      "powerKw": 19.38,
+      "speedPercent": 70,
+      "flowRate": 455
+    },
+    "chwp-6": {
+      "status": "stopped",
+      "powerKw": 0.04,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "cwp-1": {
+      "status": "stopped",
+      "powerKw": 0.02,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "cwp-2": {
+      "status": "stopped",
+      "powerKw": 0.02,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "cwp-3": {
+      "status": "running",
+      "powerKw": 52.05,
+      "speedPercent": 69.9,
+      "flowRate": 835
+    },
+    "cwp-4": {
+      "status": "running",
+      "powerKw": 51.89,
+      "speedPercent": 69.9,
+      "flowRate": 835
+    },
+    "cwp-5": {
+      "status": "running",
+      "powerKw": 52.16,
+      "speedPercent": 69.9,
+      "flowRate": 835
+    },
+    "cwp-6": {
+      "status": "stopped",
+      "powerKw": 0.03,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "ct-1": {
+      "status": "running",
+      "powerKw": 13.41,
+      "fanSpeedPercent": 71.1,
+      "flowRate": 626
+    },
+    "ct-2": {
+      "status": "running",
+      "powerKw": 12.99,
+      "fanSpeedPercent": 71.1,
+      "flowRate": 626
+    },
+    "ct-3": {
+      "status": "stopped",
+      "powerKw": 0,
+      "fanSpeedPercent": 0,
+      "flowRate": 0
+    },
+    "ct-4": {
+      "status": "running",
+      "powerKw": 13.73,
+      "fanSpeedPercent": 71.1,
+      "flowRate": 626
+    },
+    "ct-5": {
+      "status": "running",
+      "powerKw": 19.91,
+      "fanSpeedPercent": 71.1,
+      "flowRate": 626
+    },
+    "cwmutnk-41-1": {
+      "status": "running",
+      "powerKw": 0,
+      "flowRate": 0
+    },
+    "cwmup-1": {
+      "status": "stopped",
+      "powerKw": 0,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "cwmup-2": {
+      "status": "stopped",
+      "powerKw": 0,
+      "speedPercent": 0,
+      "flowRate": 0
+    },
+    "exptnk-01": {
+      "status": "running",
+      "powerKw": 0,
+      "flowRate": 0
+    },
+    "exptnk-02": {
+      "status": "running",
+      "powerKw": 0,
+      "flowRate": 0
+    },
+    "bv-1": {
+      "status": "running",
+      "powerKw": 0.1,
+      "flowRate": 0
+    },
+    "bv-2": {
+      "status": "running",
+      "powerKw": 0.1,
+      "flowRate": 0
+    }
+  },
+  "bootHeaders": {
+    "chws": 7.58,
+    "chwr": 14.44,
+    "cws": 28.47,
+    "cwr": 32.73,
+    "buildingLoadRt": 3094.0816,
+    "ambientTemp": 31,
+    "humidityRh": 59,
+    "condFlowM3h": 2504.74
+  },
+  "bootRisers": [
+    {
+      "loadSharePct": 31.7,
+      "flowM3h": 399.2,
+      "flowLs": 110.89,
+      "chwSt": 7.58,
+      "chwRt": 15.02,
+      "rt": 982
+    },
+    {
+      "loadSharePct": 23.1,
+      "flowM3h": 272.6,
+      "flowLs": 75.72,
+      "chwSt": 7.58,
+      "chwRt": 15.5,
+      "rt": 714
+    },
+    {
+      "loadSharePct": 23.8,
+      "flowM3h": 444.1,
+      "flowLs": 123.36,
+      "chwSt": 7.58,
+      "chwRt": 12.59,
+      "rt": 735
+    },
+    {
+      "loadSharePct": 21.4,
+      "flowM3h": 248.4,
+      "flowLs": 69,
+      "chwSt": 7.59,
+      "chwRt": 15.66,
+      "rt": 663
+    }
+  ],
+  "bootControls": {
+    "ctrl-building-load": 3094.0816,
+    "ctrl-riser-finger": 31.713346,
+    "ctrl-riser-l13": 23.058236,
+    "ctrl-riser-main": 23.734808,
+    "ctrl-riser-t1u": 21.402579,
+    "ctrl-ambient-temp": 31,
+    "ctrl-humidity": 59.37,
+    "ctrl-chws-sp": 7.58,
+    "ctrl-chwr-sp": 14.46,
+    "ctrl-cws-sp": 28.47,
+    "ctrl-cwr-sp": 32.73,
+    "ctrl-cw-dt-sp": 4.2631,
+    "ctrl-dp-sp": 15,
+    "ctrl-dp-sp-high": 12,
+    "ctrl-ct-fan": 0,
+    "ctrl-pump-spd": 0,
+    "ctrl-cwp-spd": 0,
+    "ctrl-ch-enable": 1,
+    "ctrl-opt-mode": 1
+  },
+  "afterEditKpis": {
+    "kpi-load": 3500,
+    "kpi-kw": 2072,
+    "kpi-eff": 0.592,
+    "kpi-cop": 5.94,
+    "kpi-ch-kwrt": 0.488,
+    "kpi-ch-kw": 1709.1,
+    "kpi-chwp-kw": 78.4,
+    "kpi-cwp-kw": 224.5,
+    "kpi-ct-kw": 60,
+    "kpi-chw-dt": 5.82,
+    "kpi-chws": 8.7,
+    "kpi-chwr": 14.52,
+    "kpi-dp": 15,
+    "kpi-bypass": 0,
+    "kpi-cond-dt": 4.3,
+    "kpi-cws": 28.47,
+    "kpi-cwr": 32.73,
+    "kpi-approach": 3.8,
+    "kpi-ct-fan": 71,
+    "kpi-rch": 3,
+    "kpi-rchwp": 4,
+    "kpi-rcwp": 3,
+    "kpi-rct": 4,
+    "kpi-wetbulb": 24.7
+  },
+  "predict": [
+    {
+      "kwPerRt": 0.58,
+      "totalKw": 1794.81,
+      "buildingLoadRt": 3094.0816,
+      "hasCritical": false
+    },
+    {
+      "kwPerRt": 0.58,
+      "totalKw": 1794.81,
+      "buildingLoadRt": 3094.0816,
+      "hasCritical": false
+    },
+    {
+      "kwPerRt": 0.58,
+      "totalKw": 1794.81,
+      "buildingLoadRt": 3094.0816,
+      "hasCritical": false
+    },
+    {
+      "kwPerRt": 0.58,
+      "totalKw": 1794.81,
+      "buildingLoadRt": 3094.0816,
+      "hasCritical": false
+    },
+    {
+      "kwPerRt": 0.58,
+      "totalKw": 1794.81,
+      "buildingLoadRt": 3094.0816,
+      "hasCritical": false
+    }
+  ],
+  "staging": {
+    "stageChillers": [
+      1,
+      2,
+      3,
+      3,
+      4,
+      5,
+      5
+    ],
+    "stageChillersDisabled": 0,
+    "stageChwp": [
+      1,
+      2,
+      2,
+      3,
+      5,
+      6
+    ],
+    "stageCwp": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      6
+    ],
+    "stageCoolingTowers": [
+      0,
+      2,
+      3,
+      4,
+      5,
+      5
+    ],
+    "chillerLoadPercent": [
+      0,
+      24,
+      50,
+      80,
+      100,
+      100
+    ],
+    "chwpSpeedFromDpSetpoint": [
+      49,
+      55,
+      70,
+      85,
+      100,
+      100
+    ]
+  },
+  "row86Kpis": {
+    "kpi-load": 3234,
+    "kpi-kw": 1925.73,
+    "kpi-eff": 0.595,
+    "kpi-cop": 5.91,
+    "kpi-ch-kwrt": 0.506,
+    "kpi-ch-kw": 1637.5,
+    "kpi-chwp-kw": 59.7,
+    "kpi-cwp-kw": 165.9,
+    "kpi-ct-kw": 62.6,
+    "kpi-chw-dt": 7.17,
+    "kpi-chws": 7.5,
+    "kpi-chwr": 14.67,
+    "kpi-dp": 15,
+    "kpi-bypass": 0,
+    "kpi-cond-dt": 4.4,
+    "kpi-cws": 28.81,
+    "kpi-cwr": 33.24,
+    "kpi-approach": 3.2,
+    "kpi-ct-fan": 72,
+    "kpi-rch": 3,
+    "kpi-rchwp": 3,
+    "kpi-rcwp": 3,
+    "kpi-rct": 4,
+    "kpi-wetbulb": 25.6
+  },
+  "row86Expected": {
+    "kw": 1936.15,
+    "rt": 3206.493377,
+    "deltaT": 6.66,
+    "DPM-CH-1-CP-1-kW": 0.62,
+    "DPM-CH-1-CP-2-kW": 0.56,
+    "HL_CH_1_CP1_Power": 0,
+    "HL_CH_1_CP2_Power": 0,
+    "CH-1-ChwSt": 10.12,
+    "CH-1-ChwRt": 15.44,
+    "CH-1-CwSt": 22.89,
+    "CH-1-CwRt": 31.43,
+    "CH-1-ChwFls": 0,
+    "CH-1-CwFls": 0,
+    "DPM-CH-2-CP-1-kW": 273.03,
+    "DPM-CH-2-CP-2-kW": 274.49,
+    "HL_CH_2_CP1_Power": 257,
+    "HL_CH_2_CP2_Power": 256,
+    "CH-2-ChwSt": 7.5,
+    "CH-2-ChwRt": 14.18,
+    "CH-2-CwSt": 28.83,
+    "CH-2-CwRt": 33.24,
+    "CH-2-ChwFls": 134.98,
+    "CH-2-CwFls": 232.67,
+    "DPM-CH-3-CP-1-kW": 269.42,
+    "DPM-CH-3-CP-2-kW": 267.63,
+    "HL_CH_3_CP1_Power": 251,
+    "HL_CH_3_CP2_Power": 250,
+    "CH-3-ChwSt": 7.54,
+    "CH-3-ChwRt": 14.16,
+    "CH-3-CwSt": 28.85,
+    "CH-3-CwRt": 33.27,
+    "CH-3-ChwFls": 135.29,
+    "CH-3-CwFls": 233.04,
+    "DPM_CH-4-CP-1-kW": 266.73,
+    "DPM-CH-4-CP-2-kW": 279.39,
+    "HL_CH_4_CP1_Power": 254,
+    "HL_CH_4_CP2_Power": 263,
+    "CH-4-ChwSt": 7.48,
+    "CH-4-ChwRt": 14.19,
+    "CH-4-CwSt": 28.83,
+    "CH-4-CwRt": 33.33,
+    "CH-4-ChwFls": 134.24,
+    "CH-4-CwFls": 231.24,
+    "DPM-CH-5-CP-1-kW": 0.79,
+    "DPM-CH-5-CP-2-kW": 0.79,
+    "HL_CH_5_CP1_Power": 0,
+    "HL_CH_5_CP2_Power": 0,
+    "CH-5-ChwSt": 17.35,
+    "CH-5-ChwRt": 18.51,
+    "CH-5-CwSt": 25.09,
+    "CH-5-CwRt": 24.43,
+    "CH-5-ChwFls": 0,
+    "CH-5-CwFls": 0,
+    "DPM-CHWP-1-kW": 0.05,
+    "CHWP_1_VSDkW": 0,
+    "DPM-CWP-1-kW": 0.05,
+    "CWP_1_VSDkW": 0,
+    "DPM-CHWP-2-kW": 23.31,
+    "CHWP_2_VSDkW": 23,
+    "DPM-CWP-2-kW": 57.85,
+    "CWP_2_VSDkW": 57.7,
+    "DPM-CHWP-3-kW": 24.53,
+    "CHWP_3_VSDkW": 23.8,
+    "DPM-CWP-3-kW": 52.31,
+    "CWP_3_VSDkW": 51.8,
+    "DPM-CHWP-4-kW": 23.88,
+    "CHWP_4_VSDkW": 23.5,
+    "DPM-CWP-4-kW": 51.87,
+    "CWP_4_VSDkW": 52,
+    "DPM-CHWP-5-kW": 0.02,
+    "CHWP_5_VSDkW": 0,
+    "DPM-CWP-5-kW": 0.05,
+    "CWP_5_VSDkW": 0,
+    "DPM-CHWP-6-kW": -0.06,
+    "CHWP_6_VSDkW": 0,
+    "DPM-CWP-6-kW": 0.04,
+    "CWP_6_VSDkW": 0,
+    "CT_01_DPM_kW": 15.6,
+    "CT_1_VSD_A_kW": 7.19,
+    "CT_1_VSD_B_kW": 7.61,
+    "CT_1A_CWST": 29.07,
+    "CT_1B_CWST": 28.78,
+    "CT_1A_CWRT": 33.3,
+    "CT_1B_CWRT": 33.33,
+    "CT_02_DPM_kW": 12.2,
+    "CT_2_VSD_A_kW": 5.79,
+    "CT_2_VSD_B_kW": 5.9,
+    "CT_2A_CWST": 28.94,
+    "CT_2B_CWST": 28.67,
+    "CT_2A_CWRT": 33.32,
+    "CT_2B_CWRT": 33.46,
+    "CT_03_DPM_kW": 0.1,
+    "CT_3_VSD_A_kW": 0,
+    "CT_3_VSD_B_kW": 0,
+    "CT_3A_CWST": 30.25,
+    "CT_3B_CWST": 29.81,
+    "CT_3A_CWRT": 28.68,
+    "CT_3B_CWRT": 28.76,
+    "DPM_CT_04_kW": 13.2,
+    "CT_4_VSD_135_kW": 6.23,
+    "CT_4_VSD_246_kW": 6.15,
+    "CT_4A_CWST": 28.99,
+    "CT_4B_CWST": 28.81,
+    "CT_4A_CWRT": 33.46,
+    "CT_4B_CWRT": 33.36,
+    "CT_05_DPM_kW": 27.7,
+    "CT_5_VSD_A_kW": 13.63,
+    "CT_5_VSD_B_kW": 13.22,
+    "CT_5A_CWST": 29.06,
+    "CT_5B_CWST": 29.05,
+    "CT_5A_CWRT": 33.38,
+    "CT_5B_CWRT": 33.41,
+    "CHW-Riser-Finger-ChwFls": 119.05,
+    "CHW-Riser-Finger-ChwSt": 7.5,
+    "CHW-Riser-Finger-ChwRt": 14.81,
+    "CHW-Riser-L1-3-ChwFls": 80.39,
+    "CHW-Riser-L1-3-ChwSt": 7.5,
+    "CHW-Riser-L1-3-ChwRt": 14.54,
+    "CHW-Riser-MainBuilding-ChwFls": 131.02,
+    "CHW-Riser-MainBuilding-ChwSt": 7.5,
+    "CHW-Riser-MainBuilding-ChwRt": 12.47,
+    "CHW-Riser-T1U-ChwFls": 73.94,
+    "CHW-Riser-T1U-ChwSt": 7.5,
+    "CHW-Riser-T1U-ChwRt": 15.71,
+    "Header-hcwf": 696.94,
+    "Header-hcwst": 7.51,
+    "Header-hcwrt": 14.17,
+    "WST_1_WetBulbTemp": 25.17,
+    "WST_2_WetBulbTemp": 25.5,
+    "WST_3_WetBulbTemp": 25.68,
+    "WST_4_WetBulbTemp": 25.83,
+    "WST_5_WetBulbTemp": 25.61
+  },
+  "mvRowReplay": [
+    {
+      "row": 2,
+      "datasetKw": 1917.69,
+      "simKw": 1893.93,
+      "simKwRt": 0.597
+    },
+    {
+      "row": 22,
+      "datasetKw": 1974.43,
+      "simKw": 1950.65,
+      "simKwRt": 0.593
+    },
+    {
+      "row": 42,
+      "datasetKw": 1951.03,
+      "simKw": 1939.19,
+      "simKwRt": 0.596
+    },
+    {
+      "row": 62,
+      "datasetKw": 1946.12,
+      "simKw": 1924.03,
+      "simKwRt": 0.596
+    },
+    {
+      "row": 82,
+      "datasetKw": 1935.37,
+      "simKw": 1916.84,
+      "simKwRt": 0.595
+    },
+    {
+      "row": 102,
+      "datasetKw": 1920.19,
+      "simKw": 1904.36,
+      "simKwRt": 0.596
+    },
+    {
+      "row": 122,
+      "datasetKw": 1907.41,
+      "simKw": 1895.41,
+      "simKwRt": 0.596
+    },
+    {
+      "row": 134,
+      "datasetKw": 1884.93,
+      "simKw": 1871.74,
+      "simKwRt": 0.597
+    }
+  ],
+  "mpcInput": {
+    "input": {
+      "buildingLoadRt": 3094,
+      "wetBulbC": 24.7
+    },
+    "baselineControl": {
+      "chwstSetpointC": 7.58,
+      "dpSetpointPsi": 15,
+      "runningChillers": 3,
+      "chillerIds": [
+        "CH-3",
+        "CH-4",
+        "CH-5"
+      ],
+      "chwpSpeedPct": 70,
+      "cwpSpeedPct": 69.9,
+      "ctFanSpeedPct": 71.1
+    }
+  },
+  "mpcBaselineResult": {
+    "chillerKw": 1524.9,
+    "chwpKw": 59.5,
+    "cwpKw": 156,
+    "pumpKw": 215.5,
+    "towerKw": 60,
+    "totalPlantKw": 1800.5,
+    "plantKwPerRt": 0.582,
+    "feasible": true
+  },
+  "mpcResult": {
+    "solved": true,
+    "evaluated": 103,
+    "feasible": 83,
+    "rejected": 20,
+    "rejectionsByCode": {
+      "chw-flow-max": 2,
+      "cw-flow-max": 6,
+      "tower-approach": 9,
+      "chw-flow-min": 3
+    },
+    "savingKw": 273.1,
+    "savingPct": 15.2,
+    "optimalControl": {
+      "chwstSetpointC": 9.58,
+      "dpSetpointPsi": 15,
+      "runningChillers": 4,
+      "chillerIds": [
+        "CH-1",
+        "CH-3",
+        "CH-4",
+        "CH-5"
+      ],
+      "chwpSpeedPct": 47.5,
+      "cwpSpeedPct": 40,
+      "ctFanSpeedPct": 71.1
+    },
+    "optimalResult": {
+      "chillerKw": 1394.9,
+      "pumpKw": 58.7,
+      "towerKw": 73.9,
+      "totalPlantKw": 1527.4,
+      "plantKwPerRt": 0.494
+    },
+    "iterationDigest": [
+      "1:1800.5:1:0",
+      "2:1892.1:1:0",
+      "3:1846.3:1:0",
+      "4:1754.7:1:1",
+      "5:1709:1:1",
+      "6:1709:1:0",
+      "7:1709:1:0",
+      "8:1709:1:0",
+      "9:1709:1:0",
+      "10:1660.6:1:1",
+      "11:1678.4:1:0",
+      "12:1709:1:0",
+      "13:1755.9:0:0",
+      "14:1822.8:0:0",
+      "15:1533.9:1:1",
+      "16:1580.6:1:0",
+      "17:1661.3:1:0",
+      "18:1785.1:0:0",
+      "19:1961.3:0:0",
+      "20:1823.1:1:0",
+      "21:1836.5:1:0",
+      "22:1665.1:1:0",
+      "23:1489.5:0:0",
+      "24:1562.8:0:0",
+      "25:1556.8:1:0",
+      "26:1545.3:1:0",
+      "27:1533.9:1:0",
+      "28:1533.9:1:0",
+      "29:1537.3:1:0",
+      "30:1541.4:1:0",
+      "31:1543:1:0",
+      "32:1553.6:1:0",
+      "33:1721.8:1:0",
+      "34:1480.9:0:0",
+      "35:1831:1:0",
+      "36:1920.1:1:0",
+      "37:1875.6:1:0",
+      "38:1786.4:1:0",
+      "39:1741.8:1:0",
+      "40:1741.8:1:0",
+      "41:1741.8:1:0",
+      "42:1741.8:1:0",
+      "43:1741.8:1:0",
+      "44:1693.4:0:0",
+      "45:1711.2:1:0",
+      "46:1741.8:1:0",
+      "47:1788.8:1:0",
+      "48:1855.6:1:0",
+      "49:1537.7:1:0",
+      "50:1601.7:1:0",
+      "51:1712.1:1:0",
+      "52:1881.6:0:0",
+      "53:2122.7:0:0",
+      "54:1805.1:1:0",
+      "55:1821.6:1:0",
+      "56:1661.9:1:0",
+      "57:1503.2:0:0",
+      "58:1593.3:0:0",
+      "59:1560:1:0",
+      "60:1548.9:1:0",
+      "61:1537.7:1:0",
+      "62:1537.7:1:0",
+      "63:1527.4:1:1",
+      "64:1537.7:1:0",
+      "65:1551.2:1:0",
+      "66:1540:1:0",
+      "67:1554.4:1:0",
+      "68:1705.5:1:0",
+      "69:1482.3:0:0",
+      "70:1853.8:1:0",
+      "71:1941:1:0",
+      "72:1897.4:1:0",
+      "73:1810.3:1:0",
+      "74:1766.7:1:0",
+      "75:1766.7:1:0",
+      "76:1766.7:1:0",
+      "77:1766.7:1:0",
+      "78:1766.7:1:0",
+      "79:1718.3:0:0",
+      "80:1736.1:0:0",
+      "81:1813.7:1:0",
+      "82:1880.5:1:0",
+      "83:1546.4:1:0",
+      "84:1627.7:1:0",
+      "85:1767.8:1:0",
+      "86:1983:0:0",
+      "87:2289.2:0:0",
+      "88:1806.3:1:0",
+      "89:1822.8:1:0",
+      "90:1667.5:1:0",
+      "91:1513.6:0:0",
+      "92:1603.7:0:0",
+      "93:1568.2:1:0",
+      "94:1557.3:1:0",
+      "95:1546.4:1:0",
+      "96:1546.4:1:0",
+      "97:1529.3:1:0",
+      "98:1546.4:1:0",
+      "99:1567.7:1:0",
+      "100:1545.2:1:0",
+      "101:1563.6:1:0",
+      "102:1702.9:1:0",
+      "103:1485.9:0:0"
+    ]
+  },
+  "constraintCheck": {
+    "feasible": false,
+    "codes": [
+      "tower-approach"
+    ]
+  }
+}

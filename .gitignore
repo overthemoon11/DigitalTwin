@@ -71,7 +71,7 @@ pids/
 # ----- Cache -----
 # Extracted-workbook cache for frontend/scripts/calibrateFromDataset.py.
 # Regenerate with `--refresh`; the workbook itself is the source of truth.
-frontend/scripts/.t1-month-cache.npz
+calibration/fixtures/.t1-month-cache.npz
 .cache/
 .parcel-cache/
 .eslintcache
