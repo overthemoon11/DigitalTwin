@@ -72,6 +72,9 @@ pids/
 # Extracted-workbook cache for frontend/scripts/calibrateFromDataset.py.
 # Regenerate with `--refresh`; the workbook itself is the source of truth.
 calibration/fixtures/.t1-month-cache.npz
+# Extracted-workbook cache for data/scripts/export_bms_records.py.
+# The normalised JSON artifacts next to it ARE tracked; this binary is not.
+data/processed/.t1-bms-cache.npz
 .cache/
 .parcel-cache/
 .eslintcache
@@ -96,6 +99,18 @@ temp/
 *.temp
 *.bak
 *.backup
+# Scratch space for one-off probes run from the backend package.
+backend/.tmp/
+
+# ----- Generated run outputs -----
+# The synthetic MPC benchmark writes CSVs and figures per run; they are
+# reproducible from `npm run benchmark` and are not source. `--outdir` defaults
+# to a RELATIVE `results`, so run it from mpc_program/ (which the npm script
+# does) or it lands at the repo root — hence both patterns.
+mpc_program/results*/
+/results/
+# Fitted-model reports emitted alongside the TypeScript artifacts they generate.
+data/processed/gordon_ng_fit.json
 
 # ----- Local configuration -----
 local.settings.json

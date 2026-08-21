@@ -72,6 +72,7 @@ function designChillerUnit(index: number): ChillerUnitConstraint {
 /** The plant's as-designed constraint set — the "Reset to Design" target. */
 export function designConstraints(): ConstraintConfig {
   const chws = CHILLER_CONTROL_CONSTRAINTS['ctrl-chws-sp'];
+  const chwr = CHILLER_CONTROL_CONSTRAINTS['ctrl-chwr-sp'];
   const dp = CHILLER_CONTROL_CONSTRAINTS['ctrl-dp-sp'];
 
   return {
@@ -117,8 +118,19 @@ export function designConstraints(): ConstraintConfig {
       minRunningChillers: 1,
       maxRunningChillers: CHILLER_COUNT,
       requiredStandbyChillers: 0,
+      // The engine's own CHWR operating bound. This is the limit that prices
+      // CHWST reset and DP reset — see the field's comment in shared/types.
+      maxChwrC: chwr.max,
+      // No demand cap by default: T1 has no measured tariff or demand limit, so
+      // inventing one would be a constraint the site never asked for.
+      maxPlantKw: 0,
+      maxChillerStartsPerRun: 0,
+      // T1 ran 24/7 for every minute of December; an equal pair means no schedule.
+      operatingHours: { startHour: 0, endHour: 0 },
       maxChwstChangePerCycleC: 2,
       maxDpChangePerCyclePsi: 5,
+      maxCwpSpeedChangePerCyclePct: 15,
+      maxCtFanSpeedChangePerCyclePct: 20,
       minChillerRuntimeMin: 30,
       minChillerOffTimeMin: 20,
     },
@@ -202,6 +214,29 @@ export function validateConstraintConfig(cfg: ConstraintConfig): ConstraintConfi
   }
   if (cfg.system.minRunningChillers < 1) {
     errors.push({ section: 'system', field: 'minRunningChillers', message: 'at least one chiller must run' });
+  }
+
+  if (num(errors, 'system', 'maxChwrC', cfg.system.maxChwrC) && cfg.system.maxChwrC <= cfg.chiller.maxChwstC) {
+    errors.push({
+      section: 'system',
+      field: 'maxChwrC',
+      message: `CHWR limit ${cfg.system.maxChwrC}°C must exceed the highest allowed CHWST ${cfg.chiller.maxChwstC}°C`,
+    });
+  }
+  if (num(errors, 'system', 'maxPlantKw', cfg.system.maxPlantKw) && cfg.system.maxPlantKw < 0) {
+    errors.push({ section: 'system', field: 'maxPlantKw', message: 'plant demand cap cannot be negative (0 disables it)' });
+  }
+  if (
+    num(errors, 'system', 'maxChillerStartsPerRun', cfg.system.maxChillerStartsPerRun) &&
+    cfg.system.maxChillerStartsPerRun < 0
+  ) {
+    errors.push({ section: 'system', field: 'maxChillerStartsPerRun', message: 'start cap cannot be negative (0 disables it)' });
+  }
+  for (const key of ['startHour', 'endHour'] as const) {
+    const v = cfg.system.operatingHours?.[key];
+    if (!num(errors, 'system', `operatingHours.${key}`, v) || v < 0 || v > 24) {
+      errors.push({ section: 'system', field: `operatingHours.${key}`, message: 'must be an hour between 0 and 24' });
+    }
   }
 
   return errors;

@@ -8,7 +8,7 @@
 import type { ConstraintConfig, ControlState, SimulationInput } from '../../../shared/types/mpc';
 import type { PlantState } from '../../../shared/types/plant';
 import { applyChillerScenarioPayload } from '../digital-twin/chiller/model/controlEngine';
-import { controlOverrides, solveWeather } from './simulator/chillerPlantSimulator';
+import { controlOverrides, solveWeather, stagingFor } from './simulator/chillerPlantSimulator';
 import { dutyOrderFor } from './optimizer/candidateGenerator';
 
 export { designConstraints, validateConstraintConfig } from './constraints/constraintConfig';
@@ -17,9 +17,12 @@ export {
   simulateCandidate,
   readBaselineControl,
   readSimulationInput,
+  reconcileControl,
   solveWeather,
   controlOverrides,
-  approachFromFanSpeed,
+  approachFromConditions,
+  chwFlowLsFor,
+  stagingFor,
 } from './simulator/chillerPlantSimulator';
 export { continuousAxes, stagingOptions, chillerIdsFor } from './optimizer/candidateGenerator';
 export { objective, improves, savings } from './optimizer/objectiveFunction';
@@ -68,7 +71,7 @@ function commitControlState(
     label,
     controls: controlOverrides(input, control, weather),
     precise: true,
-    staging: { chiller: Math.round(control.runningChillers) },
+    staging: stagingFor(control.runningChillers),
     // Same duty order the search simulated under, so the twin starts exactly
     // the machines the sidebar names.
     ...(opts.constraints ? { duty: { chiller: dutyOrderFor(opts.constraints) } } : {}),

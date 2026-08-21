@@ -20,11 +20,12 @@ import type {
 } from '../../../../shared/types/mpc';
 import { clamp, round } from '../../digital-twin/chiller/model/plantPhysics';
 import { getPlantDutyOrders } from '../../digital-twin/chiller/model/controlEngine';
+import { reachableDpBand } from '../../digital-twin/chiller/model/dpHydraulics';
 
 export interface Axis {
   key: keyof Pick<
     ControlState,
-    'chwstSetpointC' | 'dpSetpointPsi' | 'chwpSpeedPct' | 'cwpSpeedPct' | 'ctFanSpeedPct'
+    'chwstSetpointC' | 'dpSetpointPsi' | 'cwpSpeedPct' | 'ctFanSpeedPct'
   >;
   label: string;
   min: number;
@@ -32,10 +33,28 @@ export interface Axis {
   decimals: number;
 }
 
-/** The five continuous axes, bounded by the constraint config + move limits. */
+/**
+ * The continuous search axes, bounded by the constraint config + move limits.
+ *
+ * FOUR axes, not five. CHWP speed is deliberately absent: it is not an
+ * independent degree of freedom but the speed a DP loop settles at for the
+ * commanded setpoint, so it is derived from `dpSetpointPsi` in
+ * `reconcileControl`. Searching both would let the optimiser publish a DP
+ * setpoint and a pump speed that no BMS could execute together — and because
+ * the map is monotone, searching DP over its reachable band explores exactly
+ * the same set of pump operating points with no loss of optimality.
+ *
+ * The DP band is additionally intersected with what the pump limits can
+ * actually reach, so the search does not waste candidates on setpoints that all
+ * saturate to the same speed.
+ */
 export function continuousAxes(cfg: ConstraintConfig, baseline: ControlState): Axis[] {
-  const dpMin = Math.max(cfg.chwp.minDpPsi, cfg.system.minChwDpPsi);
-  const dpMax = Math.min(cfg.chwp.maxDpPsi, cfg.system.maxChwDpPsi);
+  const dp = reachableDpBand(
+    Math.max(cfg.chwp.minDpPsi, cfg.system.minChwDpPsi),
+    Math.min(cfg.chwp.maxDpPsi, cfg.system.maxChwDpPsi),
+    cfg.chwp.minSpeedPct,
+    cfg.chwp.maxSpeedPct
+  );
 
   return [
     {
@@ -48,13 +67,24 @@ export function continuousAxes(cfg: ConstraintConfig, baseline: ControlState): A
     {
       key: 'dpSetpointPsi',
       label: 'DP-SP',
-      min: Math.max(dpMin, baseline.dpSetpointPsi - cfg.system.maxDpChangePerCyclePsi),
-      max: Math.min(dpMax, baseline.dpSetpointPsi + cfg.system.maxDpChangePerCyclePsi),
+      min: Math.max(dp.min, baseline.dpSetpointPsi - cfg.system.maxDpChangePerCyclePsi),
+      max: Math.min(dp.max, baseline.dpSetpointPsi + cfg.system.maxDpChangePerCyclePsi),
       decimals: 1,
     },
-    { key: 'chwpSpeedPct', label: 'CHWP Speed', min: cfg.chwp.minSpeedPct, max: cfg.chwp.maxSpeedPct, decimals: 1 },
-    { key: 'cwpSpeedPct', label: 'CWP Speed', min: cfg.cwp.minSpeedPct, max: cfg.cwp.maxSpeedPct, decimals: 1 },
-    { key: 'ctFanSpeedPct', label: 'CT Fan Speed', min: cfg.tower.minFanSpeedPct, max: cfg.tower.maxFanSpeedPct, decimals: 1 },
+    {
+      key: 'cwpSpeedPct',
+      label: 'CWP Speed',
+      min: Math.max(cfg.cwp.minSpeedPct, baseline.cwpSpeedPct - cfg.system.maxCwpSpeedChangePerCyclePct),
+      max: Math.min(cfg.cwp.maxSpeedPct, baseline.cwpSpeedPct + cfg.system.maxCwpSpeedChangePerCyclePct),
+      decimals: 1,
+    },
+    {
+      key: 'ctFanSpeedPct',
+      label: 'CT Fan Speed',
+      min: Math.max(cfg.tower.minFanSpeedPct, baseline.ctFanSpeedPct - cfg.system.maxCtFanSpeedChangePerCyclePct),
+      max: Math.min(cfg.tower.maxFanSpeedPct, baseline.ctFanSpeedPct + cfg.system.maxCtFanSpeedChangePerCyclePct),
+      decimals: 1,
+    },
   ];
 }
 

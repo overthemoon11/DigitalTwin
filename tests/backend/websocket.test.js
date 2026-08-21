@@ -4,9 +4,9 @@
  * Tests WebSocket connection and real-time updates for the HVAC Digital Twin
  */
 
-const { test, describe, before, after } = require('node:test');
-const assert = require('node:assert');
-const WebSocket = require('ws');
+import { test, describe, before, after } from 'node:test';
+import assert from 'node:assert';
+import WebSocket from 'ws';
 
 const WS_URL = 'ws://localhost:3003/ws';
 const API_BASE = 'http://localhost:3003';

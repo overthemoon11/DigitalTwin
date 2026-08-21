@@ -1,163 +1,181 @@
 import React from 'react';
 import { useTwinStore } from '../../../store/useTwinStore';
 
-const n1 = (v) => (Number.isFinite(v) ? v.toFixed(1) : '—');
-const n3 = (v) => (Number.isFinite(v) ? v.toFixed(3) : '—');
-const kw = (v) => (Number.isFinite(v) ? `${Math.round(v).toLocaleString()} kW` : '—');
+const n0 = (v) => (Number.isFinite(v) ? Math.round(v).toLocaleString() : '—');
+const n2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : '—');
 
 /**
- * Rejection counts grouped by their human label, biggest first. Codes are
- * finer-grained than labels (chw-flow-min and chw-flow-max are both "CHW
- * flow"), so grouping by code would print the same reason twice.
+ * Solver and constraint status for a receding-horizon run.
+ *
+ * Three things belong here and nowhere else.
+ *
+ * WHICH CONSTRAINTS BOUND THE ANSWER. An optimum sitting on a limit is a
+ * different claim from one sitting in the interior: it says "this is as far as
+ * you let me go", and the operator can widen the limit on the left. Reporting
+ * the total without the active set hides that entirely.
+ *
+ * WHAT THE OBJECTIVE ACTUALLY WEIGHED. The cost breakdown for the applied step,
+ * in kW-equivalent, so a surprising decision can be traced to energy, to the
+ * return limit, or to a switching penalty instead of being taken on trust.
+ *
+ * WHETHER THE SOLVER SUCCEEDED. A fallback step is not an optimised step, and
+ * the count of them is the first thing to check before believing a saving.
  */
-function rejectionsByLabel(rejectionsByCode, labels) {
-  const merged = new Map();
-  for (const [code, count] of Object.entries(rejectionsByCode ?? {})) {
-    const label = labels?.[code] ?? code;
-    merged.set(label, (merged.get(label) ?? 0) + count);
-  }
-  return [...merged.entries()].sort((a, b) => b[1] - a[1]);
-}
 
-function CandidateRows({ control }) {
-  if (!control) return null;
+/** Human labels for the constraint codes the solver reports as active. */
+const ACTIVE_LABEL = {
+  CHWR_LIMIT: 'CHWR return limit',
+  CHWR_TERMINAL_LIMIT: 'CHWR limit at the horizon end',
+  CAPACITY_SHORTFALL: 'staged capacity',
+  LOOP_WARMING: 'cooling deferred into the loop',
+  CHILLER_SWITCH: 'chiller switching penalty',
+  OUTSIDE_OPERATING_HOURS: 'plant schedule',
+};
+
+const COST_LABEL = {
+  energyKwh: 'Plant energy',
+  unmetPenalty: 'Unservable cooling',
+  loopCarryPenalty: 'Deferred cooling',
+  chwrPenalty: 'CHWR overshoot',
+  switchingPenalty: 'Chiller switching',
+  movementPenalty: 'Setpoint movement',
+  terminalStoragePenalty: 'Loop energy left behind',
+  infeasiblePenalty: 'Constraint violation',
+};
+
+function StatusShell({ tone, title, children }) {
   return (
-    <div className="mpc-cycle-rows">
-      <div><span>CHWST-SP</span><strong>{n1(control.chwstSetpointC)} °C</strong></div>
-      <div><span>DP-SP</span><strong>{n1(control.dpSetpointPsi)} psi</strong></div>
-      <div><span>Chillers</span><strong>{control.runningChillers}</strong></div>
-      <div><span>CHWP</span><strong>{n1(control.chwpSpeedPct)} %</strong></div>
-      <div><span>CWP</span><strong>{n1(control.cwpSpeedPct)} %</strong></div>
-      <div><span>CT</span><strong>{n1(control.ctFanSpeedPct)} %</strong></div>
+    <div className={`mpc-status ${tone}`}>
+      <div className="mpc-status-title">{title}</div>
+      {children}
     </div>
   );
 }
 
-/**
- * MPC execution panel: idle prompt, live cycle trace while searching, and the
- * completion summary with the rejection breakdown.
- *
- * The rejection tally counts CANDIDATES by their first violated constraint, so
- * the numbers add up to the rejected count rather than double-counting a
- * candidate that broke several rules at once.
- */
-export default function MpcStatusPanel({ status, progress, result, error }) {
-  // Supplied by the backend alongside the MPC config; the frontend no longer
-  // owns the violation-code vocabulary.
+export default function MpcStatusPanel({ status, run, error }) {
   const labels = useTwinStore((s) => s.mpcViolationLabels);
-  if (status === 'RUNNING' || status === 'VALIDATING') {
-    const pct = progress?.totalCycles
-      ? Math.min(100, Math.round((progress.cycle / progress.totalCycles) * 100))
-      : 0;
+
+  if (status === 'RUNNING') {
     return (
-      <div className="mpc-status mpc-status--running">
-        <div className="mpc-status-title">MPC Optimization</div>
-        {status === 'VALIDATING' ? (
-          <p className="mpc-status-line">Validating constraints…</p>
-        ) : (
-          <>
-            <p className="mpc-status-line">
-              Cycle {progress?.cycle ?? 0} / {progress?.totalCycles ?? '—'}
-            </p>
-            <div className="mpc-subhead">Current Candidate</div>
-            <CandidateRows control={progress?.candidate} />
-            <div className="mpc-subhead">Candidate Result</div>
-            <div className="mpc-cycle-rows">
-              <div><span>Plant kW</span><strong>{kw(progress?.result?.totalPlantKw)}</strong></div>
-              <div><span>Plant kW/RT</span><strong>{n3(progress?.result?.plantKwPerRt)}</strong></div>
-              <div>
-                <span>Feasible</span>
-                <strong className={progress?.result?.feasible ? 'ok' : 'bad'}>
-                  {progress?.result?.feasible ? 'yes' : 'rejected'}
-                </strong>
-              </div>
-            </div>
-            <div className="mpc-subhead">Best So Far</div>
-            <div className="mpc-cycle-rows">
-              <div><span>Plant kW</span><strong>{kw(progress?.bestTotalKw)}</strong></div>
-              <div><span>Plant kW/RT</span><strong>{n3(progress?.bestKwPerRt)}</strong></div>
-            </div>
-            <div className="mpc-progress"><div className="mpc-progress-bar" style={{ width: `${pct}%` }} /></div>
-            <div className="mpc-progress-pct">{pct}%</div>
-          </>
-        )}
-      </div>
+      <StatusShell tone="mpc-status--running" title="MPC Optimisation">
+        <p className="mpc-status-line">
+          Solving the horizon at every step and replaying the baseline under identical
+          conditions…
+        </p>
+        <div className="mpc-progress">
+          <div className="mpc-progress-bar mpc-progress-bar--indeterminate" />
+        </div>
+        <p className="mpc-status-line mpc-status-line--muted">
+          A longer run costs proportionally more: each step re-solves a full horizon.
+        </p>
+      </StatusShell>
     );
   }
 
   if (status === 'ERROR') {
     return (
-      <div className="mpc-status mpc-status--error">
-        <div className="mpc-status-title">MPC Error</div>
-        <p className="mpc-status-line">{error || 'Optimisation could not start.'}</p>
-      </div>
-    );
-  }
-
-  if (status === 'INFEASIBLE') {
-    const codes = rejectionsByLabel(result?.rejectionsByCode, labels);
-    return (
-      <div className="mpc-status mpc-status--error">
-        <div className="mpc-status-title">No Feasible Solution</div>
-        <p className="mpc-status-line">
-          No operating combination satisfies the current load and constraints.
-        </p>
-        {codes.length > 0 && (
-          <>
-            <div className="mpc-subhead">Limiting constraints</div>
-            <ul className="mpc-reject-list">
-              {codes.slice(0, 6).map(([label, count]) => (
-                <li key={label}>
-                  {count} × {label}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+      <StatusShell tone="mpc-status--error" title="MPC Error">
+        <p className="mpc-status-line">{error || 'The run could not start.'}</p>
         <p className="mpc-status-line mpc-status-line--muted">
-          {result?.evaluatedCandidates ?? 0} candidates evaluated, all rejected.
+          A refused comparison is not a weak result — it means the two arms did not face
+          identical conditions, so no saving could be attributed to the controller.
         </p>
-      </div>
+      </StatusShell>
     );
   }
 
-  if (status === 'COMPLETED' && result) {
-    const codes = rejectionsByLabel(result.rejectionsByCode, labels);
+  if (!run) {
     return (
-      <div className="mpc-status mpc-status--done">
-        <div className="mpc-status-title">MPC Complete</div>
-        <div className="mpc-cycle-rows">
-          <div><span>Evaluated</span><strong>{result.evaluatedCandidates}</strong></div>
-          <div><span>Feasible</span><strong className="ok">{result.feasibleCandidates}</strong></div>
-          <div><span>Rejected</span><strong className="bad">{result.rejectedCandidates}</strong></div>
-        </div>
-        <div className="mpc-subhead">Best Plant Power</div>
-        <div className="mpc-cycle-rows">
-          <div><span>Plant kW</span><strong>{kw(result.optimalResult?.totalPlantKw)}</strong></div>
-          <div><span>Plant kW/RT</span><strong>{n3(result.optimalResult?.plantKwPerRt)}</strong></div>
-          <div><span>Saving</span><strong className={result.savingKw > 0 ? 'ok' : ''}>{n1(result.savingKw)} kW · {n1(result.savingPct)} %</strong></div>
-        </div>
-        {codes.length > 0 && (
-          <>
-            <div className="mpc-subhead">Rejected</div>
-            <ul className="mpc-reject-list">
-              {codes.slice(0, 5).map(([label, count]) => (
-                <li key={label}>
-                  {count} × {label}
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+      <StatusShell tone="" title="MPC Status">
+        <p className="mpc-status-line">Ready</p>
+        <p className="mpc-status-line mpc-status-line--muted">
+          Set the conditions on the left, the limits above, then run.
+        </p>
+      </StatusShell>
     );
   }
+
+  const solver = run.solver;
+  const failed = solver.fallbacks > 0;
+  const infeasible = run.mpc.totals.infeasibleSteps;
+  const cost = solver.firstStepCostKw ?? {};
+  const violations = run.mpc.trajectory.flatMap((s) => s.violations ?? []);
+  const byCode = new Map();
+  for (const v of violations) byCode.set(v.code, (byCode.get(v.code) ?? 0) + 1);
 
   return (
-    <div className="mpc-status">
-      <div className="mpc-status-title">MPC Status</div>
-      <p className="mpc-status-line">Ready</p>
-      <p className="mpc-status-line mpc-status-line--muted">Waiting for simulation</p>
-    </div>
+    <StatusShell
+      tone={failed || infeasible ? 'mpc-status--warn' : 'mpc-status--done'}
+      title="Solver Status"
+    >
+      <div className="mpc-cycle-rows">
+        <div><span>Solver</span><strong>{solver.name.replace(/ \(.*\)$/, '')}</strong></div>
+        <div><span>Steps solved</span><strong>{solver.steps}</strong></div>
+        <div>
+          <span>Fallbacks</span>
+          <strong className={failed ? 'bad' : 'ok'}>{solver.fallbacks}</strong>
+        </div>
+        <div><span>Mean solve time</span><strong>{n0(solver.meanSolveMs)} ms</strong></div>
+        <div>
+          <span>Statuses</span>
+          <strong>
+            {Object.entries(solver.statuses)
+              .map(([k, v]) => `${v}× ${k}`)
+              .join(', ')}
+          </strong>
+        </div>
+        <div>
+          <span>Infeasible steps</span>
+          <strong className={infeasible ? 'bad' : 'ok'}>{infeasible}</strong>
+        </div>
+      </div>
+
+      <div className="mpc-subhead">Objective, applied step (kW-equivalent)</div>
+      <div className="mpc-cycle-rows">
+        {Object.entries(cost)
+          .filter(([, v]) => Number.isFinite(v))
+          .map(([k, v]) => (
+            <div key={k}>
+              <span>{COST_LABEL[k] ?? k}</span>
+              <strong className={v > 0 && k !== 'energyKwh' ? 'bad' : ''}>{n2(v)}</strong>
+            </div>
+          ))}
+      </div>
+
+      <div className="mpc-subhead">Constraints that bound the answer</div>
+      {solver.activeConstraints.length === 0 ? (
+        <p className="mpc-status-line mpc-status-line--muted">
+          None — the optimum is interior, so widening a limit would not buy anything.
+        </p>
+      ) : (
+        <ul className="mpc-reject-list">
+          {solver.activeConstraints.map((code) => (
+            <li key={code}>{ACTIVE_LABEL[code] ?? labels?.[code] ?? code}</li>
+          ))}
+        </ul>
+      )}
+
+      {byCode.size > 0 && (
+        <>
+          <div className="mpc-subhead">Violations recorded</div>
+          <ul className="mpc-reject-list">
+            {[...byCode.entries()]
+              .sort((a, b) => b[1] - a[1])
+              .map(([code, count]) => (
+                <li key={code}>
+                  {count} × {labels?.[code] ?? code}
+                </li>
+              ))}
+          </ul>
+        </>
+      )}
+
+      {failed && (
+        <p className="mpc-warn">
+          ▲ {solver.fallbacks} step(s) could not be solved and held the plant&apos;s own
+          control instead. Those steps are not optimised, and the saving above includes them.
+        </p>
+      )}
+    </StatusShell>
   );
 }

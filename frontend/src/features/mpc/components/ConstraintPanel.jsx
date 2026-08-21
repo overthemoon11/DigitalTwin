@@ -243,15 +243,35 @@ export default function ConstraintPanel({
           error: errFor('system', 'minRunningChillers'),
         })}
         {field({ label: 'Required Standby', value: cfg.system.requiredStandbyChillers, step: 1, decimals: 0, error: errFor('system', 'requiredStandbyChillers'), onCommit: (v) => onSet('system.requiredStandbyChillers', v) })}
+        {/* The single most consequential limit in this panel. Raising CHWST and
+            slowing the CHW pumps both save power by letting the loop run
+            warmer; this is what says how much warmer is acceptable, and
+            without it both would look like free money. */}
+        {field({ label: 'Max CHWR (return limit)', value: cfg.system.maxChwrC, unit: '°C', step: 0.1, error: errFor('system', 'maxChwrC'), onCommit: (v) => onSet('system.maxChwrC', v) })}
+        {field({ label: 'Max Plant Demand', value: cfg.system.maxPlantKw, unit: 'kW', step: 100, decimals: 0, error: errFor('system', 'maxPlantKw'), onCommit: (v) => onSet('system.maxPlantKw', v) })}
+        {field({ label: 'Max Chiller Starts / Run', value: cfg.system.maxChillerStartsPerRun, step: 1, decimals: 0, error: errFor('system', 'maxChillerStartsPerRun'), onCommit: (v) => onSet('system.maxChillerStartsPerRun', v) })}
+        {range({
+          label: 'Operating Hours',
+          step: 1,
+          decimals: 0,
+          minValue: cfg.system.operatingHours?.startHour ?? 0,
+          maxValue: cfg.system.operatingHours?.endHour ?? 0,
+          onCommitMin: (v) => onSet('system.operatingHours.startHour', v),
+          onCommitMax: (v) => onSet('system.operatingHours.endHour', v),
+          error: errFor('system', 'operatingHours.startHour'),
+        })}
         {field({ label: 'Max CHWST Δ / Cycle', value: cfg.system.maxChwstChangePerCycleC, unit: '°C', step: 0.1, onCommit: (v) => onSet('system.maxChwstChangePerCycleC', v) })}
         {field({ label: 'Max DP Δ / Cycle', value: cfg.system.maxDpChangePerCyclePsi, unit: 'psi', step: 0.5, onCommit: (v) => onSet('system.maxDpChangePerCyclePsi', v) })}
+        {field({ label: 'Max CWP Δ / Cycle', value: cfg.system.maxCwpSpeedChangePerCyclePct, unit: '%', step: 1, decimals: 0, onCommit: (v) => onSet('system.maxCwpSpeedChangePerCyclePct', v) })}
+        {field({ label: 'Max CT Fan Δ / Cycle', value: cfg.system.maxCtFanSpeedChangePerCyclePct, unit: '%', step: 1, decimals: 0, onCommit: (v) => onSet('system.maxCtFanSpeedChangePerCyclePct', v) })}
         {/* Two separate minimums, not a band -- deliberately kept apart. */}
         {field({ label: 'Min Chiller Runtime', value: cfg.system.minChillerRuntimeMin, unit: 'min', step: 5, decimals: 0, onCommit: (v) => onSet('system.minChillerRuntimeMin', v) })}
         {field({ label: 'Min Chiller Off Time', value: cfg.system.minChillerOffTimeMin, unit: 'min', step: 5, decimals: 0, onCommit: (v) => onSet('system.minChillerOffTimeMin', v) })}
-        <p className="mpc-note mpc-note--warn">
-          Runtime / off-time timers are stored and validated but not yet simulated — the
-          engine has no equipment run-hour clock. Everything above them is enforced on
-          every candidate.
+        <p className="mpc-note">
+          Runtime and off-time timers ARE enforced by the horizon controller: they decide
+          which machines are eligible to switch at each step, so a plan that would breach
+          them is never reachable. Zero disables the plant-demand cap, the start cap, and
+          the operating-hours window (T1 ran 24/7 all December).
         </p>
       </ConstraintSection>
     </div>

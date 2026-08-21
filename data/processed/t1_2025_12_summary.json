@@ -1,0 +1,196 @@
+{
+ "artifactVersion": 1,
+ "datasetId": "t1_2025_12",
+ "source": {
+  "workbook": "T1_MVrawDataR2_2025_12_completed.xlsx",
+  "sheet": "T1_MVrawDataR2_2025_12",
+  "sizeBytes": 39837136
+ },
+ "stepMinutes": 15,
+ "recordCount": 2976,
+ "days": [
+  "2025-12-01",
+  "2025-12-02",
+  "2025-12-03",
+  "2025-12-04",
+  "2025-12-05",
+  "2025-12-06",
+  "2025-12-07",
+  "2025-12-08",
+  "2025-12-09",
+  "2025-12-10",
+  "2025-12-11",
+  "2025-12-12",
+  "2025-12-13",
+  "2025-12-14",
+  "2025-12-15",
+  "2025-12-16",
+  "2025-12-17",
+  "2025-12-18",
+  "2025-12-19",
+  "2025-12-20",
+  "2025-12-21",
+  "2025-12-22",
+  "2025-12-23",
+  "2025-12-24",
+  "2025-12-25",
+  "2025-12-26",
+  "2025-12-27",
+  "2025-12-28",
+  "2025-12-29",
+  "2025-12-30",
+  "2025-12-31"
+ ],
+ "timebase": {
+  "first": "2025-12-01 00:00:00",
+  "last": "2025-12-31 23:59:00",
+  "rows": 44640,
+  "parsedTimestamps": 44640,
+  "unparsedTimestamps": 0,
+  "intervalSecondsMode": 60.0,
+  "intervalHistogram": {
+   "60": 44637,
+   "0": 1,
+   "120": 1
+  },
+  "duplicateTimestamps": 1,
+  "expectedRowsAt1Min": 44640,
+  "missingRowsVsExpected": 1
+ },
+ "equipment": {
+  "chillers": 5,
+  "chwPumps": 6,
+  "cwPumps": 6,
+  "coolingTowers": 5
+ },
+ "columnsMapped": 136,
+ "columnsUncertain": 33,
+ "provenance": {
+  "chwFlowLs": "MEASURED (sum of the per-chiller evaporator meters, ~376 L/s; agrees with the riser total)",
+  "cwHeaderFlowLs": "MEASURED (Header-hcwf, ~696 L/s). CONDENSER water despite the 'hcw' tag prefix - see the mapping report",
+  "loadRt": "DERIVED in the workbook (only 133 of 44,640 rows measured)",
+  "plantKwPerRt": "DERIVED (kw / rt)",
+  "equipmentStatus": "INFERRED from metered kW against RUN_KW {'ch': 50.0, 'chwp': 5.0, 'cwp': 5.0, 'ct': 3.0}",
+  "wetBulbC": "MEASURED (mean of 5 WST sensors)",
+  "temperatures": "MEASURED",
+  "power": "MEASURED (DPM meters)"
+ },
+ "rtValidation": {
+  "coolingLoadFormula": "RT = factor * sum(4 riser flows, L/s) * (CHWR - CHWS, K)",
+  "factorWorkbook": 1.18892327296496,
+  "factorPhysics": 1.19021894,
+  "factorRefitFromMeasuredRows": 1.18892327,
+  "vsMeasuredRows": {
+   "workbookFactor": {
+    "n": 133,
+    "maeRt": 3.3617,
+    "rmseRt": 4.1667,
+    "biasRt": -0.0016,
+    "mapePct": 0.1049,
+    "maxAbsErrRt": 12.811
+   },
+   "physicsFactor": {
+    "n": 133,
+    "maeRt": 4.4485,
+    "rmseRt": 5.4379,
+    "biasRt": 3.4924,
+    "mapePct": 0.1389,
+    "maxAbsErrRt": 16.285
+   }
+  },
+  "vsAllRows": {
+   "workbookFactor": {
+    "n": 44640,
+    "maeRt": 0.01,
+    "rmseRt": 0.2274,
+    "biasRt": -0.0,
+    "mapePct": 0.0003,
+    "maxAbsErrRt": 12.811
+   },
+   "physicsFactor": {
+    "n": 44640,
+    "maeRt": 3.3571,
+    "rmseRt": 3.3686,
+    "biasRt": 3.3543,
+    "mapePct": 0.1091,
+    "maxAbsErrRt": 16.285
+   }
+  },
+  "plantKwSumVsWorkbookColumn": {
+   "n": 43198,
+   "maeKw": 2.7719,
+   "rmseKw": 2.8417,
+   "biasKw": -2.7719,
+   "note": "sum(running chiller+CHWP+CWP+CT kW) vs the workbook `kw` column, over usable rows with CT-4 present"
+  },
+  "abnormal": {
+   "negativeHeaderDtRows": 2,
+   "zeroRiserFlowRows": 0,
+   "ct4PowerMissingRows": 1440,
+   "unusableRows": 2
+  }
+ },
+ "missingSignals": {
+  "chw_dp_kpa": "No differential-pressure channel of any kind. DP-SP cannot be calibrated or validated from this dataset.",
+  "chwst_sp_c": "No setpoint channels at all. Only ACHIEVED temperatures are trended, so a setpoint can only be proxied by its achieved value.",
+  "dp_sp_kpa": "No DP setpoint (no DP measurement either).",
+  "cwst_sp_c": "No condenser-water setpoint; CWS is observable, its setpoint is not.",
+  "chwp_speed_pct": "No pump speed or frequency channel - VSD kW only.",
+  "cwp_speed_pct": "No pump speed or frequency channel - VSD kW only.",
+  "ct_fan_speed_pct": "No fan speed channel - fan VSD kW only.",
+  "valve_position_pct": "No valve positions.",
+  "oat_dry_bulb_c": "No outdoor dry-bulb; only the five WST wet-bulb sensors.",
+  "oat_rh_pct": "No outdoor humidity.",
+  "chiller_status": "No status/run flags; ON/OFF must be inferred from kW against the RUN_KW thresholds.",
+  "cw_header_flow_ls": "No condenser-water HEADER flow; per-chiller CwFls only."
+ },
+ "knownAnomalies": [
+  {
+   "code": "CT4_POWER_GAP",
+   "from": "2025-12-31 00:00",
+   "to": "2025-12-31 23:59",
+   "detail": "DPM_CT_04_kW and the CT_4 VSD channels are absent for all 1,440 rows; total plant kW is understated on this date.",
+   "action": "excluded from tower fitting and from energy baselines"
+  },
+  {
+   "code": "NEGATIVE_HEADER_DT",
+   "from": "2025-12-23 11:41",
+   "to": "2025-12-23 11:42",
+   "detail": "Header CHWS exceeds CHWR, so the reconstructed RT is negative.",
+   "action": "excluded from every fit and from load statistics"
+  }
+ ],
+ "runningUnits": {
+  "chillers": [
+   39.1,
+   38.7,
+   99.8,
+   61.1,
+   61.4
+  ],
+  "chwPumps": [
+   39.1,
+   38.7,
+   99.8,
+   61.2,
+   61.5,
+   0.0
+  ],
+  "cwPumps": [
+   39.1,
+   38.7,
+   99.8,
+   61.2,
+   61.5,
+   0.0
+  ],
+  "coolingTowers": [
+   80.8,
+   85.7,
+   56.2,
+   88.4,
+   85.6
+  ],
+  "note": "percent of the month each unit was running (kW threshold)"
+ }
+}

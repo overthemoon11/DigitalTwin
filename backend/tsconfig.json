@@ -1,0 +1,21 @@
+{
+  "//": "Type checking only. The backend RUNS through tsx, which strips types without checking them, so nothing here emits — this exists so `npm run typecheck` can catch what tsx silently accepts. `shared/` is included because the contracts live above this package.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "../shared/**/*.ts"],
+  "exclude": ["node_modules", ".tmp", "dist"]
+}

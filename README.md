@@ -88,6 +88,34 @@ graph TD
 > Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 > ```
 
+### Prerequisites for the MPC / calibration pipeline
+
+The chiller-plant MPC ships with real BMS data and fitted models. Running the
+app needs only Node; re-exporting the data or re-fitting the models needs Python
+3.11+ with `numpy scipy matplotlib openpyxl`.
+
+### Option 0: Root task runner (all commands in one place)
+
+```powershell
+npm run install:all           # install backend + frontend dependencies
+
+npm run backend               # http://localhost:3003
+npm run frontend              # http://localhost:3002
+
+npm run test:all              # typecheck + backend tests + golden + frontend build
+npm test                      # backend test suite only
+npm run test:golden           # twin output vs the characterization golden
+npm run typecheck             # tsc --noEmit, backend and frontend
+
+npm run data:export:refresh   # re-read the BMS workbook -> data/processed artifacts
+npm run calibrate             # re-fit every model from the exported artifacts
+npm run benchmark:selftest    # the synthetic MPC benchmark's own checks
+```
+
+See [`docs/mpc-digital-twin-integration.md`](docs/mpc-digital-twin-integration.md)
+for what each of those does, what is calibrated against real data and what is a
+physics default.
+
 ### Option A: Manual Startup (Recommended)
 
 Open **two separate terminals** and run:
@@ -215,6 +243,29 @@ POST /api/twin/reset        - Reset to baseline state
 GET  /api/twin/explain/:id  - Get explanation for KPI or alert
 ```
 
+### Chiller-plant MPC
+
+```
+GET  /api/mpc/config              - design constraints + violation labels
+GET  /api/mpc/baseline            - the live plant as disturbances + control state
+POST /api/mpc/optimize            - steady-state optimum at ONE operating point
+POST /api/mpc/simulate            - score a single candidate control state
+POST /api/mpc/restore             - commit a control state to the twin
+
+GET  /api/mpc/horizon/config      - solver defaults, run modes, recorded days
+POST /api/mpc/horizon/compare     - baseline vs MPC over IDENTICAL conditions
+GET  /api/mpc/model-status        - per-model calibration status + missing signals
+GET  /api/mpc/twin-validation     - twin vs measured plant, channel by channel
+```
+
+### Real BMS dataset
+
+```
+GET  /api/bms/dataset-summary     - provenance, timebase, gaps, RT re-derivation
+GET  /api/bms/days                - recorded days with load range + quality flags
+GET  /api/bms/day/:day            - every measured 15-minute bucket of one day
+```
+
 ### Copilot
 
 ```
@@ -303,34 +354,47 @@ Then run tests in another terminal.
 
 ```
 digitaltwin/
-├── start-demo.ps1          # PowerShell startup script
-├── start-demo.bat          # Batch startup script
+├── package.json            # root task runner (see Option 0 above)
+├── start-demo.ps1 / .bat   # startup scripts
+├── shared/types/           # contracts BOTH sides import
+│   ├── plant.ts            #   the twin's state
+│   ├── mpc.ts              #   steady-state MPC: controls, constraints, results
+│   ├── horizon.ts          #   time-domain MPC: forecasts, loop state, runs
+│   └── bms.ts              #   canonical shape of real measured history
 ├── frontend/               # React web application
 │   ├── src/
-│   │   ├── components/     # UI components
-│   │   ├── hooks/          # State management (Zustand)
-│   │   └── App.jsx         # Main application
+│   │   ├── features/mpc/   #   the MPC simulator UI (both sidebars)
+│   │   ├── components/     #   SCADA views, asset trees, panels
+│   │   ├── api/            #   thin typed clients, no domain logic
+│   │   ├── store/          #   Zustand: UI state + request orchestration
+│   │   └── app/App.jsx     #   layout
 │   └── package.json
-├── backend/                # Node.js API server
+├── backend/                # Node.js API server (runs .ts through tsx)
 │   ├── src/
-│   │   ├── services/       # Foundry Local SDK + copilot service
-│   │   ├── simulator/      # HVAC physics simulator
-│   │   ├── routes/         # API routes
-│   │   └── index.js        # Express server
-│   ├── tests/              # Backend unit tests
+│   │   ├── digital-twin/   #   THE calibrated plant model + its fits
+│   │   ├── mpc/            #   simulator adapter, constraints, optimisers
+│   │   │   └── horizon/    #     receding-horizon controller + closed loop
+│   │   ├── control/        #   baseline (incumbent) controllers
+│   │   ├── data/           #   BMS artifact loader + preprocessing
+│   │   ├── evaluation/     #   twin-vs-plant validation
+│   │   ├── api/            #   routes + controllers (no domain logic)
+│   │   └── index.js        #   Express + WebSocket server
+│   ├── tests/              # backend test suite
 │   └── package.json
-├── tests/                  # Comprehensive test suite
-│   ├── run-all-tests.ps1   # Test runner (PowerShell)
-│   ├── run-all-tests.bat   # Test runner (Batch)
-│   ├── backend/            # API & WebSocket tests
-│   ├── integration/        # E2E & data flow tests
-│   └── validation/         # Schema & health checks
-├── twin/                   # Digital twin data
-│   ├── twin.schema.json    # JSON schema definition
-│   ├── twin.baseline.json  # Initial/reset state
-│   └── twin.state.json     # Current live state
+├── data/
+│   ├── raw/                # the BMS workbook (source of truth, never edited)
+│   ├── scripts/            # bms_columns.py + export_bms_records.py
+│   └── processed/          # versioned JSON artifacts the backend reads
+├── calibration/scripts/    # model-fitting scripts -> generated .ts artifacts
+├── mpc_program/            # the synthetic Python MPC benchmark (Mode 1)
+├── tests/                  # cross-cutting suites
+│   ├── characterization/   #   golden file: proves the twin's output is unchanged
+│   ├── backend/            #   API & WebSocket tests
+│   ├── integration/        #   E2E & data flow
+│   └── validation/         #   schema & health checks
+├── twin/                   # legacy twin state (schema, baseline, live)
 ├── assets/                 # 3D models (GLB files)
-└── docs/                   # Documentation
+└── docs/                   # documentation
 ```
 
 ## Building Model

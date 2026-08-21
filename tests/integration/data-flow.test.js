@@ -4,8 +4,8 @@
  * Tests data consistency and flow between components
  */
 
-const { test, describe, beforeEach } = require('node:test');
-const assert = require('node:assert');
+import { test, describe, beforeEach } from 'node:test';
+import assert from 'node:assert';
 
 const API_BASE = 'http://localhost:3003';
 

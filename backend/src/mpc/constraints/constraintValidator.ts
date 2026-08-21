@@ -24,12 +24,16 @@ import { stagedCapacityRt, stagedUnits } from '../optimizer/candidateGenerator';
 /** Physical / operational quantities the checks read off a simulated candidate. */
 export interface ValidationSubject {
   chwsC: number;
+  /** Achieved chilled-water RETURN — the limit that prices CHWST and DP reset. */
+  chwrC: number;
   cwsC: number;
   wetBulbC: number;
   chwFlowLs: number;
   cwFlowLs: number;
   chillerLoadPct: number;
   coolingRequiredRt: number;
+  /** Total plant demand, for the optional demand cap. */
+  totalPlantKw: number;
   staging: { chillers: number; chwp: number; cwp: number; ct: number };
 }
 
@@ -56,7 +60,18 @@ export const VIOLATION_LABELS: Record<string, string> = {
   'cw-header-flow': 'CW header flow',
   'chwst-rate-limit': 'CHWST move limit',
   'dp-rate-limit': 'DP move limit',
+  'cwp-rate-limit': 'CWP speed move limit',
+  'ct-rate-limit': 'CT fan move limit',
+  'chwr-max': 'CHWR return limit',
+  'plant-demand-cap': 'plant demand cap',
 };
+
+/**
+ * How far an OUTCOME check may be relaxed to absorb rounding in the numbers it
+ * compares. Only ever applied where two independently-rounded reported values
+ * are differenced — never to a commanded setpoint, which is exact.
+ */
+const REPORTING_TOLERANCE_K = 0.15;
 
 function v(
   code: string,
@@ -168,11 +183,25 @@ export function validateCandidate(
     }
   }
 
-  /* --- tower: the hard physical floor ---------------------------------- */
-  const approachFloor = input.wetBulbC + cfg.tower.minApproachC;
-  if (subject.cwsC < approachFloor - 1e-6) {
+  /* --- tower: the hard physical floor ----------------------------------
+   * A CROSS-CHECK, not the enforcement point. The engine already floors the
+   * achieved condenser temperature at wet bulb + minimum approach; this catches
+   * a candidate that somehow escaped it.
+   *
+   * Two things about the comparison. It uses the ACHIEVED wet bulb rather than
+   * the requested one, because the requested value is reproduced by inverting a
+   * (dry-bulb, RH) pair and the two are not bit-identical. And it allows
+   * REPORTING_TOLERANCE_K, because the two quantities being compared are
+   * rounded independently: the engine reports condenser temperature to two
+   * decimals but re-derives the wet bulb from headers already rounded to one,
+   * which can shift it by ~0.06 K. Without the tolerance every candidate
+   * sitting exactly ON the floor reported itself as violating it — which is
+   * what happens on a humid day, when the floor is the binding constraint. A
+   * real violation is a large one; 0.15 K is reporting noise. */
+  const approachFloor = subject.wetBulbC + cfg.tower.minApproachC;
+  if (subject.cwsC < approachFloor - REPORTING_TOLERANCE_K) {
     out.push(
-      v('tower-approach', `CWST ${round(subject.cwsC, 2)}°C below wet bulb ${round(input.wetBulbC, 2)}°C + approach ${cfg.tower.minApproachC}°C`, {
+      v('tower-approach', `CWST ${round(subject.cwsC, 2)}°C below wet bulb ${round(subject.wetBulbC, 2)}°C + approach ${cfg.tower.minApproachC}°C`, {
         actual: subject.cwsC,
         limit: round(approachFloor, 2),
         unit: '°C',
@@ -181,6 +210,33 @@ export function validateCandidate(
   }
   if (subject.cwsC > cfg.tower.maxCwstC + 1e-9) {
     out.push(v('cwst-max', `CWST ${round(subject.cwsC, 2)}°C above maximum ${cfg.tower.maxCwstC}°C`, { actual: subject.cwsC, limit: cfg.tower.maxCwstC, unit: '°C' }));
+  }
+
+  /* --- chilled-water return limit --------------------------------------
+   * The single most important outcome constraint for setpoint optimisation.
+   * Raising CHWST or slowing the CHW pumps both save power by letting the loop
+   * run warmer; this is what says how much warmer is acceptable. Without it the
+   * optimiser would take both to their bounds and call the difference a saving.
+   */
+  if (subject.chwrC > cfg.system.maxChwrC + 1e-9) {
+    out.push(
+      v('chwr-max', `CHWR ${round(subject.chwrC, 2)}°C above the ${cfg.system.maxChwrC}°C return limit`, {
+        actual: subject.chwrC,
+        limit: cfg.system.maxChwrC,
+        unit: '°C',
+      })
+    );
+  }
+
+  /* --- plant demand cap (0 disables) ------------------------------------ */
+  if (cfg.system.maxPlantKw > 0 && subject.totalPlantKw > cfg.system.maxPlantKw + 1e-9) {
+    out.push(
+      v('plant-demand-cap', `Plant demand ${round(subject.totalPlantKw, 0)} kW above the ${cfg.system.maxPlantKw} kW cap`, {
+        actual: subject.totalPlantKw,
+        limit: cfg.system.maxPlantKw,
+        unit: ' kW',
+      })
+    );
   }
 
   /* --- header hydraulics ----------------------------------------------- */
@@ -200,6 +256,14 @@ export function validateCandidate(
     const dDp = Math.abs(control.dpSetpointPsi - baseline.dpSetpointPsi);
     if (dDp > cfg.system.maxDpChangePerCyclePsi + 1e-9) {
       out.push(v('dp-rate-limit', `DP move ${round(dDp, 2)} psi exceeds ${cfg.system.maxDpChangePerCyclePsi} psi per cycle`, { actual: dDp, limit: cfg.system.maxDpChangePerCyclePsi, unit: ' psi' }));
+    }
+    const dCwp = Math.abs(control.cwpSpeedPct - baseline.cwpSpeedPct);
+    if (dCwp > cfg.system.maxCwpSpeedChangePerCyclePct + 1e-9) {
+      out.push(v('cwp-rate-limit', `CWP speed move ${round(dCwp, 1)}% exceeds ${cfg.system.maxCwpSpeedChangePerCyclePct}% per cycle`, { actual: dCwp, limit: cfg.system.maxCwpSpeedChangePerCyclePct, unit: '%' }));
+    }
+    const dCt = Math.abs(control.ctFanSpeedPct - baseline.ctFanSpeedPct);
+    if (dCt > cfg.system.maxCtFanSpeedChangePerCyclePct + 1e-9) {
+      out.push(v('ct-rate-limit', `CT fan move ${round(dCt, 1)}% exceeds ${cfg.system.maxCtFanSpeedChangePerCyclePct}% per cycle`, { actual: dCt, limit: cfg.system.maxCtFanSpeedChangePerCyclePct, unit: '%' }));
     }
   }
 

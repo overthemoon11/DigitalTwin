@@ -42,7 +42,7 @@ import {
   CWP_VSD_RATIO,
   type PlantState,
 } from '../../digital-twin/chiller/index';
-// @ts-expect-error — plain-JS copilot module
+// Plain-JS copilot module — see the note in copilotController.
 import { buildChillerChatSuggestions } from '../../services/copilot/chillerCopilotActions.js';
 
 export class ApiError extends Error {

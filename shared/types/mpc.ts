@@ -96,10 +96,33 @@ export interface SystemConstraints {
   minRunningChillers: number;
   maxRunningChillers: number;
   requiredStandbyChillers: number;
+  /**
+   * Highest chilled-water RETURN temperature the loop may reach.
+   *
+   * This is the constraint that makes CHWST reset and DP reset two-sided.
+   * Without it, raising CHWST or slowing the CHW pumps looks like free chiller
+   * savings, because the twin simply floats the return up: the coils are not
+   * modelled, so nothing else pushes back. A return limit is also what a real
+   * operator actually enforces, since a warm return means starved coils.
+   */
+  maxChwrC: number;
+  /** Plant electrical demand cap, kW. 0 disables it. */
+  maxPlantKw: number;
+  /** Chiller starts allowed across one horizon run. 0 disables the cap. */
+  maxChillerStartsPerRun: number;
+  /**
+   * Hours of the day the plant may run, as [startHour, endHour). When they are
+   * equal the plant runs 24/7 — which is what T1 did for all of December, so
+   * this is declared and enforced but never exercised by the shipped dataset.
+   */
+  operatingHours: { startHour: number; endHour: number };
   /** Move-size limits per optimisation cycle (rate limits on the applied move). */
   maxChwstChangePerCycleC: number;
   maxDpChangePerCyclePsi: number;
-  /** Anti-short-cycling timers. Declared here, not yet simulated — see docs. */
+  /** Per-cycle rate limits on the continuous speed commands. */
+  maxCwpSpeedChangePerCyclePct: number;
+  maxCtFanSpeedChangePerCyclePct: number;
+  /** Anti-short-cycling timers, enforced by the horizon controller's dwell rules. */
   minChillerRuntimeMin: number;
   minChillerOffTimeMin: number;
 }
@@ -159,6 +182,22 @@ export interface SimulationResult {
   towerApproachC: number;
   wetBulbC: number;
   measuredDpPsi: number;
+
+  /**
+   * Equivalent condenser-lift penalty charged for running the CW pumps away
+   * from their reference speed, K. Zero at the reference — see
+   * `condenserHydraulics.ts`. Reported rather than buried so the CWP trade-off
+   * is auditable: this is the term that stops slow pumps looking free.
+   */
+  condenserLiftShiftK: number;
+  /** Chiller kW BEFORE the condenser-flow and part-load corrections. */
+  chillerKwUncorrected: number;
+  /**
+   * Gordon-Ng part-load shape correction applied to chiller power, 1.0 inside
+   * the observed per-machine load band. This is what stops the engine's affine
+   * curve from making extra chillers free — see `chillerPartLoad.ts`.
+   */
+  partLoadShapeFactor: number;
 
   staging: { chillers: number; chwp: number; cwp: number; ct: number };
 

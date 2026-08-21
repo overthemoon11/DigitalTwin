@@ -4,8 +4,8 @@
  * Tests all REST API endpoints of the HVAC Digital Twin backend
  */
 
-const { test, describe, beforeEach, before, after } = require('node:test');
-const assert = require('node:assert');
+import { test, describe, beforeEach, before, after } from 'node:test';
+import assert from 'node:assert';
 
 const API_BASE = 'http://localhost:3003';
 

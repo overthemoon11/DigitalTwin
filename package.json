@@ -1,4 +1,33 @@
 {
+  "name": "hvac-digital-twin",
+  "private": true,
+  "//": "Root task runner. Every command a developer needs is named here, so nothing has to be run by remembering an internal script path in the right order. Python steps require: numpy scipy matplotlib openpyxl.",
+  "scripts": {
+    "backend": "npm --prefix backend start",
+    "frontend": "npm --prefix frontend run dev",
+
+    "test": "npm --prefix backend test",
+    "test:golden": "npx tsx tests/characterization/chillerGolden.ts",
+    "test:golden:write": "npx tsx tests/characterization/chillerGolden.ts --write",
+    "test:all": "npm run typecheck && npm run test && npm run test:golden && npm run build",
+
+    "typecheck": "npm --prefix backend run typecheck && npm --prefix frontend run typecheck",
+    "build": "npm --prefix frontend run build",
+
+    "data:export": "python data/scripts/export_bms_records.py",
+    "data:export:refresh": "python data/scripts/export_bms_records.py --refresh",
+
+    "calibrate": "npm run calibrate:engine && npm run calibrate:tower && npm run calibrate:gordonng",
+    "calibrate:engine": "python calibration/scripts/calibrateFromDataset.py",
+    "calibrate:tower": "python calibration/scripts/fitTowerApproach.py",
+    "calibrate:gordonng": "python calibration/scripts/fitGordonNg.py --write",
+
+    "benchmark": "cd mpc_program && python run_mpc.py",
+    "benchmark:selftest": "cd mpc_program && python run_mpc.py --selftest",
+    "benchmark:quick": "cd mpc_program && python run_mpc.py --quick",
+
+    "install:all": "npm --prefix backend install && npm --prefix frontend install"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.0",
     "playwright": "^1.58.0"

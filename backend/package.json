@@ -10,7 +10,8 @@
     "predev": "node --import ./src/load-env.js src/check-node-version.js",
     "dev": "node --import ./src/load-env.js --import tsx --watch src/index.js",
     "pretest": "node --import ./src/load-env.js src/check-node-version.js",
-    "test": "node --import tsx --test tests/*.test.js"
+    "test": "node --import tsx --test tests/*.test.js",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "keywords": [
     "hvac",
@@ -26,6 +27,8 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2"
   },

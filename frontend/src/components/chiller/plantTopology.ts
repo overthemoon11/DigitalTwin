@@ -71,7 +71,10 @@ export const ZONE = {
   CHW_LOOP: { x: 188, y: 520, w: 1400, h: 270, titleY: 560 },
 } as const;
 
-export const pumpCx = (x: number, w = PUMP_DIM.CHWP.w) => x + w / 2;
+// `w: number` is explicit on purpose. `PUMP_DIM` is `as const`, so inferring the
+// parameter type from the default would narrow it to the literal 60 and reject
+// every CWP call site — which is what happened.
+export const pumpCx = (x: number, w: number = PUMP_DIM.CHWP.w) => x + w / 2;
 export const towerCx = (x: number) => x + 34;
 export const chillerCx = (x: number) => x + 50;
 

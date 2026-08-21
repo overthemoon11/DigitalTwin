@@ -77,6 +77,20 @@ function App() {
     mpcProgress,
     mpcError,
     mpcApplied,
+    horizonConfig,
+    horizonMode,
+    horizonDay,
+    horizonSteps,
+    horizonForecast,
+    horizonRun,
+    horizonStatus,
+    horizonError,
+    horizonModelStatus,
+    twinValidation,
+    initHorizon,
+    setHorizonScenario,
+    loadTwinValidation,
+    runHorizonMpc,
     initMpcFromPlant,
     setMpcInput,
     setMpcConstraint,
@@ -288,12 +302,23 @@ function App() {
                 {effectiveLeftMode === "mpc" ? (
                   <MpcLeftSidebar
                     input={mpcInput}
-                    baselineControl={mpcLiveBaseline}
-                    result={mpcResult}
-                    status={mpcStatus}
+                    scenario={{
+                      mode: horizonMode,
+                      day: horizonDay,
+                      steps: horizonSteps,
+                      forecast: horizonForecast,
+                    }}
+                    config={horizonConfig}
+                    run={horizonRun}
+                    status={horizonStatus}
+                    modelStatus={horizonModelStatus}
+                    twinValidation={twinValidation}
                     applied={mpcApplied}
                     onInit={initMpcFromPlant}
+                    onInitHorizon={initHorizon}
                     onChangeInput={setMpcInput}
+                    onChangeScenario={setHorizonScenario}
+                    onLoadValidation={loadTwinValidation}
                     onRestoreBaseline={restoreMpcBaseline}
                     onReapplyOptimum={reapplyMpcOptimum}
                   />
@@ -362,16 +387,14 @@ function App() {
                   plantState={plantState}
                   mpcConstraints={mpcConstraints}
                   mpcConstraintErrors={mpcConstraintErrors}
-                  mpcStatus={mpcStatus}
-                  mpcProgress={mpcProgress}
-                  mpcResult={mpcResult}
-                  mpcError={mpcError}
+                  horizonStatus={horizonStatus}
+                  horizonRun={horizonRun}
+                  horizonError={horizonError}
                   onSetConstraint={setMpcConstraint}
                   onSetFleet={setMpcChillerFleet}
                   onSetAvailable={setMpcAvailableChillers}
                   onResetConstraints={resetMpcConstraints}
-                  onRun={runMpcSimulation}
-                  onCancel={cancelMpc}
+                  onRun={runHorizonMpc}
                   onUpdateControl={updatePlantControl}
                   onToggleDuty={togglePlantDuty}
                   onApplyScenario={applyChillerScenario}

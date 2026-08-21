@@ -9,6 +9,16 @@
  *   npx tsx tests/characterization/chillerGolden.ts --write    # capture golden
  *   npx tsx tests/characterization/chillerGolden.ts            # verify
  *
+ * REGENERATED 2026-08-21. The `evaluatePlant` / `predictPlant` / equipment / KPI
+ * groups did NOT move — the calibrated engine is untouched. Only the two `mpc*`
+ * groups changed, deliberately: the MPC's plant adapter now charges for
+ * condenser flow (condenserHydraulics), for part-load shape (chillerPartLoad)
+ * and for tower fan speed (towerFanLaw), and treats DP and CHW pump speed as
+ * one decision. The reported steady-state saving at the default operating point
+ * fell from 15.2% to 4.1% as a result, and the baseline moved from 0.576 to
+ * 0.584 kW/RT — which is closer to the measured month median of 0.585. That is
+ * the whole point of the change: the old figure was partly free money.
+ *
  * Only the physics import block below should ever need editing when the model
  * moves; everything else is path-independent on purpose.
  */

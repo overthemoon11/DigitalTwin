@@ -9,7 +9,8 @@
  *
  * The frontend keeps only the chat transcript and the rendering.
  */
-// @ts-expect-error — plain-JS copilot module, no type declarations
+// Plain-JS copilot module: `allowJs` lets tsc infer its shape, so no
+// suppression is needed here.
 import {
   parseChillerCopilotIntents,
   formatChillerControlConfirmation,

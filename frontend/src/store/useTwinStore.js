@@ -6,6 +6,7 @@ import { create } from 'zustand';
  */
 import * as simulationApi from '../api/simulationApi';
 import * as mpcApi from '../api/mpcApi';
+import * as horizonApi from '../api/horizonApi';
 import { connectTelemetry } from '../api/telemetryApi';
 import { post } from '../api/client';
 
@@ -93,6 +94,30 @@ function validateConstraints(cfg) {
   pair('tower', 'minFanSpeedPct', 'maxFanSpeedPct', 'CT fan speed');
   pair('system', 'minChwDpPsi', 'maxChwDpPsi', 'System DP');
   pair('system', 'minRunningChillers', 'maxRunningChillers', 'Running chillers');
+  // The return limit has to leave room above the highest allowed supply
+  // temperature, or no candidate can satisfy both and the run reports
+  // "infeasible" without saying why.
+  const chwrMax = cfg?.system?.maxChwrC;
+  const chwstMax = cfg?.chiller?.maxChwstC;
+  if (Number.isFinite(chwrMax) && Number.isFinite(chwstMax) && chwrMax <= chwstMax) {
+    errors.push({
+      section: 'system',
+      field: 'maxChwrC',
+      message: 'CHWR limit must exceed the highest allowed CHWST',
+    });
+  }
+  for (const [field, label] of [['maxPlantKw', 'Plant demand cap'], ['maxChillerStartsPerRun', 'Start cap']]) {
+    const v = cfg?.system?.[field];
+    if (Number.isFinite(v) && v < 0) {
+      errors.push({ section: 'system', field, message: `${label} cannot be negative (0 disables it)` });
+    }
+  }
+  for (const key of ['startHour', 'endHour']) {
+    const v = cfg?.system?.operatingHours?.[key];
+    if (Number.isFinite(v) && (v < 0 || v > 24)) {
+      errors.push({ section: 'system', field: `operatingHours.${key}`, message: 'must be an hour between 0 and 24' });
+    }
+  }
   (cfg?.chiller?.units ?? []).forEach((u, i) => {
     const p2 = (mn, mx, label) => {
       if (Number.isFinite(u[mn]) && Number.isFinite(u[mx]) && u[mn] > u[mx]) {
@@ -132,6 +157,27 @@ export const useTwinStore = create((set, get) => ({
   mpcError: null,
   mpcApplied: false,
   mpcCancelled: false,
+
+  /* Receding-horizon MPC slice.
+   *
+   * Kept beside the steady-state slice rather than merged into it because the
+   * two answer different questions: `mpcResult` is one operating point,
+   * `horizonRun` is a whole run with a baseline arm beside it. Sharing one
+   * result field would make it impossible to tell which kind of number the UI
+   * was showing. */
+  horizonConfig: null,
+  /** 'bms' replays a recorded day; 'manual' holds the operator input flat;
+   *  'synthetic' generates a diurnal profile with no site data involved. */
+  horizonMode: 'bms',
+  horizonDay: '',
+  horizonSteps: 16,
+  horizonForecast: 'degraded',
+  horizonRun: null,
+  horizonStatus: 'IDLE',
+  horizonError: null,
+  /** Which parts of the plant model this site's data could actually calibrate. */
+  horizonModelStatus: null,
+  twinValidation: null,
 
   selectedAsset: null,
   isConnected: false,
@@ -435,6 +481,98 @@ export const useTwinStore = create((set, get) => ({
       set({ mpcConstraints: cfg.designConstraints, mpcConstraintErrors: [] });
     } catch (err) {
       set({ mpcError: err.message });
+    }
+  },
+
+  /* ----------------------------------------------------------------------- */
+  /* Receding-horizon MPC                                                     */
+  /* ----------------------------------------------------------------------- */
+
+  /** Load the solver defaults and the list of recorded days, once. */
+  initHorizon: async () => {
+    if (get().horizonConfig) return;
+    try {
+      const cfg = await horizonApi.fetchHorizonConfig();
+      set((s) => ({
+        horizonConfig: cfg,
+        // Default to the most recent recorded day, which is the one an operator
+        // is most likely to want to look at.
+        horizonDay: s.horizonDay || (cfg.bms.days[cfg.bms.days.length - 1] ?? ''),
+        // With no dataset there is nothing to replay, so fall back to the
+        // interactive mode rather than offering a run that cannot start.
+        horizonMode: cfg.bms.available ? s.horizonMode : 'manual',
+      }));
+    } catch (err) {
+      set({ horizonError: err.message });
+    }
+    try {
+      set({ horizonModelStatus: await horizonApi.fetchModelStatus() });
+    } catch {
+      // Model provenance is informational; a run is still meaningful without it.
+    }
+  },
+
+  setHorizonScenario: (patch) => set(patch),
+
+  /** How the twin scores against the measured plant. Fetched on demand — it
+   *  replays the whole month, so it is not something to load on every mount. */
+  loadTwinValidation: async () => {
+    if (get().twinValidation) return;
+    try {
+      set({ twinValidation: await horizonApi.fetchTwinValidation() });
+    } catch (err) {
+      set({ horizonError: err.message });
+    }
+  },
+
+  /**
+   * RUN MPC.
+   *
+   * One POST runs BOTH arms server-side over identical conditions and returns
+   * the comparison. The first control the MPC applied is then committed to the
+   * live twin, so the schematic moves to the operating point the run actually
+   * recommends rather than showing something else.
+   *
+   * The disturbances come from the left sidebar and the constraints from the
+   * right, which is exactly the division the panels present.
+   */
+  runHorizonMpc: async () => {
+    const state = get();
+    if (state.horizonStatus === 'RUNNING') return;
+    if ((state.mpcConstraintErrors?.length ?? 0) > 0) {
+      set({ horizonError: 'Fix the constraint problems before running.', horizonStatus: 'ERROR' });
+      return;
+    }
+
+    set({ horizonStatus: 'RUNNING', horizonError: null });
+    try {
+      const run = await horizonApi.runHorizonCompare({
+        mode: state.horizonMode,
+        forecast: state.horizonForecast,
+        steps: Number(state.horizonSteps) || 16,
+        ...(state.horizonMode === 'bms' && state.horizonDay ? { day: state.horizonDay } : {}),
+        ...(state.horizonMode !== 'bms' && state.mpcInput ? { simulationInput: state.mpcInput } : {}),
+        constraints: state.mpcConstraints ?? undefined,
+      });
+      set({ horizonRun: run, horizonStatus: 'COMPLETED', horizonModelStatus: run.modelStatus });
+
+      // Commit the applied control so the central schematic shows the operating
+      // point the run recommends. Failing to commit is not a failed run — the
+      // comparison still stands — so it is reported separately.
+      if (run.appliedControl && state.mpcInput) {
+        try {
+          const { plantState } = await mpcApi.restoreControl({
+            simulationInput: state.mpcInput,
+            control: run.appliedControl,
+            constraints: state.mpcConstraints,
+          });
+          set({ plantState, mpcApplied: true });
+        } catch (err) {
+          set({ horizonError: `Run completed, but the twin was not updated: ${err.message}` });
+        }
+      }
+    } catch (err) {
+      set({ horizonStatus: 'ERROR', horizonError: err.message });
     }
   },
 

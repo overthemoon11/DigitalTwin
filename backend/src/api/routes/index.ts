@@ -8,6 +8,8 @@ import { Router } from 'express';
 import * as sim from '../controllers/simulationController';
 import * as mpc from '../controllers/mpcController';
 import * as copilot from '../controllers/copilotController';
+import * as bms from '../controllers/bmsController';
+import * as horizon from '../controllers/horizonController';
 import { ApiError } from '../controllers/simulationController';
 import { publishPlantState } from '../../websocket/plantChannel';
 
@@ -75,6 +77,22 @@ export function createApiRouter(): Router {
   r.post('/mpc/optimize', handleMut((b) => mpc.optimize(b)));
   r.post('/mpc/simulate', handle((b) => mpc.simulate(b)));
   r.post('/mpc/restore', handleMut((b) => mpc.restore(b)));
+
+  /* ── mpc: receding-horizon (time-domain) optimisation ──────────────────── */
+  // Distinct from /mpc/optimize, which solves ONE steady-state operating point.
+  // These run a closed loop over time: forecast -> horizon solve -> twin step.
+  r.get('/mpc/horizon/config', handle(() => horizon.getHorizonConfig()));
+  r.post('/mpc/horizon/compare', handle((b) => horizon.compareHorizon(b)));
+  r.get('/mpc/model-status', handle(() => horizon.getModelStatus()));
+  // How close the twin is to the measured plant. Read this before believing a
+  // saving: a percentage from a model with unknown error is not a result.
+  r.get('/mpc/twin-validation', handle(() => horizon.getTwinValidation()));
+
+  /* ── bms: the real measured dataset behind the calibration ─────────────── */
+  r.get('/bms/dataset-summary', handle(() => bms.getDatasetSummary()));
+  r.get('/bms/days', handle(() => bms.getDays()));
+  // Path param rather than a body, so it cannot use the bare `handle` shape.
+  r.get('/bms/day/:day', (req, res) => handle(() => bms.getDay(req.params.day))(req, res));
 
   /* ── copilot: intent parsing over the twin ─────────────────────────────── */
   r.post('/copilot/chiller', handleMut((b) => copilot.chillerChat(b)));

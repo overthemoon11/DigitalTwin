@@ -70,6 +70,7 @@ export const REF_CHWP_FLOW = REF_CHWP_FLOW_MONTH;
 export const REF_CHWP_KW = REF_CHWP_KW_MONTH;
 
 /** Condenser-water pump / cooling-tower fan reference kW (at REF speed 70%). */
+export const REF_CWP_SPEED = 70;
 export const REF_CWP_KW = REF_CWP_KW_MONTH;
 export const REF_CWP_FLOW = REF_CWP_FLOW_MONTH;
 export const REF_CT_KW = REF_CT_KW_MONTH;

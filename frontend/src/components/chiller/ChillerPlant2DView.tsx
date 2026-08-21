@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { PlantEquipment, PlantHeaders, PlantKpi, MakeupTankEquipment, PumpEquipment } from '../../types/plant';
+import type { ChillerEquipment, CoolingTowerEquipment, PlantEquipment, PlantHeaders, PlantKpi, MakeupTankEquipment, PumpEquipment } from '../../types/plant';
 import { Chiller } from './Chiller';
 import { CoolingTower } from './CoolingTower';
 import { Pump } from './Pump';
@@ -324,7 +324,7 @@ export default function ChillerPlant2DView({ equipment, headers, kpis, selectedI
         {/* —— EQUIPMENT —— */}
         {CT_X.map((tx, i) => {
           const id = `ct-${i + 1}`;
-          const eq = get(id);
+          const eq = get<CoolingTowerEquipment>(id);
           return eq ? (
             <CoolingTower key={id} equipment={eq} x={tx} y={CT_Y} selected={selectedId === id} onSelect={(id) => onSelect(id)} />
           ) : null;
@@ -368,9 +368,9 @@ export default function ChillerPlant2DView({ equipment, headers, kpis, selectedI
           const chId = `ch-${i + 1}`;
           const chwpId = `chwp-${i + 1}`;
           const cwpId = `cwp-${i + 1}`;
-          const ch = get(chId);
-          const chwp = get(chwpId);
-          const cwp = get(cwpId);
+          const ch = get<ChillerEquipment>(chId);
+          const chwp = get<PumpEquipment>(chwpId);
+          const cwp = get<PumpEquipment>(cwpId);
           return (
             <g key={chId} className="scada-chiller-train">
               {chwp && (
@@ -387,7 +387,7 @@ export default function ChillerPlant2DView({ equipment, headers, kpis, selectedI
         })}
 
         {get(`chwp-${CHWP_COUNT}`) && (
-          <Pump equipment={get(`chwp-${CHWP_COUNT}`)!} x={STANDBY_CHWP_X} y={CHWP_Y} compact labelW={58} labelSide="below" selected={selectedId === `chwp-${CHWP_COUNT}`} onSelect={onSelect} />
+          <Pump equipment={get<PumpEquipment>(`chwp-${CHWP_COUNT}`)!} x={STANDBY_CHWP_X} y={CHWP_Y} compact labelW={58} labelSide="below" selected={selectedId === `chwp-${CHWP_COUNT}`} onSelect={onSelect} />
         )}
         {get(`cwp-${CWP_COUNT}`) && (
           <Pump equipment={get(`cwp-${CWP_COUNT}`)!} x={STANDBY_CWP_X} y={CWP_Y} mini labelW={54} labelSide="below" selected={selectedId === `cwp-${CWP_COUNT}`} onSelect={onSelect} />

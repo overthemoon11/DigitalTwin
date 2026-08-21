@@ -8,11 +8,17 @@
  * UI change.
  *
  * The shipped strategy is `ConstrainedCoordinateSearch`: staging enumeration ×
- * cyclic coordinate descent over the five continuous axes, coarse pass then
- * local refinement. It is a genuine constrained search over the calibrated
- * plant model — every candidate is simulated and validated, and infeasible
- * candidates are rejected before they can win. It is NOT a heuristic that
- * applies a canned percentage reduction.
+ * cyclic coordinate descent over the four continuous axes, coarse pass then
+ * local refinement. Four, not five, because CHWP speed follows the DP setpoint
+ * rather than being independent — see `continuousAxes`.
+ *
+ * It is a genuine constrained search over the calibrated plant model: every
+ * candidate is reconciled, simulated and validated, and infeasible candidates
+ * are rejected before they can win. It is NOT a heuristic that applies a canned
+ * percentage reduction.
+ *
+ * This solves ONE operating point. Its time-domain counterpart, which plans over
+ * a horizon and owns the staging/dwell problem, is `mpc/horizon/plantMpc.ts`.
  *
  * Why coordinate descent: the objective is cheap (one steady-state engine
  * evaluation, sub-millisecond) but non-smooth — staging is integer, the tower
@@ -29,7 +35,7 @@ import type {
   SimulationInput,
   SimulationResult,
 } from '../../../../shared/types/mpc';
-import { simulateCandidate } from '../simulator/chillerPlantSimulator';
+import { reconcileControl, simulateCandidate } from '../simulator/chillerPlantSimulator';
 import { improves, objective, savings } from './objectiveFunction';
 import { axisGrid, chillerIdsFor, continuousAxes, localGrid, stagingOptions } from './candidateGenerator';
 
@@ -88,13 +94,19 @@ class ConstrainedCoordinateSearch implements MpcOptimizer {
       bestResult = baselineResult;
     }
 
-    const evaluate = async (candidate: ControlState): Promise<SimulationResult | null> => {
+    const evaluate = async (proposed: ControlState): Promise<SimulationResult | null> => {
+      let candidate = proposed;
       if (cancelled || evaluated >= maxCycles) return null;
       if (hooks.isCancelled?.()) {
         cancelled = true;
         return null;
       }
 
+      // Reconcile first: DP setpoint and CHW pump speed are one physical
+      // decision, so a candidate naming both independently is not executable.
+      // Doing it here rather than at each generation site means nothing can be
+      // priced in an inconsistent state.
+      candidate = reconcileControl(candidate, constraints);
       const result = simulateCandidate(input, candidate, constraints, {
         baseline: baselineControl,
         dryBulbHintC: ctx.dryBulbHintC,
@@ -145,11 +157,14 @@ class ConstrainedCoordinateSearch implements MpcOptimizer {
 
       // Seed each staging branch from the baseline setpoints, so the branch is
       // scored on the staging change itself before the axes move.
-      let incumbent: ControlState = {
-        ...cloneControl(baselineControl),
-        runningChillers: count,
-        chillerIds: chillerIdsFor(constraints, count),
-      };
+      let incumbent: ControlState = reconcileControl(
+        {
+          ...cloneControl(baselineControl),
+          runningChillers: count,
+          chillerIds: chillerIdsFor(constraints, count),
+        },
+        constraints
+      );
       let incumbentResult = await evaluate(incumbent);
       let localBest = incumbentResult && incumbentResult.feasible ? incumbentResult : null;
 
@@ -159,7 +174,7 @@ class ConstrainedCoordinateSearch implements MpcOptimizer {
         for (const value of axisGrid(axis, COARSE_POINTS)) {
           if (cancelled || evaluated >= maxCycles) break;
           if (value === incumbent[axis.key]) continue;
-          const candidate: ControlState = { ...cloneControl(incumbent), [axis.key]: value };
+          const candidate = reconcileControl({ ...cloneControl(incumbent), [axis.key]: value }, constraints);
           const result = await evaluate(candidate);
           if (result && result.feasible && (!localBest || objective(result) < objective(localBest))) {
             localBest = result;
@@ -176,7 +191,7 @@ class ConstrainedCoordinateSearch implements MpcOptimizer {
         for (const value of localGrid(axis, incumbent[axis.key], span, REFINE_POINTS)) {
           if (cancelled || evaluated >= maxCycles) break;
           if (value === incumbent[axis.key]) continue;
-          const candidate: ControlState = { ...cloneControl(incumbent), [axis.key]: value };
+          const candidate = reconcileControl({ ...cloneControl(incumbent), [axis.key]: value }, constraints);
           const result = await evaluate(candidate);
           if (result && result.feasible && (!localBest || objective(result) < objective(localBest))) {
             localBest = result;

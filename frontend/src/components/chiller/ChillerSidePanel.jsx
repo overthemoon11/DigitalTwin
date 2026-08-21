@@ -19,16 +19,14 @@ export default function ChillerSidePanel({
   // MPC
   mpcConstraints,
   mpcConstraintErrors,
-  mpcStatus,
-  mpcProgress,
-  mpcResult,
-  mpcError,
+  horizonStatus,
+  horizonRun,
+  horizonError,
   onSetConstraint,
   onSetFleet,
   onSetAvailable,
   onResetConstraints,
   onRun,
-  onCancel,
   // manual controls / points
   onUpdateControl,
   onToggleDuty,
@@ -71,16 +69,14 @@ export default function ChillerSidePanel({
           <MpcRightSidebar
             constraints={mpcConstraints}
             errors={mpcConstraintErrors}
-            status={mpcStatus}
-            progress={mpcProgress}
-            result={mpcResult}
-            error={mpcError}
+            status={horizonStatus}
+            run={horizonRun}
+            error={horizonError}
             onSet={onSetConstraint}
             onSetFleet={onSetFleet}
             onSetAvailable={onSetAvailable}
             onReset={onResetConstraints}
             onRun={onRun}
-            onCancel={onCancel}
           />
         ) : tab === "controls" ? (
           <ChillerScadaPanel plantState={plantState} onSet={onUpdateControl} />
