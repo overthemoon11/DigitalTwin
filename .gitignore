@@ -101,6 +101,8 @@ temp/
 *.backup
 # Scratch space for one-off probes run from the backend package.
 backend/.tmp/
+# Local recovery artifacts retained only as a forensic backup.
+/recovered/
 
 # ----- Generated run outputs -----
 # The synthetic MPC benchmark writes CSVs and figures per run; they are
