@@ -12,8 +12,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const API_BASE = 'http://localhost:3003';
-const FRONTEND_URL = 'http://localhost:3002';
+const API_BASE = 'http://localhost:3005';
+const FRONTEND_URL = 'http://localhost:3004';
 
 describe('System Health Checks', () => {
   
@@ -215,16 +215,16 @@ describe('System Health Checks', () => {
       
       assert.ok(content.includes('proxy'), 'Should have proxy configuration');
       assert.ok(content.includes("'/api'"), 'Should proxy /api routes');
-      assert.ok(content.includes('3003'), 'Should proxy to port 3003');
+      assert.ok(content.includes('3005'), 'Should proxy to port 3005');
     });
 
-    test('backend should be configured for port 3003', () => {
+    test('backend should be configured for port 3005', () => {
       const indexPath = path.join(__dirname, '../../backend/src/index.js');
       const content = fs.readFileSync(indexPath, 'utf8');
       
       assert.ok(
-        content.includes('3003'),
-        'Backend should listen on port 3003'
+        content.includes('3005'),
+        'Backend should listen on port 3005'
       );
     });
   });

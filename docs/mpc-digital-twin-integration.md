@@ -835,10 +835,10 @@ Python >= 3.11        numpy · scipy · matplotlib · openpyxl
 ### The application
 
 ```bash
-# backend  — http://localhost:3003
+# backend  — http://localhost:3005
 cd backend && npm install && npm start
 
-# frontend — http://localhost:3002
+# frontend — http://localhost:3004
 cd frontend && npm install && npm run dev
 ```
 
@@ -848,7 +848,7 @@ left, adjust the limits on the right, press **Run MPC**.
 Or from the command line:
 
 ```bash
-curl -X POST http://localhost:3003/api/mpc/horizon/compare \
+curl -X POST http://localhost:3005/api/mpc/horizon/compare \
   -H 'Content-Type: application/json' \
   -d '{"mode":"bms","day":"2025-12-14","steps":16}'
 ```

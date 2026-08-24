@@ -99,8 +99,8 @@ app needs only Node; re-exporting the data or re-fitting the models needs Python
 ```powershell
 npm run install:all           # install backend + frontend dependencies
 
-npm run backend               # http://localhost:3003
-npm run frontend              # http://localhost:3002
+npm run backend               # http://localhost:3005
+npm run frontend              # http://localhost:3004
 
 npm run test:all              # typecheck + backend tests + golden + frontend build
 npm test                      # backend test suite only
@@ -134,7 +134,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3002 in your browser.
+Then open http://localhost:3004 in your browser.
 
 ### Option B: Using Startup Scripts
 
@@ -286,7 +286,7 @@ To reset the digital twin to its baseline state:
 
 **Via API:**
 ```bash
-curl -X POST http://localhost:3003/api/twin/reset
+curl -X POST http://localhost:3005/api/twin/reset
 ```
 
 **Via UI:**
@@ -341,8 +341,8 @@ Tests cover 5 impact scenarios:
 
 ### Prerequisites for Integration Tests
 
-- Backend server must be running on port 3003
-- Frontend server must be running on port 3002 (for full E2E)
+- Backend server must be running on port 3005
+- Frontend server must be running on port 3004 (for full E2E)
 
 Start servers first:
 ```powershell

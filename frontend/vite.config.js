@@ -14,14 +14,14 @@ export default defineConfig({
   server: {
     // shared/ sits above the Vite root, so it must be explicitly allowed.
     fs: { allow: ['..'] },
-    port: 3002,
+    port: 3004,
     proxy: {
       '/api': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3005',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:3003',
+        target: 'ws://localhost:3005',
         ws: true,
       },
     },
