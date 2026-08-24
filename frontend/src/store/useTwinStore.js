@@ -8,6 +8,7 @@ import * as simulationApi from '../api/simulationApi';
 import * as mpcApi from '../api/mpcApi';
 import * as horizonApi from '../api/horizonApi';
 import { connectTelemetry } from '../api/telemetryApi';
+import * as assistantApi from '../api/assistantApi';
 import { post } from '../api/client';
 
 import {
@@ -182,7 +183,22 @@ export const useTwinStore = create((set, get) => ({
   selectedAsset: null,
   isConnected: false,
   ws: null,
+
+  /* Plant AI Assistant slice.
+   *
+   * The transcript is a list of `{ role, content, meta }`. `meta` carries what
+   * the backend said ABOUT the answer — its provenance, the tools it ran, the
+   * rich blocks, the suggested follow-ups and any change awaiting confirmation.
+   * The old shape (`role` + `content`) is unchanged, so the ETS and AHU panels,
+   * which still answer locally, render through the same component. */
   conversationHistory: [],
+  /** Server-side conversation id. The backend resolves follow-ups against it. */
+  assistantConversationId: null,
+  /** Which tool is running right now, for the streaming status line. */
+  assistantStage: null,
+  /** Health of the assistant, which is NOT the same as model health — the
+   *  tools answer plant questions with no model at all. */
+  assistantStatus: null,
   modelStatus: null,
   _plantStop: null,
   _districtStop: null,
@@ -223,9 +239,15 @@ export const useTwinStore = create((set, get) => ({
       // The optimiser runs server-side in one request, so it streams its cycle
       // trace here rather than the store driving the loop.
       onMpcProgress: (progress) => set({ mpcProgress: progress }),
+      // Local LLM lifecycle (downloading / loading / ready / unavailable). The
+      // server already broadcast this frame; the assistant header shows it
+      // instead of a hard-coded "Local LLM" label.
+      onModelStatus: (status) => set({ modelStatus: status }),
       onOpen: () => set({ isConnected: true }),
       onClose: () => set({ isConnected: false }),
     });
+
+    get().fetchModelStatus();
 
     // Static config (control bounds, inventory, scenarios) and the MPC design
     // defaults, fetched once instead of imported from the model.
@@ -810,6 +832,122 @@ export const useTwinStore = create((set, get) => ({
     }
   },
 
+  fetchAssistantStatus: async () => {
+    try {
+      set({ assistantStatus: await assistantApi.fetchAssistantStatus() });
+    } catch {
+      // The status endpoint being unreachable IS the status; the panel reads
+      // `isConnected` for that and must not show a stale "ready".
+      set({ assistantStatus: null });
+    }
+  },
+
+  /**
+   * Send one message to the Plant AI Assistant.
+   *
+   * Everything the assistant does happens on the backend: intent routing, tool
+   * selection, plant reads, MPC, grounding and the answer itself. This function
+   * streams the reply and stores it. It contains no plant knowledge, no intent
+   * parsing and no fallback prose — when the backend cannot answer, the error
+   * is shown as an error rather than papered over with a command list.
+   */
+  sendAssistantMessage: async (message, context) => {
+    const { conversationHistory, assistantConversationId } = get();
+    const pending = { role: 'assistant', content: '', meta: { streaming: true } };
+    set({
+      conversationHistory: [...conversationHistory, { role: 'user', content: message }, pending],
+      assistantStage: null,
+    });
+
+    const patchLast = (patch) =>
+      set((state) => {
+        const next = [...state.conversationHistory];
+        const last = next[next.length - 1];
+        if (!last || last.role !== 'assistant') return {};
+        next[next.length - 1] = { ...last, ...patch, meta: { ...last.meta, ...patch.meta } };
+        return { conversationHistory: next };
+      });
+
+    let streamed = '';
+    try {
+      const reply = await assistantApi.streamChat(
+        { message, conversationId: assistantConversationId ?? undefined, context },
+        {
+          onStage: (stage) => set({ assistantStage: stage }),
+          onDelta: (text) => {
+            streamed += text;
+            patchLast({ content: streamed });
+          },
+        }
+      );
+      set({ assistantConversationId: reply.conversationId, assistantStage: null });
+      patchLast({
+        content: reply.message,
+        meta: {
+          streaming: false,
+          sourceType: reply.sourceType,
+          sources: reply.sources,
+          toolsUsed: reply.toolsUsed,
+          toolErrors: reply.toolErrors,
+          blocks: reply.blocks,
+          actions: reply.actions,
+          proposedActions: reply.proposedActions,
+          warnings: reply.warnings,
+          intent: reply.intent,
+          answeredBy: reply.answeredBy,
+          unverifiedFigures: reply.unverifiedFigures,
+          latencyMs: reply.latencyMs,
+        },
+      });
+      // A tool may have moved the twin (a scenario, a time advance). The live
+      // socket will catch up on its own tick, but not for up to two seconds.
+      if (reply.toolsUsed.some((t) => ['applyScenario', 'runSimulation'].includes(t))) {
+        get().refreshPlantState?.();
+      }
+      return reply;
+    } catch (err) {
+      set({ assistantStage: null });
+      patchLast({ meta: { streaming: false, failed: true, error: err?.message ?? String(err) } });
+      throw err;
+    }
+  },
+
+  /**
+   * Apply a change the assistant proposed, after the operator confirmed it.
+   * This is the only path from the chat to a plant write, and it needs an id
+   * the backend issued on a previous turn.
+   */
+  confirmAssistantAction: async (actionId) => {
+    const conversationId = get().assistantConversationId;
+    if (!conversationId) return { applied: false, message: 'This conversation has expired.' };
+    const result = await assistantApi.confirmAssistantAction(conversationId, actionId);
+    set((state) => ({
+      conversationHistory: state.conversationHistory.map((turn) =>
+        turn.meta?.proposedActions?.some((a) => a.id === actionId)
+          ? {
+              ...turn,
+              meta: {
+                ...turn.meta,
+                proposedActions: turn.meta.proposedActions.filter((a) => a.id !== actionId),
+                appliedActions: [...(turn.meta.appliedActions ?? []), result],
+              },
+            }
+          : turn
+      ),
+    }));
+    get().refreshPlantState?.();
+    return result;
+  },
+
+  /** Pull one fresh plant frame rather than waiting for the next 2s tick. */
+  refreshPlantState: async () => {
+    try {
+      set({ plantState: await simulationApi.fetchState() });
+    } catch {
+      /* the socket will deliver the next tick */
+    }
+  },
+
   sendCopilotMessage: async (message) => {
     const {
       conversationHistory,
@@ -1010,6 +1148,8 @@ export const useTwinStore = create((set, get) => ({
   },
 
   clearConversation: () => {
-    set({ conversationHistory: [] });
+    const id = get().assistantConversationId;
+    if (id) assistantApi.clearAssistantConversation(id).catch(() => {});
+    set({ conversationHistory: [], assistantConversationId: null, assistantStage: null });
   },
 }));

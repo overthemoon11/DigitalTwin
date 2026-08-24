@@ -220,4 +220,127 @@ export const SlidersIcon = (p) => (
   </Icon>
 );
 
+/* ── assistant ──────────────────────────────────────────────────────────── */
+
+export const AssistantIcon = (p) => (
+  <Icon {...p}>
+    <path d="M12 3.2l1.5 4.1 4.1 1.5-4.1 1.5L12 14.4l-1.5-4.1L6.4 8.8l4.1-1.5z" />
+    <path d="M18.4 14.6l.75 2.05 2.05.75-2.05.75-.75 2.05-.75-2.05-2.05-.75 2.05-.75z" />
+    <path d="M6 16.5h4.5" />
+  </Icon>
+);
+
+export const SendIcon = (p) => (
+  <Icon {...p}>
+    <path d="M4.4 11.9 20 5l-6.9 15.6-2-6.7z" />
+    <path d="m11.1 13.9 8.9-8.9" />
+  </Icon>
+);
+
+export const TrashIcon = (p) => (
+  <Icon {...p}>
+    <path d="M4 7h16" />
+    <path d="M9.5 7V5.2A1.2 1.2 0 0 1 10.7 4h2.6a1.2 1.2 0 0 1 1.2 1.2V7" />
+    <path d="M6.5 7l.8 11.4A1.7 1.7 0 0 0 9 20h6a1.7 1.7 0 0 0 1.7-1.6L17.5 7" />
+    <path d="M10.5 11v5M13.5 11v5" />
+  </Icon>
+);
+
+export const SunIcon = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.6 5.6l1.7 1.7M16.7 16.7l1.7 1.7M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7" />
+  </Icon>
+);
+
+export const FlameIcon = (p) => (
+  <Icon {...p}>
+    <path d="M12 21c3.5 0 6-2.3 6-5.5 0-4.4-4.2-5.9-3.4-11.5-2.6 1-4.4 3.3-4.4 5.6 0 1.4.6 2.2.6 2.9 0 .9-.7 1.5-1.5 1.5S8 13.3 8 12c-1.3 1.2-2 2.7-2 4.4C6 19 8.4 21 12 21z" />
+  </Icon>
+);
+
+export const BuildingIcon = (p) => (
+  <Icon {...p}>
+    <path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h8A1.5 1.5 0 0 1 15 5.5V21" />
+    <path d="M15 10h3.5A1.5 1.5 0 0 1 20 11.5V21" />
+    <path d="M3 21h18" />
+    <path d="M7.5 8h4M7.5 12h4M7.5 16h4" />
+  </Icon>
+);
+
+export const BellIcon = (p) => (
+  <Icon {...p}>
+    <path d="M18 15.5V11a6 6 0 1 0-12 0v4.5L4.5 18h15z" />
+    <path d="M10 18a2 2 0 0 0 4 0" />
+  </Icon>
+);
+
+export const TrendDownIcon = (p) => (
+  <Icon {...p}>
+    <path d="M3 7l6 6 3.5-3.5L21 17" />
+    <path d="M21 11v6h-6" />
+  </Icon>
+);
+
+export const TrendUpIcon = (p) => (
+  <Icon {...p}>
+    <path d="M3 17l6-6 3.5 3.5L21 7" />
+    <path d="M15 7h6v6" />
+  </Icon>
+);
+
+export const DropletIcon = (p) => (
+  <Icon {...p}>
+    <path d="M12 3.2s5.5 5.6 5.5 9.4a5.5 5.5 0 0 1-11 0C6.5 8.8 12 3.2 12 3.2z" />
+  </Icon>
+);
+
+export const FilterIcon = (p) => (
+  <Icon {...p}>
+    <path d="M4.5 5h15l-5.8 7v6.2l-3.4-1.8V12z" />
+  </Icon>
+);
+
+export const WindIcon = (p) => (
+  <Icon {...p}>
+    <path d="M3 8.5h10a2.6 2.6 0 1 0-2.6-2.6" />
+    <path d="M3 15.5h13a2.6 2.6 0 1 1-2.6 2.6" />
+    <path d="M3 12h17" />
+  </Icon>
+);
+
+export const MoonIcon = (p) => (
+  <Icon {...p}>
+    <path d="M20 14.4A8.2 8.2 0 0 1 9.6 4 8.4 8.4 0 1 0 20 14.4z" />
+  </Icon>
+);
+
+export const ExchangeIcon = (p) => (
+  <Icon {...p}>
+    <path d="M4 8.5h13M14 5.5l3 3-3 3" />
+    <path d="M20 15.5H7M10 12.5l-3 3 3 3" />
+  </Icon>
+);
+
+export const ChevronDownIcon = (p) => (
+  <Icon {...p}>
+    <path d="m6 9.5 6 6 6-6" />
+  </Icon>
+);
+
+export const RetryIcon = (p) => (
+  <Icon {...p}>
+    <path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1" />
+    <path d="M20.5 4.5V10h-5.4" />
+  </Icon>
+);
+
+export const TerminalIcon = (p) => (
+  <Icon {...p}>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+    <path d="m7.5 10 2.4 2.4-2.4 2.4" />
+    <path d="M12.5 14.8h4" />
+  </Icon>
+);
+
 export default Icon;

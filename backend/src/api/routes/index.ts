@@ -8,6 +8,7 @@ import { Router } from 'express';
 import * as sim from '../controllers/simulationController';
 import * as mpc from '../controllers/mpcController';
 import * as copilot from '../controllers/copilotController';
+import * as assistant from '../controllers/assistantController';
 import * as bms from '../controllers/bmsController';
 import * as horizon from '../controllers/horizonController';
 import { ApiError } from '../controllers/simulationController';
@@ -95,7 +96,21 @@ export function createApiRouter(): Router {
   r.get('/bms/day/:day', (req, res) => handle(() => bms.getDay(req.params.day))(req, res));
 
   /* ── copilot: intent parsing over the twin ─────────────────────────────── */
+  // Retained: the ETS and AHU panels still use this path, and the chiller
+  // parser behind it is now also reachable as an assistant tool.
   r.post('/copilot/chiller', handleMut((b) => copilot.chillerChat(b)));
+
+  /* ── assistant: the Plant AI agent over every service above ────────────── */
+  // Free-form questions in, tool-grounded answers out. `chat/stream` is the
+  // same turn delivered as Server-Sent Events, so it owns its own response.
+  r.post('/assistant/chat', handle((b) => assistant.assistantChat(b)));
+  r.post('/assistant/chat/stream', (req, res) => assistant.assistantChatStream(req, res));
+  r.get('/assistant/status', handle(() => assistant.getAssistantStatus()));
+  r.get('/assistant/tools', handle(() => assistant.getAssistantTools()));
+  // The only assistant route that mutates, and only against a proposal a
+  // previous turn issued.
+  r.post('/assistant/action/confirm', handleMut((b) => assistant.postAssistantConfirm(b)));
+  r.post('/assistant/conversation/clear', handle((b) => assistant.postAssistantClear(b)));
 
   return r;
 }

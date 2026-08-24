@@ -7,7 +7,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert';
 
-const API_BASE = 'http://localhost:3003';
+const API_BASE = 'http://localhost:3007';
 
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
@@ -291,4 +291,4 @@ describe('Data Flow Validation', () => {
 });
 
 console.log('\nRunning Data Flow Validation Tests...\n');
-console.log('Note: Backend server must be running on port 3003\n');
+console.log('Note: Backend server must be running on port 3007\n');

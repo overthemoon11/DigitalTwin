@@ -10,8 +10,8 @@ This is a full-stack web application (React + Node.js) that simulates a multi-fl
 
 | Folder | Purpose |
 |--------|---------|
-| `frontend/` | React + Three.js web UI (Vite dev server on port 3002) |
-| `backend/` | Node.js/Express API server (port 3003) + HVAC simulator |
+| `frontend/` | React + Three.js web UI (Vite dev server on port 3006) |
+| `backend/` | Node.js/Express API server (port 3007) + HVAC simulator |
 | `twin/` | JSON-based digital twin state, schema, and baseline |
 | `tests/` | Integration, validation, and E2E tests |
 | `docs/` | Architecture diagrams, demo scripts, images |
@@ -39,7 +39,8 @@ This is a full-stack web application (React + Node.js) that simulates a multi-fl
 | File | Description |
 |------|-------------|
 | `backend/src/index.js` | Express server, routes, WebSocket, Foundry Local initialisation |
-| `backend/src/services/copilot-service.js` | Intent detection, grounded responses, action execution |
+| `backend/src/assistant/` | **Plant AI Assistant** — the agent behind the chat panel. See below. |
+| `backend/src/services/copilot-service.js` | Legacy building-twin copilot (ETS / AHU panels only) |
 | `backend/src/services/foundry-local-service.js` | Foundry Local SDK lifecycle (download, load, chat) |
 | `backend/src/simulator/hvac-simulator.js` | Deterministic HVAC physics simulation |
 | `frontend/src/App.jsx` | Main layout with 3D viewer, panels, model status banner |
@@ -62,6 +63,35 @@ This is a full-stack web application (React + Node.js) that simulates a multi-fl
 | `services/legacy/` | Deprecated, unreferenced modules kept for history |
 
 `frontend/src/components/` mirrors this: `chiller/`, `ets/`, `ahu/`, `heatexchange/`, `districtcooling/` per domain; `common/` for shared panels (AlertPanel, KPIPanel, CopilotChat, ModelStatusBanner, SimulationOutputSummary, Icons, RangeSlider); `layout/` + `leftSidebar/` for the app shell; `legacy/` for unreferenced components.
+
+## Plant AI Assistant
+
+The chiller chat is an **agent**, not a command parser. Do not add intent
+parsing, plant knowledge or fallback prose to a React component — all of it
+lives behind `backend/src/assistant/index.ts`.
+
+```
+API  ->  Assistant  ->  { MPC, Digital Twin, BMS data, knowledge }
+```
+
+Rules that hold everywhere in that module:
+
+- **No plant number without a tool.** Facts are injected into the prompt, never
+  recalled. `guard.ts` audits the generated text and refuses an unbacked saving
+  claim.
+- **The answer exists before the model is called.** `composer.ts` writes a
+  complete reply from the tool results; the model rewrites it. That is why the
+  assistant still works with the LLM offline and why the tests need no model.
+- **Read-only by default.** A setpoint request becomes a `ProposedAction` with a
+  twin-simulated preview; only `POST /api/assistant/action/confirm` applies it.
+- **New capabilities are tools**, added to `tools/` and registered in
+  `tools/registry.ts` with a typed argument spec. Nothing outside that allowlist
+  is reachable from a chat message.
+- **New knowledge is a `KnowledgeSource`**, or a Markdown file dropped into
+  `docs/knowledge/`.
+
+Full documentation: [`docs/plant-ai-assistant.md`](docs/plant-ai-assistant.md).
+Tests: `backend/tests/assistant.test.js` (75) and `tests/assistant-visual-qa.mjs`.
 
 ## Foundry Local Integration
 

@@ -8,6 +8,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Plant AI Assistant — the chatbot is now an agent.** The chiller chat no
+  longer matches phrases. A message goes to `POST /api/assistant/chat[/stream]`,
+  where the backend classifies it by weighted signals, picks tools from an
+  allowlist, reads the twin / MPC / knowledge base, and answers from what it
+  read. "why is energy high", "why power consumption so high" and "what is
+  causing my plant to use more power" all reach the same tools.
+  See [docs/plant-ai-assistant.md](docs/plant-ai-assistant.md).
+  - `backend/src/assistant/` — intent routing, tool registry, context selection,
+    a grounded answer composer, prompt construction, a numeric guard, a
+    conversation store, an MPC run memory and a rolling trend buffer.
+  - 23 allowlisted tools over the existing services: plant state, summary,
+    efficiency, equipment, chillers, pumps, towers, alarms, trends, constraints,
+    controls; MPC run / compare / result / diagnostics / explanation /
+    calibration; what-if, time advance, scenarios, control proposals; knowledge
+    search. Every argument is typed, range-checked and clamped at the boundary.
+  - `getMPCExplanationContext` explains the LAST REAL RUN — both MPC entry
+    points record into `assistant/mpcMemory`, so a run started from the
+    Optimization workspace is the one explained. It returns baseline vs MPC
+    controls, conditions, the power split, CHWR against its limit, binding
+    constraints, objective terms, unmet cooling, solver status and calibration
+    warnings, plus a `verified` / `qualified` / `questionable` trust verdict.
+  - **The answer exists before the model is called.** A deterministic composer
+    writes a complete reply from the tool results; the language model rewrites
+    it as prose. With no model reachable the composer's answer ships, so the
+    assistant keeps working when the VPN is down.
+  - **Grounding.** Facts are injected rather than recalled; the generated text
+    is audited so every plant-unit figure traces back to a tool result, and a
+    quantified saving or cost claim that no tool produced is refused outright.
+  - **Read-only by default.** A setpoint request becomes a proposal carrying a
+    twin-simulated preview and its warnings; it applies only through
+    `POST /api/assistant/action/confirm`, is single-use and expires. Nothing
+    writes to a real BMS.
+  - Modular knowledge retrieval: a curated HVAC glossary plus every `docs/*.md`,
+    behind a `KnowledgeSource` interface. Manuals, sequences of operation and
+    SOPs can be added by dropping files into `docs/knowledge/`.
+  - `AIProvider` interface with the existing LLM router as the shipped adapter,
+    so the model vendor is one object to replace.
+  - SSE streaming with per-tool progress ("Reading plant state…", "Running
+    MPC…"), rich answer blocks, source badges and suggested follow-ups in the
+    panel.
+  - 69 tests in `backend/tests/assistant.test.js`, including the specification's
+    acceptance questions, all running without a model.
+
 - **Chiller-plant MPC optimisation simulator.** The plant page is now an
   optimisation tool rather than a manual control panel: left sidebar = what
   happened (Simulation Input, Optimal Control before→after, Simulation Result
@@ -37,6 +80,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   quantities constraint checks need.
 
 ### Changed
+
+- **Dev ports moved.** The Vite dev server is now on `3006` and the backend on
+  `3007` (were `3002` / `3003`), overridable with `FRONTEND_PORT` / `PORT` and
+  `BACKEND_PORT` for the proxy. The launcher scripts, tests and docs follow.
+- **Assistant panel.** Same visual language, new behaviour: the welcome states
+  what can be asked rather than listing commands, the chips are examples that go
+  through the same endpoint as typed text, each answer carries a provenance
+  badge and the tools it used, and the header distinguishes "no language model"
+  (degraded — plant answers still work) from "tools unavailable" (an outage). It
+  no longer prints "Local model ready" when the model cannot answer.
+- `openai-compatible-service.js` refuses to report `ready` when the configured
+  model is not served. A single-model endpoint offering a different id is used
+  with the substitution stated in the status message; several ids is an error
+  naming them.
+- Fixed a Server-Sent Events bug in the assistant stream: `req.on('close')`
+  fires as soon as `express.json()` consumes the body in Node 16+, which
+  suppressed every write and hung the client. The guard listens on the response.
 
 - **Chiller twin recalibrated to the whole Dec-2025 trend.** Every reference
   level was previously anchored to dataset row 1 (Dec-1 00:00). That row is an

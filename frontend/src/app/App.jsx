@@ -17,11 +17,12 @@ import DomainWorkspace from "../workspaces/DomainWorkspace";
 import PlantAssetTree from "../components/chiller/PlantAssetTree";
 import EtsAssetTree from "../components/ets/EtsAssetTree";
 import AhuAssetTree from "../components/ahu/AhuAssetTree";
-import CopilotChat from "../components/common/CopilotChat";
+import AssistantPanel from "../components/assistant/AssistantPanel";
 
 import {
   AnalyticsIcon,
   AssetsIcon,
+  ChatIcon,
   EngineeringIcon,
   OptimizeIcon,
   PlantIcon,
@@ -220,6 +221,19 @@ function App() {
         })),
       });
     }
+
+    groups.push({
+      title: "Assistant",
+      items: [
+        {
+          id: "act-assistant",
+          label: "Ask the Plant AI Assistant",
+          hint: "Scenarios, alarms, efficiency",
+          icon: <ChatIcon size={16} />,
+          run: () => setPanel("chat"),
+        },
+      ],
+    });
 
     if (isChiller) {
       groups.push({
@@ -459,15 +473,13 @@ function App() {
         {assetTree}
       </SidePanel>
 
-      <SidePanel
+      {/* Lightweight context only — which workspace and what is selected.
+          The assistant must not receive the whole application state. */}
+      <AssistantPanel
         open={panel === "chat"}
-        title="Plant chatbot"
-        eyebrow="Assistant"
         onClose={() => setPanel(null)}
-        flush
-      >
-        <CopilotChat />
-      </SidePanel>
+        page={{ workspace, selectedEquipment: selectedAsset, system: route.system }}
+      />
 
       <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} groups={searchGroups} />
     </div>

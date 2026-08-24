@@ -56,7 +56,7 @@ Routing is the URL hash — `#/chiller/analytics`, `#/chiller/engineering/solver
 | `PlantAssetTree` | Assets side panel (header/page action) + Ctrl-K search |
 | `ChillerKPIPanel` | **Analytics → Live equipment** |
 | `AlertPanel` (chiller) | **Plant** — status card and the contextual equipment card |
-| `CopilotChat` | Header chatbot action → side panel, available from every workspace |
+| `CopilotChat` | Rebuilt as the **Plant AI Assistant** (`components/assistant/`) — header action, Ctrl-K, side panel, available from every workspace |
 | Permanent left + right chiller sidebars | Removed |
 
 ### District Cooling (ETS) and AHU
@@ -119,6 +119,63 @@ without rewriting `App.css`.
   MPC = blue solid, disturbances = slate, physical channels = HVAC semantics
   (CHW `#44a7e8`, CHWR `#3569c8`, condenser `#32a76d`).
 - Engineering units are never dropped: RT, kW, kW/RT, °C, psi, L/s, %, ms, K.
+
+## Plant AI Assistant
+
+`common/CopilotChat` was a 725-line component with its own inline `<style>`
+block: uppercase section labels, boxed suggestions, emoji glyphs, indigo
+gradients and a permanent `Try: "run peak summer scenario" · paste scenario
+JSON · …` line under the input. It is now `components/assistant/`, built from
+the same tokens and primitives as every workspace.
+
+| Concern | Where it lives |
+| --- | --- |
+| Drawer, header, status, layout state | `AssistantPanel` (uses the shared `SidePanel`, which gained an optional `header` slot) |
+| Welcome, suggestions, quick actions | `AssistantWelcome` |
+| Thread, thinking state, error card | `Conversation` |
+| Reply rendering | `MessageBody` |
+| Input, examples, scenario JSON | `ChatComposer` |
+| Per-system copy and command set | `assistantConfig.js` |
+| Context chips, status derivation | `assistantState.js` |
+| Styling | the `.tw-asst-*` block in `twin-ui.css` — no second theme |
+
+Nothing about how a message is handled changed: every prompt still goes through
+`sendCopilotMessage`, chiller intents are still parsed by `POST
+/copilot/chiller`, ETS and AHU intents by their local engines, and the reply
+still comes from the local LLM when it is up and the built-in plant analysis
+when it is not.
+
+What did change:
+
+- **Two layouts.** Before the first message: welcome card, live suggestions,
+  the five quick actions as a two-column grid. After: the thread takes the
+  height and the actions collapse to one row of chips above the input.
+- **Real model state.** The header read a hard-coded `Chiller Plant Chatbot ·
+  Local LLM`. It now reads `/api/model/status` and the `model_status` socket
+  frame — `Local model ready`, `Downloading model 42%`, `Local LLM offline`,
+  `Thinking`, `Running scenario` — with a plain-language note saying what still
+  works when the model is down, and a "Check again" action.
+- **Replies are laid out, not dumped.** `MessageBody` recognises the shapes the
+  existing formatters emit: an applied-action heading becomes a result banner,
+  single labelled facts become key/value rows, a `>` line becomes a callout, and
+  the `⚠️` parse-error line the store prepends becomes a warning callout with
+  its text intact.
+- **Chiller starters were dead code.** The old component computed
+  `plantConfig.chatSuggestions` (plant alarms, kW/RT, COP) and then overwrote it
+  with the building-twin endpoint, so a chiller alarm never reached the panel.
+  Both sources are merged now, deduplicated against the quick-action commands,
+  and "Suggested" shows only what is actually notable.
+- **Progressive disclosure.** The permanent hint line is gone; the command
+  examples and the scenario-JSON box (with the preset ids for that system) sit
+  behind one "Examples & advanced" toggle. The capability is unchanged.
+- **Icons.** The emoji (`☀️ 🔥 🏢 🔔 📉 💧 🌫️ 🌬️ 🌙 🔄`) were replaced with
+  stroke icons added to `ui/TwIcons`, the shell's existing family.
+
+QA: `tests/assistant-visual-qa.mjs` drives the welcome state, a suggested
+action, a quick action, a typed question, a scenario, the scenario-JSON path,
+clear, close/reopen and the busy state across all three systems, and asserts
+zero drawer overflow and zero console errors at 1920×1080, 1440×900, 1366×768
+and 420×820.
 
 ## Responsive behaviour
 

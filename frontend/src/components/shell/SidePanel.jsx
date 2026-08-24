@@ -19,6 +19,9 @@ export default function SidePanel({
   footer,
   wide = false,
   flush = false,
+  /** Replaces the eyebrow + title block. The close button stays. */
+  header,
+  headerClass = "",
 }) {
   const bodyRef = useRef(null);
 
@@ -47,11 +50,13 @@ export default function SidePanel({
         tabIndex={open ? 0 : -1}
       />
       <aside className={`tw-panel ${wide ? "tw-panel--wide" : ""}`} role="dialog" aria-modal="true" aria-label={title}>
-        <header className="tw-panel-header">
-          <div>
-            {eyebrow && <span className="tw-eyebrow">{eyebrow}</span>}
-            <h2>{title}</h2>
-          </div>
+        <header className={`tw-panel-header ${headerClass}`}>
+          {header ?? (
+            <div>
+              {eyebrow && <span className="tw-eyebrow">{eyebrow}</span>}
+              <h2>{title}</h2>
+            </div>
+          )}
           <button type="button" className="tw-icon-btn" onClick={onClose} aria-label={`Close ${title}`}>
             <CloseIcon />
           </button>

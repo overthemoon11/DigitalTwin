@@ -24,6 +24,10 @@ import {
   VIOLATION_LABELS,
 } from '../../mpc/index';
 import { stepPlantSimulation } from '../../digital-twin/chiller/index';
+// The assistant explains the run the operator actually saw, so every run is
+// recorded where it can find it. `mpcMemory` is a leaf module: it imports
+// nothing back, so this does not couple the MPC to the assistant.
+import { recordSteadyStateRun } from '../../assistant/mpcMemory';
 import type { ConstraintConfig, ControlState, SimulationInput } from '../../../../shared/types/mpc';
 import { ApiError } from './simulationController';
 import { publishMpcProgress } from '../../websocket/plantChannel';
@@ -135,6 +139,8 @@ export async function optimize(body: any) {
       constraints,
     });
   }
+
+  recordSteadyStateRun(result, { applied: plantState !== null, viaAssistant: false });
 
   return {
     status: result.solved ? ('COMPLETED' as const) : ('INFEASIBLE' as const),

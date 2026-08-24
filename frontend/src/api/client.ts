@@ -5,7 +5,7 @@
  * `fetch` must not appear in components or the store — they call the typed
  * functions in `simulationApi` / `mpcApi`, which call through here.
  *
- * Paths are relative (`/api/...`) so Vite's dev proxy forwards them to :3003
+ * Paths are relative (`/api/...`) so Vite's dev proxy forwards them to :3007
  * and a production build works against whatever origin serves the app. No
  * environment switching, no hard-coded hosts.
  */
@@ -32,7 +32,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } catch (cause) {
     // A network failure here almost always means the backend is not running,
     // which is worth saying plainly rather than surfacing "Failed to fetch".
-    throw new ApiError(0, `cannot reach the backend at ${url} — is it running on :3003?`, url);
+    throw new ApiError(0, `cannot reach the backend at ${url} — is it running on :3007?`, url);
   }
 
   if (!res.ok) {

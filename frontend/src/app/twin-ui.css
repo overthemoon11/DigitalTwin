@@ -1851,7 +1851,7 @@ body {
 }
 .tw-panel-header h2 { margin: 2px 0 0; color: var(--tw-ink); font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
 .tw-panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 20px 26px; }
-.tw-panel-body--flush { padding: 0; }
+.tw-panel-body--flush { padding: 0; overflow: hidden; }
 .tw-panel-footer {
   flex: 0 0 auto;
   padding: 13px 20px;
@@ -1944,10 +1944,672 @@ body {
 .tw-cmd-item small { margin-left: auto; color: var(--tw-ink-3); font-size: 0.67rem; font-weight: 500; }
 .tw-cmd-empty { padding: 26px; color: var(--tw-ink-3); font-size: 0.78rem; text-align: center; }
 
-/* chatbot panel host ------------------------------------------------------- */
+/* ==========================================================================
+   Plant AI Assistant
+   --------------------------------------------------------------------------
+   Hosted in the side panel, built from the same tokens as every workspace:
+   white surfaces on the panel ground, one blue accent, 10-18px radii and the
+   --tw-shadow elevation set. There is no second palette here - every colour
+   below resolves to a variable declared at the top of this file.
+   ========================================================================== */
 
-.tw-panel .copilot-chat,
-.tw-panel .chat-container { height: 100%; border: 0; background: transparent; }
+/* panel host: the assistant owns the whole drawer body and scrolls internally */
+.tw-panel-body--flush > .tw-asst { height: 100%; }
+
+.tw-asst {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--tw-bg);
+}
+
+/* context strip ------------------------------------------------------------ */
+
+.tw-asst-context {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 9px 20px 10px;
+  border-bottom: 1px solid var(--tw-line);
+  background: var(--tw-surface);
+}
+.tw-asst-context > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--tw-ink-2);
+  font-size: 0.685rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tw-asst-context > span b {
+  color: var(--tw-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.tw-asst-context-sep { width: 1px; height: 11px; background: var(--tw-line-strong); }
+
+/* scroll region ------------------------------------------------------------ */
+
+.tw-asst-scroll {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 18px 20px;
+}
+/* A thread grows upward from the composer, the way a conversation reads. The
+   welcome state stays top-aligned. `margin-top: auto` rather than
+   `justify-content` so the top of a long thread stays scrollable. */
+.tw-asst-scroll--thread > *:first-child { margin-top: auto; }
+.tw-asst-scroll::-webkit-scrollbar { width: 9px; }
+.tw-asst-scroll::-webkit-scrollbar-thumb {
+  border: 3px solid var(--tw-bg);
+  border-radius: 999px;
+  background: #d3d7e0;
+}
+
+/* welcome ------------------------------------------------------------------ */
+
+.tw-asst-hero {
+  padding: 17px 18px 18px;
+  border: 1px solid #e4ebfb;
+  border-radius: var(--tw-r-lg);
+  background: var(--tw-grad-impact);
+}
+.tw-asst-hero h3 {
+  margin: 0;
+  color: var(--tw-ink);
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+}
+.tw-asst-hero p {
+  margin: 6px 0 0;
+  color: #58627a;
+  font-size: 0.755rem;
+  line-height: 1.55;
+}
+
+/* section heading - normal case, same weight as .tw-card-head h3 ----------- */
+
+.tw-asst-group { display: flex; flex-direction: column; gap: 8px; }
+.tw-asst-group > h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 2px 0;
+  color: var(--tw-ink);
+  font-size: 0.795rem;
+  font-weight: 700;
+  letter-spacing: -0.008em;
+}
+.tw-asst-group > h4 em {
+  color: var(--tw-ink-3);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* suggestions -------------------------------------------------------------- */
+
+.tw-asst-sug {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 13px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-md);
+  background: var(--tw-surface);
+  box-shadow: var(--tw-shadow);
+  text-align: left;
+  transition: box-shadow var(--tw-ease), transform var(--tw-ease), border-color var(--tw-ease);
+}
+.tw-asst-sug:hover:not(:disabled) {
+  border-color: var(--tw-line-strong);
+  box-shadow: var(--tw-shadow-md);
+  transform: translateY(-1px);
+}
+.tw-asst-sug:disabled { cursor: not-allowed; opacity: 0.55; }
+.tw-asst-sug-glyph {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--tw-surface-3);
+  color: var(--tw-ink-2);
+}
+.tw-asst-sug-text { min-width: 0; }
+.tw-asst-sug-text strong {
+  display: block;
+  color: var(--tw-ink);
+  font-size: 0.775rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.tw-asst-sug-text small {
+  display: block;
+  margin-top: 2px;
+  color: var(--tw-ink-2);
+  font-size: 0.685rem;
+  line-height: 1.35;
+}
+.tw-asst-sug-go { margin-left: auto; flex: 0 0 auto; color: var(--tw-ink-3); }
+.tw-asst-sug:hover:not(:disabled) .tw-asst-sug-go { color: var(--tw-primary); }
+
+/* priority: tint the surface and accent the indicator, never a heavy border */
+.tw-asst-sug--high {
+  border-color: #f6dcde;
+  background: linear-gradient(180deg, var(--tw-danger-soft) 0%, #fef7f7 100%);
+}
+.tw-asst-sug--high .tw-asst-sug-glyph { background: #fbdcde; color: var(--tw-danger-ink); }
+.tw-asst-sug--medium {
+  border-color: #f6e6cd;
+  background: linear-gradient(180deg, var(--tw-warning-soft) 0%, #fffaf2 100%);
+}
+.tw-asst-sug--medium .tw-asst-sug-glyph { background: #fbe7cb; color: var(--tw-warning-ink); }
+
+/* quick actions ------------------------------------------------------------ */
+
+.tw-asst-quick {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.tw-asst-qa {
+  display: flex;
+  min-height: 66px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 11px 12px 12px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-md);
+  background: var(--tw-surface);
+  box-shadow: var(--tw-shadow);
+  text-align: left;
+  transition: box-shadow var(--tw-ease), transform var(--tw-ease), border-color var(--tw-ease);
+}
+.tw-asst-qa:hover:not(:disabled) {
+  border-color: #d8e2fc;
+  box-shadow: var(--tw-shadow-md);
+  transform: translateY(-1px);
+}
+.tw-asst-qa:disabled { cursor: not-allowed; opacity: 0.55; }
+.tw-asst-qa > svg { color: var(--tw-primary-ink); }
+.tw-asst-qa strong {
+  color: var(--tw-ink);
+  font-size: 0.755rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.tw-asst-qa small {
+  margin-top: -3px;
+  color: var(--tw-ink-2);
+  font-size: 0.665rem;
+  line-height: 1.3;
+}
+
+/* conversation ------------------------------------------------------------- */
+
+.tw-asst-thread { display: flex; flex-direction: column; gap: 14px; }
+
+.tw-asst-msg { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+.tw-asst-msg-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tw-ink-3);
+  font-size: 0.645rem;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+.tw-asst-msg--user { align-items: flex-end; }
+.tw-asst-msg--user .tw-asst-bubble {
+  max-width: 88%;
+  padding: 10px 13px;
+  border: 1px solid #dfe8fd;
+  border-radius: var(--tw-r-md) var(--tw-r-md) 4px var(--tw-r-md);
+  background: var(--tw-primary-soft);
+  color: var(--tw-primary-ink);
+  font-size: 0.775rem;
+  font-weight: 550;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.tw-asst-msg--ai .tw-asst-msg-who { color: var(--tw-primary-ink); }
+.tw-asst-msg--ai .tw-asst-msg-who svg { color: var(--tw-primary); }
+.tw-asst-msg--ai .tw-asst-bubble {
+  padding: 13px 15px 14px;
+  border: 1px solid var(--tw-line);
+  border-radius: 4px var(--tw-r-md) var(--tw-r-md) var(--tw-r-md);
+  background: var(--tw-surface);
+  box-shadow: var(--tw-shadow);
+  color: var(--tw-ink);
+  font-size: 0.775rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* assistant message internals (markdown) ---------------------------------- */
+
+.tw-asst-bubble > *:first-child { margin-top: 0; }
+.tw-asst-bubble > *:last-child { margin-bottom: 0; }
+.tw-asst-bubble p { margin: 0 0 7px; }
+.tw-asst-bubble strong { color: var(--tw-ink); font-weight: 700; }
+.tw-asst-bubble h4 {
+  margin: 14px 0 7px;
+  color: var(--tw-ink);
+  font-size: 0.815rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.tw-asst-bubble h5 {
+  margin: 12px 0 5px;
+  color: var(--tw-ink-2);
+  font-size: 0.71rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tw-asst-bubble ul { margin: 0 0 7px; padding-left: 17px; }
+.tw-asst-bubble ul ul { margin: 3px 0 0; }
+.tw-asst-bubble li { margin: 0 0 3px; }
+.tw-asst-bubble li::marker { color: var(--tw-ink-3); }
+.tw-asst-bubble code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--tw-surface-3);
+  color: var(--tw-ink);
+  font-family: var(--font-mono, Consolas, monospace);
+  font-size: 0.7rem;
+}
+
+/* Label/value bullet lines render as a scannable key-value block rather than
+   a bullet list: one row per fact, units kept, nothing over-carded. */
+.tw-asst-rows {
+  display: flex;
+  margin: 0 0 8px;
+  flex-direction: column;
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-surface-2);
+}
+.tw-asst-row {
+  display: flex;
+  min-height: 30px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 6px 11px;
+  border-bottom: 1px solid var(--tw-surface);
+}
+.tw-asst-row:last-child { border-bottom: 0; }
+/* The label never collapses; a long value wraps rather than shredding it. */
+.tw-asst-row > span {
+  flex: 0 1 auto;
+  color: var(--tw-ink-2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.tw-asst-row > strong {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--tw-ink);
+  font-size: 0.745rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+/* `7.0 -> **6.5** deg C`: the outer text is the previous value, the nested
+   strong is the new one, so a change reads in one glance. */
+.tw-asst-row > strong.is-mixed { color: var(--tw-ink-3); font-weight: 600; }
+.tw-asst-row > strong.is-mixed strong { color: var(--tw-ink); font-weight: 700; }
+
+/* action result banner - a scenario ran, or a setpoint moved */
+.tw-asst-result {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-success-soft);
+  color: var(--tw-success-ink);
+}
+.tw-asst-result svg { flex: 0 0 auto; }
+.tw-asst-result strong { color: var(--tw-success-ink); font-size: 0.755rem; font-weight: 700; }
+
+/* blockquote model notes, and the warning line the store prepends on a
+   parse error - kept verbatim, styled instead of hidden */
+.tw-asst-note {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 9px 11px;
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-primary-soft);
+  color: var(--tw-primary-ink);
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+.tw-asst-note strong { color: inherit; }
+.tw-asst-note--warn { background: var(--tw-warning-soft); color: var(--tw-warning-ink); }
+.tw-asst-note-btn {
+  margin-left: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tw-asst-note-btn:hover { text-decoration-thickness: 2px; }
+
+/* thinking ----------------------------------------------------------------- */
+
+.tw-asst-think {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 15px;
+  border: 1px solid var(--tw-line);
+  border-radius: 4px var(--tw-r-md) var(--tw-r-md) var(--tw-r-md);
+  background: var(--tw-surface);
+  box-shadow: var(--tw-shadow);
+  color: var(--tw-ink-2);
+  font-size: 0.755rem;
+  font-weight: 600;
+}
+.tw-asst-dots { display: inline-flex; flex: 0 0 auto; gap: 4px; }
+.tw-asst-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tw-primary);
+  animation: tw-asst-bounce 1.3s infinite ease-in-out both;
+}
+.tw-asst-dots i:nth-child(1) { animation-delay: -0.3s; }
+.tw-asst-dots i:nth-child(2) { animation-delay: -0.15s; }
+@keyframes tw-asst-bounce {
+  0%, 80%, 100% { opacity: 0.35; transform: scale(0.62); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* error -------------------------------------------------------------------- */
+
+.tw-asst-err {
+  padding: 13px 15px 14px;
+  border: 1px solid #f4dcde;
+  border-radius: var(--tw-r-md);
+  background: var(--tw-danger-soft);
+}
+.tw-asst-err h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--tw-danger-ink);
+  font-size: 0.795rem;
+  font-weight: 700;
+}
+.tw-asst-err p { margin: 6px 0 0; color: #8d5157; font-size: 0.73rem; line-height: 1.5; }
+.tw-asst-err-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 11px; }
+.tw-asst-err pre {
+  margin: 10px 0 0;
+  max-height: 130px;
+  overflow: auto;
+  padding: 9px 10px;
+  border-radius: var(--tw-r-xs);
+  background: rgba(255, 255, 255, 0.7);
+  color: #7d4a4f;
+  font-family: var(--font-mono, Consolas, monospace);
+  font-size: 0.665rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* footer: input and progressive disclosure -------------------------------- */
+
+.tw-asst-foot {
+  flex: 0 0 auto;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--tw-line);
+  background: var(--tw-surface);
+}
+
+.tw-asst-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 6px 6px 6px 14px;
+  border: 1px solid var(--tw-line-strong);
+  border-radius: var(--tw-r-md);
+  background: var(--tw-surface);
+  transition: border-color var(--tw-ease), box-shadow var(--tw-ease);
+}
+.tw-asst-form:focus-within { border-color: var(--tw-primary); box-shadow: var(--ring); }
+.tw-asst-form textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 22px;
+  max-height: 118px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--tw-ink);
+  font-family: inherit;
+  font-size: 0.795rem;
+  line-height: 1.45;
+  outline: none;
+  resize: none;
+}
+.tw-asst-form textarea::placeholder { color: var(--tw-ink-3); }
+.tw-asst-form textarea:disabled { color: var(--tw-ink-2); }
+
+.tw-asst-send {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tw-primary);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5d89f7, #4270ec);
+  box-shadow: 0 5px 13px rgba(75, 123, 245, 0.24);
+  color: #fff;
+  transition: box-shadow var(--tw-ease), opacity var(--tw-ease);
+}
+.tw-asst-send:hover:not(:disabled) { box-shadow: 0 7px 17px rgba(75, 123, 245, 0.3); }
+.tw-asst-send:disabled {
+  border-color: var(--tw-line);
+  background: var(--tw-surface-3);
+  box-shadow: none;
+  color: var(--tw-ink-3);
+  cursor: not-allowed;
+}
+.tw-asst-send .tw-spin { animation: tw-spin 900ms linear infinite; }
+
+.tw-asst-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+}
+.tw-asst-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: -6px;
+  padding: 3px 7px 3px 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--tw-ink-2);
+  font-size: 0.685rem;
+  font-weight: 650;
+}
+.tw-asst-link:hover { background: var(--tw-surface-3); color: var(--tw-ink); }
+.tw-asst-link--end { margin-left: auto; margin-right: -6px; }
+.tw-asst-chev { transition: transform var(--tw-ease); }
+.tw-asst-link[aria-expanded="true"] .tw-asst-chev { transform: rotate(180deg); }
+
+/* examples / advanced disclosure */
+.tw-asst-adv {
+  margin-bottom: 11px;
+  padding: 13px 14px 14px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-md);
+  background: var(--tw-surface-2);
+}
+.tw-asst-adv h5 {
+  margin: 0 0 8px;
+  color: var(--tw-ink);
+  font-size: 0.735rem;
+  font-weight: 700;
+}
+.tw-asst-adv h5 + p { margin: -5px 0 9px; color: var(--tw-ink-2); font-size: 0.685rem; line-height: 1.45; }
+.tw-asst-adv-sep { margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--tw-line); }
+.tw-asst-ex { display: flex; flex-wrap: wrap; gap: 6px; }
+.tw-asst-ex button {
+  padding: 6px 11px;
+  border: 1px solid var(--tw-line);
+  border-radius: 999px;
+  background: var(--tw-surface);
+  color: var(--tw-ink-2);
+  font-size: 0.695rem;
+  font-weight: 600;
+}
+.tw-asst-ex button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tw-asst-ex button:hover:not(:disabled) {
+  border-color: #d8e2fc;
+  background: var(--tw-primary-soft);
+  color: var(--tw-primary-ink);
+}
+.tw-asst-ex button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+/* Once a thread exists the action set shrinks to this one wrapping row, so the
+   conversation keeps the height instead of a permanent block of cards. */
+.tw-asst-followup { margin-top: 2px; }
+.tw-asst-followup button.is-urgent {
+  border-color: #f4dcde;
+  background: var(--tw-danger-soft);
+  color: var(--tw-danger-ink);
+}
+.tw-asst-followup button.is-urgent:hover:not(:disabled) {
+  border-color: #eec8cb;
+  background: #fce3e5;
+  color: var(--tw-danger-ink);
+}
+.tw-asst-json {
+  width: 100%;
+  min-height: 92px;
+  padding: 10px 11px;
+  border: 1px solid var(--tw-line-strong);
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-surface);
+  color: var(--tw-ink);
+  font-family: var(--font-mono, Consolas, monospace);
+  font-size: 0.685rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+.tw-asst-json:focus { border-color: var(--tw-primary); box-shadow: var(--ring); outline: none; }
+.tw-asst-json-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+
+/* assistant header inside the shared drawer -------------------------------- */
+
+.tw-panel-header--asst { align-items: center; gap: 12px; }
+.tw-asst-head { display: flex; min-width: 0; align-items: center; gap: 11px; }
+.tw-asst-mark {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dfe8fd;
+  border-radius: 11px;
+  background: var(--tw-grad-impact);
+  color: var(--tw-primary-ink);
+}
+.tw-asst-title { min-width: 0; }
+.tw-asst-title h2 {
+  margin: 0;
+  color: var(--tw-ink);
+  font-size: 1.14rem;
+  font-weight: 700;
+  letter-spacing: -0.024em;
+  line-height: 1.2;
+}
+.tw-asst-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--tw-ink-2);
+  font-size: 0.705rem;
+  font-weight: 600;
+}
+.tw-asst-status-sys { color: var(--tw-ink-2); }
+.tw-asst-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+.tw-asst-status--ok { color: var(--tw-success-ink); }
+.tw-asst-status--busy { color: var(--tw-primary-ink); }
+.tw-asst-status--busy .tw-asst-status-dot { animation: tw-blink 1.1s ease-in-out infinite; }
+.tw-asst-status--warn { color: var(--tw-warning-ink); }
+.tw-asst-status--bad { color: var(--tw-danger-ink); }
+.tw-asst-status--idle { color: var(--tw-ink-3); }
+
+/* Narrow drawers (mobile / small tablets): one column of actions. */
+@media (max-width: 640px) {
+  .tw-asst-quick { grid-template-columns: minmax(0, 1fr); }
+  .tw-asst-qa { min-height: 0; flex-direction: row; align-items: center; gap: 10px; }
+  .tw-asst-qa small { margin: 0 0 0 auto; text-align: right; }
+  .tw-asst-scroll { padding: 14px 14px 18px; }
+  .tw-asst-foot { padding: 11px 14px 13px; }
+  .tw-asst-context { padding-inline: 14px; }
+}
+
+/* Short laptops (1366x768): the conversation keeps the vertical space, not
+   the static blocks above it. */
+@media (max-height: 820px) {
+  .tw-asst-scroll { gap: 10px; padding: 12px 16px 14px; }
+  .tw-asst-hero { padding: 12px 15px 13px; }
+  .tw-asst-hero p { margin-top: 4px; }
+  .tw-asst-group { gap: 7px; }
+  .tw-asst-sug { padding: 9px 12px; }
+  .tw-asst-quick { gap: 8px; }
+  .tw-asst-qa { min-height: 56px; gap: 6px; padding: 9px 11px 10px; }
+  .tw-asst-context { padding-block: 7px 8px; }
+  .tw-asst-foot { padding: 10px 18px 12px; }
+  .tw-asst-meta { margin-top: 7px; }
+}
 
 /* ==========================================================================
    Legacy domain workspaces (District Cooling / AHU) hosted in the new shell
@@ -2032,6 +2694,12 @@ body {
   .tw-user-name { display: none; }
 }
 
+/* Phone-class widths: the drawer becomes a full-width overlay rather than a
+   strip too narrow to hold a conversation. */
+@media (max-width: 640px) {
+  .tw-panel { width: 100vw; }
+}
+
 @media (max-width: 900px) {
   .tw-header { gap: 10px; }
   .tw-header-center { order: 3; flex-basis: 100%; }
@@ -2074,5 +2742,211 @@ body {
   .equip-card,
   .opt-progress i,
   .tw-pill--busy i,
+  .tw-asst-dots i,
+  .tw-asst-status--busy .tw-asst-status-dot,
+  .tw-asst-send .tw-spin,
   .tw-run-btn .tw-spin { animation: none; transition: none; }
+}
+
+/* ── assistant: agent answer metadata ─────────────────────────────────────
+   Everything below belongs to one answer bubble. The rule the styling has to
+   carry is provenance: a reader must be able to tell a measured number from a
+   predicted one from a textbook one without reading the prose, so the source
+   badge is a constant fixture and the tones are semantic rather than
+   decorative. */
+
+.tw-asst-hero-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 6px;
+  margin: 11px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.tw-asst-hero-list li {
+  padding: 3px 9px;
+  border: 1px solid #dfe7fb;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #4a5570;
+  font-size: 0.665rem;
+  font-weight: 600;
+}
+.tw-asst-hero-foot {
+  display: flex;
+  gap: 7px;
+  margin: 2px 2px 0;
+  color: var(--tw-ink-3);
+  font-size: 0.655rem;
+  line-height: 1.5;
+}
+.tw-asst-hero-foot svg { flex: 0 0 auto; margin-top: 2px; }
+
+/* source badge ------------------------------------------------------------ */
+
+.tw-asst-src {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 0.615rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.tw-asst-src--live { border-color: #bfe6d1; background: var(--tw-success-soft); color: var(--tw-success-ink); }
+.tw-asst-src--twin { border-color: #cfdcfb; background: var(--tw-primary-soft); color: var(--tw-primary-ink); }
+.tw-asst-src--mpc { border-color: #d9d0f5; background: #f1ecfd; color: #5b41a8; }
+.tw-asst-src--sim { border-color: #f6dfbe; background: var(--tw-warning-soft); color: var(--tw-warning-ink); }
+.tw-asst-src--kb { border-color: var(--tw-line-strong); background: var(--tw-surface-2); color: var(--tw-ink-2); }
+
+/* metric + comparison blocks ---------------------------------------------- */
+
+.tw-asst-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 7px;
+  margin: 10px 0 8px;
+}
+.tw-asst-metric {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 11px 10px;
+  border: 1px solid var(--tw-line);
+  border-left: 3px solid var(--tw-line-strong);
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-surface);
+}
+.tw-asst-metric.is-good { border-left-color: var(--tw-success); }
+.tw-asst-metric.is-warn { border-left-color: var(--tw-warning); }
+.tw-asst-metric.is-bad { border-left-color: var(--tw-danger); }
+.tw-asst-metric-k {
+  color: var(--tw-ink-3);
+  font-size: 0.635rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tw-asst-metric > strong {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--tw-ink);
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.tw-asst-metric > strong em {
+  color: var(--tw-ink-3);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 600;
+}
+.tw-asst-metric > strong i {
+  color: var(--tw-ink-3);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 600;
+}
+.tw-asst-metric--cmp > strong { font-size: 0.9rem; gap: 5px; }
+.tw-asst-metric > small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tw-ink-3);
+  font-size: 0.645rem;
+  font-weight: 600;
+}
+.tw-asst-metric.is-good > small { color: var(--tw-success-ink); }
+.tw-asst-metric.is-warn > small { color: var(--tw-warning-ink); }
+.tw-asst-metric.is-bad > small { color: var(--tw-danger-ink); }
+
+/* proposed change ---------------------------------------------------------- */
+
+.tw-asst-action {
+  margin: 11px 0 4px;
+  padding: 12px 13px 13px;
+  border: 1px solid #f0dcc0;
+  border-radius: var(--tw-r-md);
+  background: #fffaf2;
+}
+.tw-asst-action--done { border-color: #c6e6d4; background: var(--tw-success-soft); }
+.tw-asst-action h5 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 9px;
+  color: var(--tw-warning-ink);
+  font-size: 0.735rem;
+  font-weight: 700;
+}
+.tw-asst-action--done h5 { color: var(--tw-success-ink); }
+.tw-asst-action h6 {
+  margin: 11px 0 6px;
+  color: var(--tw-ink-2);
+  font-size: 0.665rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.tw-asst-action .tw-asst-rows { background: rgba(255, 255, 255, 0.72); }
+.tw-asst-action .tw-asst-row > strong i {
+  color: var(--tw-ink-3);
+  font-style: normal;
+  font-weight: 600;
+}
+.tw-asst-action .tw-asst-row > strong em {
+  color: var(--tw-ink-3);
+  font-style: normal;
+  font-weight: 600;
+}
+.tw-asst-action .tw-asst-note { margin-top: 9px; }
+.tw-asst-action-btns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+}
+.tw-asst-action-note { color: var(--tw-ink-3); font-size: 0.645rem; font-weight: 600; }
+
+/* answer footer: source, tools, timing ------------------------------------ */
+
+.tw-asst-foot-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 9px;
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--tw-line);
+}
+.tw-asst-trace {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tw-ink-3);
+  font-size: 0.63rem;
+  font-weight: 600;
+}
+.tw-asst-trace svg { flex: 0 0 auto; opacity: 0.8; }
+.tw-asst-trace--dim { opacity: 0.72; }
+.tw-asst-trace--bad { color: var(--tw-danger-ink); }
+
+/* follow-ups the answer itself suggested ---------------------------------- */
+
+.tw-asst-answer-actions { margin-top: 11px; }
+.tw-asst-answer-actions button.is-primary {
+  border-color: #cfdcfb;
+  background: var(--tw-primary-soft);
+  color: var(--tw-primary-ink);
+}
+.tw-asst-answer-actions button.is-primary:hover:not(:disabled) {
+  border-color: var(--tw-primary);
+  background: #e2ecff;
 }

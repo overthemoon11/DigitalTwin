@@ -86,8 +86,8 @@ export default function AppHeader({
           className="tw-icon-btn"
           onClick={onOpenChat}
           aria-pressed={chatOpen}
-          title="Plant chatbot"
-          aria-label="Plant chatbot"
+          title="Plant AI Assistant"
+          aria-label="Plant AI Assistant"
         >
           <ChatIcon />
         </button>

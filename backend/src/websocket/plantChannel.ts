@@ -18,6 +18,10 @@
  */
 import { stepPlantSimulation } from '../digital-twin/chiller/index';
 import { readBaselineControl, readSimulationInput } from '../mpc/index';
+// The assistant answers "has CHWR been climbing?", which needs a history that
+// nothing else in the stack kept. The tick that already steps the twin is the
+// natural place to sample it.
+import { recordPlantSample } from '../assistant/trends';
 
 const TICK_MS = 2000;
 
@@ -31,6 +35,7 @@ function broadcast(): void {
   let payload: string;
   try {
     const state = stepPlantSimulation();
+    recordPlantSample(state);
     // The MPC "BEFORE" column is derived from this same state. Sending it here
     // keeps one derivation on the server rather than a second copy in the UI.
     payload = JSON.stringify({

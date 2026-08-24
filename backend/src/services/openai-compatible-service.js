@@ -31,6 +31,16 @@ let currentStatus = ModelStatus.NOT_INITIALIZED;
 let downloadProgress = 0;
 let statusMessage = 'Remote LLM not initialized';
 let statusListeners = [];
+/**
+ * The model id the server actually accepts.
+ *
+ * Usually the configured one. When the endpoint serves a single model under a
+ * different id — a re-host under another org prefix, which is what happens when
+ * a vLLM deployment is moved — this holds that id instead, and `statusMessage`
+ * says so. Without it the service reports "ready" and then 404s on every
+ * request, which is the one thing a status field must never do.
+ */
+let resolvedModel = null;
 
 function onStatusChange(listener) {
   statusListeners.push(listener);
@@ -60,7 +70,7 @@ function getStatus() {
     status: currentStatus,
     message: statusMessage,
     downloadProgress,
-    modelAlias: model,
+    modelAlias: resolvedModel ?? model,
     provider: 'openai',
     baseUrl,
     ready: currentStatus === ModelStatus.READY,
@@ -113,14 +123,27 @@ async function initialize() {
     const data = await res.json();
     const modelIds = (data.data || []).map((entry) => entry.id);
 
+    resolvedModel = model;
+    let note = '';
+
     if (modelIds.length > 0 && !modelIds.includes(model)) {
-      console.warn(
-        `[LLM] Model "${model}" not listed by server. Available: ${modelIds.join(', ')}`
-      );
+      if (modelIds.length === 1) {
+        // A single-model endpoint that does not answer to the configured id is
+        // a stale config, not an outage. Use what is served and say so loudly,
+        // rather than reporting ready and failing every completion.
+        resolvedModel = modelIds[0];
+        note = ` (configured "${model}" is not served; using "${resolvedModel}")`;
+        console.warn(`[LLM] Model "${model}" not served. Using the only available model "${resolvedModel}".`);
+      } else {
+        const msg = `Model "${model}" is not served by ${baseUrl}. Available: ${modelIds.join(', ')}`;
+        console.error(`[LLM] ${msg}`);
+        setStatus(ModelStatus.ERROR, msg);
+        return;
+      }
     }
 
-    setStatus(ModelStatus.READY, `Remote model ${model} ready`);
-    console.log('[LLM] Remote model ready');
+    setStatus(ModelStatus.READY, `Remote model ${resolvedModel} ready${note}`);
+    console.log(`[LLM] Remote model ready: ${resolvedModel}`);
   } catch (err) {
     const hint = err.name === 'AbortError'
       ? 'Connection timed out — check OpenVPN and that the LLM server is running.'
@@ -148,7 +171,7 @@ async function chatCompletion(messages, options = {}) {
           ...apiHeaders(),
         },
         body: JSON.stringify({
-          model,
+          model: resolvedModel ?? model,
           messages,
           temperature: options.temperature ?? 0.7,
           max_tokens: options.maxTokens ?? 1024,
@@ -188,7 +211,7 @@ async function chatCompletionStream(messages, onChunk, options = {}) {
           ...apiHeaders(),
         },
         body: JSON.stringify({
-          model,
+          model: resolvedModel ?? model,
           messages,
           temperature: options.temperature ?? 0.7,
           max_tokens: options.maxTokens ?? 1024,
@@ -246,6 +269,7 @@ async function chatCompletionStream(messages, onChunk, options = {}) {
 async function shutdown() {
   currentStatus = ModelStatus.NOT_INITIALIZED;
   statusMessage = 'Remote LLM disconnected';
+  resolvedModel = null;
 }
 
 export {

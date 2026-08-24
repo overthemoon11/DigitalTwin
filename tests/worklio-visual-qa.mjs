@@ -7,14 +7,14 @@
  * of every workspace and asserting that nothing overflows horizontally and that
  * the console stays clean.
  *
- * Run the backend (:3003) and a Vite dev server first, then:
+ * Run the backend (:3007) and a Vite dev server first, then:
  *   node tests/worklio-visual-qa.mjs [baseUrl]
  */
 import { chromium } from "@playwright/test";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const baseUrl = process.argv[2] || "http://localhost:3002";
+const baseUrl = process.argv[2] || "http://localhost:3006";
 const outputDir = path.resolve("docs", "images", "worklio-redesign");
 const VIEWPORTS = [
   [1920, 1080],
@@ -215,11 +215,12 @@ try {
   await page.getByRole("button", { name: "Chiller Plant" }).click();
   await page.getByRole("heading", { name: "Plant overview" }).waitFor();
 
-  /* ── chatbot panel ─────────────────────────────────────────────────────── */
-  await page.getByRole("button", { name: "Plant chatbot" }).click();
-  await page.getByRole("dialog", { name: "Plant chatbot" }).waitFor();
+  /* ── assistant panel ───────────────────────────────────────────────────── */
+  /* Full coverage of the assistant lives in tests/assistant-visual-qa.mjs. */
+  await page.getByRole("button", { name: "Plant AI Assistant" }).first().click();
+  await page.getByRole("dialog", { name: "Plant AI Assistant" }).waitFor();
   await page.waitForTimeout(500);
-  await shot("chatbot-panel-1920x1080");
+  await shot("assistant-panel-1920x1080");
   await page.keyboard.press("Escape");
 
   /* ── responsive sweep ──────────────────────────────────────────────────── */

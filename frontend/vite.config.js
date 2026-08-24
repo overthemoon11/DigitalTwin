@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
+const backendPort = Number(process.env.BACKEND_PORT || 3007);
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -14,14 +16,17 @@ export default defineConfig({
   server: {
     // shared/ sits above the Vite root, so it must be explicitly allowed.
     fs: { allow: ['..'] },
-    port: 3002,
+    port: Number(process.env.FRONTEND_PORT || 3006),
     proxy: {
+      // BACKEND_PORT exists so a second dev server can be pointed at a second
+      // backend — running the visual QA against a test instance should not
+      // require editing this file or stopping the one you are working in.
       '/api': {
-        target: 'http://localhost:3003',
+        target: `http://localhost:${backendPort}`,
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:3003',
+        target: `ws://localhost:${backendPort}`,
         ws: true,
       },
     },

@@ -37,6 +37,9 @@ import {
 } from '../../digital-twin/chiller/model/condenserHydraulics';
 import { CT_APPROACH_AIRFLOW_EXPONENT } from '../../digital-twin/chiller/model/towerFanLaw';
 import type { ModelStatus } from '../../../../shared/types/bms';
+// See the note in mpcController: the assistant explains real runs, so runs are
+// recorded as they happen rather than re-solved when someone asks about them.
+import { recordHorizonRun } from '../../assistant/mpcMemory';
 
 const MODES: HorizonMode[] = ['bms', 'manual', 'synthetic'];
 const FORECASTS: ForecastKind[] = ['perfect', 'degraded', 'persistence'];
@@ -199,7 +202,7 @@ export function compareHorizon(body: any) {
     const solves = c.mpc.trajectory.map((s) => s.diagnostics).filter((d): d is SolverDiagnostics => !!d);
     const first = solves[0] ?? null;
 
-    return {
+    const payload = {
       status: 'COMPLETED' as const,
       scenario: c.scenario,
       conditions: c.conditions,
@@ -224,6 +227,8 @@ export function compareHorizon(body: any) {
       },
       modelStatus: getModelStatus(),
     };
+    recordHorizonRun(payload, { viaAssistant: false });
+    return payload;
   } catch (err) {
     if (err instanceof ConditionMismatchError) throw new ApiError(409, err.message);
     if (err instanceof BmsArtifactError) throw new ApiError(503, err.message);

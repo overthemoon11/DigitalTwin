@@ -22,11 +22,15 @@ A web-based digital twin demo for multi-floor office building HVAC operations, f
 - Chiller, boiler, and pump dynamics
 - CO2 and air quality modelling
 
-### 🤖 AI Copilot
-- Natural language queries about building status
-- Execute commands: "Set lobby temp to 72"
-- Run simulations: "Advance 30 minutes"
-- Inject faults for testing
+### 🤖 Plant AI Assistant
+- Free-form questions — no command vocabulary to learn
+- Answers grounded in the Digital Twin, the MPC solver and a plant knowledge base
+- Explains **why** the MPC chose a setting, from the solver's own diagnostics
+- Says how far a reported saving can be trusted, and why not
+- Runs what-if conditions on the twin instead of describing them
+- Setpoint changes are proposed with a simulated preview and require confirmation
+- Works with the language model offline — replies are composed from the verified data
+- See [docs/plant-ai-assistant.md](docs/plant-ai-assistant.md)
 
 ### ⚡ Fault Injection
 - 20+ fault scenarios for testing:
@@ -99,8 +103,8 @@ app needs only Node; re-exporting the data or re-fitting the models needs Python
 ```powershell
 npm run install:all           # install backend + frontend dependencies
 
-npm run backend               # http://localhost:3003
-npm run frontend              # http://localhost:3002
+npm run backend               # http://localhost:3007
+npm run frontend              # http://localhost:3006
 
 npm run test:all              # typecheck + backend tests + golden + frontend build
 npm test                      # backend test suite only
@@ -134,7 +138,7 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3002 in your browser.
+Then open http://localhost:3006 in your browser.
 
 ### Option B: Using Startup Scripts
 
@@ -213,11 +217,12 @@ node src/index.js
 - Acknowledge and track alerts
 - Recommended actions for each alert
 
-### AI Copilot (Foundry Local)
-- Ask questions about building performance
-- Get grounded explanations citing actual data
-- Receive optimisation recommendations
-- Falls back to rule-based responses if SLM unavailable
+### Plant AI Assistant
+- Ask anything in your own words; the backend routes it by intent, not by phrase
+- Every plant figure comes from a tool call — nothing is recalled or estimated
+- Each answer is labelled with its provenance: live BMS, Digital Twin, MPC
+  prediction, what-if simulation, or general HVAC knowledge
+- Degrades to verified-data answers when no language model is reachable
 
 ## API Reference
 
@@ -266,10 +271,22 @@ GET  /api/bms/days                - recorded days with load range + quality flag
 GET  /api/bms/day/:day            - every measured 15-minute bucket of one day
 ```
 
-### Copilot
+### Plant AI Assistant
 
 ```
-POST /api/copilot/chat      - Send message to AI copilot
+POST /api/assistant/chat               - One turn, one JSON reply
+POST /api/assistant/chat/stream        - The same turn as Server-Sent Events
+GET  /api/assistant/status             - Health of the model AND of the tools
+GET  /api/assistant/tools              - The tool allowlist + knowledge sources
+POST /api/assistant/action/confirm     - Apply a change a previous turn proposed
+POST /api/assistant/conversation/clear - Forget a conversation
+```
+
+### Copilot (legacy — ETS and AHU panels)
+
+```
+POST /api/copilot/chat      - Send message to the building-twin copilot
+POST /api/copilot/chiller   - Chiller command parsing (now also an assistant tool)
 ```
 
 ### Model Status
@@ -286,7 +303,7 @@ To reset the digital twin to its baseline state:
 
 **Via API:**
 ```bash
-curl -X POST http://localhost:3003/api/twin/reset
+curl -X POST http://localhost:3007/api/twin/reset
 ```
 
 **Via UI:**
@@ -341,8 +358,8 @@ Tests cover 5 impact scenarios:
 
 ### Prerequisites for Integration Tests
 
-- Backend server must be running on port 3003
-- Frontend server must be running on port 3002 (for full E2E)
+- Backend server must be running on port 3007
+- Frontend server must be running on port 3006 (for full E2E)
 
 Start servers first:
 ```powershell
