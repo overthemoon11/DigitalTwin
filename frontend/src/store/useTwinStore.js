@@ -580,8 +580,8 @@ export const useTwinStore = create((set, get) => ({
 
   /** Put the twin back on the control state that was captured as BEFORE. */
   restoreMpcBaseline: async () => {
-    const { mpcInput, mpcResult, mpcConstraints } = get();
-    const control = mpcResult?.baselineControl;
+    const { mpcInput, mpcResult, horizonRun, mpcConstraints } = get();
+    const control = horizonRun?.baselineControl ?? mpcResult?.baselineControl;
     if (!mpcInput || !control) return;
     try {
       const { plantState } = await mpcApi.restoreControl({
@@ -597,8 +597,8 @@ export const useTwinStore = create((set, get) => ({
 
   /** Re-apply the optimum found by the last completed run. */
   reapplyMpcOptimum: async () => {
-    const { mpcInput, mpcResult, mpcConstraints } = get();
-    const control = mpcResult?.optimalControl;
+    const { mpcInput, mpcResult, horizonRun, mpcConstraints } = get();
+    const control = horizonRun?.appliedControl ?? mpcResult?.optimalControl;
     if (!mpcInput || !control) return;
     try {
       const { plantState } = await mpcApi.restoreControl({

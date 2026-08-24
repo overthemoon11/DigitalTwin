@@ -38,23 +38,25 @@ function ScadaRow({ label, value, unit, edit, onSet }) {
   return (
     <div className="scada-row scada-row--edit">
       <span className="scada-row-label">{label}</span>
-      <span className="scada-input-wrap">
-        <input
-          className="scada-input"
-          type="number"
-          inputMode="decimal"
-          step={edit.step ?? 1}
-          min={edit.min}
-          max={edit.max}
-          value={editing ? draft : fmt(value, edit.decimals ?? 0)}
-          onChange={(e) => setDraft(e.target.value)}
-          onFocus={(e) => e.target.select()}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-            if (e.key === 'Escape') setDraft(null);
-          }}
-        />
+      <span className="scada-number-control">
+        <span className="scada-input-wrap">
+          <input
+            className="scada-input"
+            type="number"
+            inputMode="decimal"
+            step={edit.step ?? 1}
+            min={edit.min}
+            max={edit.max}
+            value={editing ? draft : fmt(value, edit.decimals ?? 0)}
+            onChange={(e) => setDraft(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            onBlur={commit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') e.currentTarget.blur();
+              if (e.key === 'Escape') setDraft(null);
+            }}
+          />
+        </span>
         {unit ? <span className="scada-row-unit">{unit}</span> : null}
       </span>
     </div>

@@ -1,12 +1,35 @@
 import React, { useState } from 'react';
 
 /**
- * Collapsible constraint group. The right sidebar is 300 px wide and the full
- * constraint set is long, so groups collapse; the ones an operator touches most
- * (chiller, system) default open.
+ * One constraint group.
+ *
+ * Two presentations, because the same fields are read in two very different
+ * places. In a narrow drawer the full constraint set is far too long to show at
+ * once, so groups collapse. In the Engineering workspace there is room to lay
+ * them out as cards in a grid, and collapsing them there would hide the whole
+ * point of giving constraints a workspace — so `alwaysOpen` drops the toggle
+ * and renders a plain card heading instead.
  */
-export default function ConstraintSection({ title, defaultOpen = false, invalidCount = 0, children }) {
+export default function ConstraintSection({
+  title,
+  defaultOpen = false,
+  invalidCount = 0,
+  alwaysOpen = false,
+  children,
+}) {
   const [open, setOpen] = useState(defaultOpen);
+
+  if (alwaysOpen) {
+    return (
+      <section className="tw-card tw-card--pad eng-constraint-card eng-fields">
+        <h3>
+          <span>{title}</span>
+          {invalidCount > 0 && <span className="eng-invalid-badge">{invalidCount}</span>}
+        </h3>
+        <div>{children}</div>
+      </section>
+    );
+  }
 
   return (
     <div className={`scada-box mpc-constraint-box ${open ? 'open' : ''}`}>

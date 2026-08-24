@@ -47,7 +47,13 @@ export default function ModelStatusPanel({ modelStatus, twinValidation, onLoadVa
         data. The rest are physics defaults, and every control that depends on one says so.
       </p>
 
-      <table className="vsp-cascade-table mpc-compare mpc-model-table">
+      <div className="eng-table-wrap eng-model-table-wrap">
+        <table className="tw-table vsp-cascade-table mpc-compare mpc-model-table">
+          <colgroup>
+            <col className="mpc-model-col-name" />
+            <col className="mpc-model-col-basis" />
+            <col className="mpc-model-col-fit" />
+          </colgroup>
         <thead>
           <tr>
             <th>Model</th>
@@ -68,8 +74,9 @@ export default function ModelStatusPanel({ modelStatus, twinValidation, onLoadVa
                 </span>
                 <span className="mpc-model-trained">from {TRAINED_LABEL[m.trainedOn] ?? m.trainedOn}</span>
               </td>
-              <td className="mpc-model-metrics">
-                {m.metrics
+              <td>
+                <div className="mpc-model-metrics">
+                  {m.metrics
                   ? Object.entries(m.metrics)
                       .slice(0, 3)
                       .map(([k, v]) => (
@@ -78,16 +85,18 @@ export default function ModelStatusPanel({ modelStatus, twinValidation, onLoadVa
                         </span>
                       ))
                   : <span className="mpc-model-none">not fitted</span>}
-                {m.missingInputs.length > 0 && (
-                  <span className="mpc-model-missing" title="Channels this model needs that the site does not trend">
-                    missing: {m.missingInputs.join(', ')}
-                  </span>
-                )}
+                  {m.missingInputs.length > 0 && (
+                    <span className="mpc-model-missing" title="Channels this model needs that the site does not trend">
+                      missing: {m.missingInputs.join(', ')}
+                    </span>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
 
       {Object.keys(missingSignals ?? {}).length > 0 && (
         <>
@@ -117,7 +126,13 @@ export default function ModelStatusPanel({ modelStatus, twinValidation, onLoadVa
           ) : (
             <>
               <p className="vsp-desc">{twinValidation.basis}</p>
-              <table className="vsp-cascade-table mpc-compare">
+              <div className="eng-table-wrap eng-validation-table-wrap">
+                <table className="tw-table vsp-cascade-table mpc-compare eng-validation-table">
+                  <colgroup>
+                    <col className="mpc-validation-col-channel" />
+                    <col className="mpc-validation-col-mae" />
+                    <col className="mpc-validation-col-fit" />
+                  </colgroup>
                 <thead>
                   <tr>
                     <th>Channel</th>
@@ -142,7 +157,8 @@ export default function ModelStatusPanel({ modelStatus, twinValidation, onLoadVa
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
               <p className="vsp-desc">
                 Scored over {twinValidation.recordsScored.toLocaleString()} of{' '}
                 {twinValidation.recordsAvailable.toLocaleString()} measured buckets across{' '}

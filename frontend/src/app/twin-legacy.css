@@ -1,0 +1,491 @@
+/* ==========================================================================
+   Legacy panels re-hosted in the new workspaces
+   --------------------------------------------------------------------------
+   The MPC form panels, the SCADA control grid, the ETS/AHU control panels and
+   the cascade table all keep their behaviour and their data contracts. Only
+   their presentation is normalised here, so the components themselves did not
+   have to be rewritten to move workspace.
+
+   Loaded after twin-ui.css.
+   ========================================================================== */
+
+/* ── Simulation input form (features/mpc/SimulationInputPanel) ───────────── */
+
+.sim-config .mpc-section,
+.sim-config .vsp-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.sim-config .mpc-section > h4 { display: none; }
+
+.sim-config .mpc-scenario-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 13px;
+}
+.sim-config .mpc-scenario-grid label {
+  display: block;
+  color: var(--tw-ink-2);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+.sim-config .mpc-scenario-grid select,
+.tw-panel .mpc-scenario-grid select,
+.eng-host select.scada-input {
+  width: 100%;
+  min-height: 40px;
+  margin-top: 6px;
+  padding: 0 11px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-surface);
+  color: var(--tw-ink);
+  font-family: inherit;
+  font-size: 0.79rem;
+  font-weight: 600;
+}
+.sim-config .mpc-scenario-grid select:focus { border-color: var(--tw-primary); outline: none; }
+
+.sim-config .mpc-source-note {
+  margin: 15px 0;
+  padding: 11px 13px;
+  border-left: 3px solid var(--tw-primary);
+  border-radius: 0 var(--tw-r-sm) var(--tw-r-sm) 0;
+  background: var(--tw-primary-soft);
+  color: #3d4d72;
+  font-size: 0.71rem;
+  line-height: 1.55;
+}
+.sim-config .mpc-input-body,
+.sim-config .scada-box-body { padding: 0; }
+.sim-config .scada-row {
+  min-height: 44px;
+  padding: 0;
+  border-bottom: 1px solid var(--tw-line-soft);
+}
+.sim-config .scada-row-label {
+  color: var(--tw-ink-2);
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+.sim-config .scada-input {
+  min-height: 34px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-xs);
+  background: var(--tw-surface);
+  color: var(--tw-ink);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.sim-config .scada-input:disabled { background: var(--tw-surface-2); color: var(--tw-ink-3); }
+.sim-config .scada-row-unit { color: var(--tw-ink-3); font-size: 0.68rem; }
+.sim-config .vsp-desc {
+  margin: 12px 0 0;
+  color: var(--tw-ink-3);
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
+/* ── MPC cycle strip and model status inside the new cards ───────────────── */
+
+.eng-host .mpc-section,
+.eng-host .vsp-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.eng-host .mpc-section > h4 {
+  margin: 0 0 14px;
+  color: var(--tw-ink);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.eng-host .mpc-cycle {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.eng-host .mpc-cycle-stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px 14px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-md);
+  background: var(--tw-surface-2);
+}
+.eng-host .mpc-cycle-index {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--tw-primary-soft);
+  color: var(--tw-primary-ink);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+.eng-host .mpc-cycle-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.eng-host .mpc-cycle-title { color: var(--tw-ink-2); font-size: 0.68rem; font-weight: 650; }
+.eng-host .mpc-cycle-value {
+  color: var(--tw-ink);
+  font-size: 0.79rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.eng-host .vsp-desc,
+.eng-host .mpc-status-line {
+  margin: 14px 0 0;
+  color: var(--tw-ink-3);
+  font-size: 0.71rem;
+  line-height: 1.55;
+}
+
+.eng-host .vsp-cascade-table,
+.eng-host .mpc-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+}
+.eng-host .vsp-cascade-table th {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--tw-line);
+  background: var(--tw-surface-2);
+  color: var(--tw-ink-2);
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+}
+.eng-host .vsp-cascade-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--tw-line-soft);
+  color: var(--tw-ink);
+  vertical-align: top;
+}
+.eng-host .vsp-ct-param { color: var(--tw-ink-2); }
+
+/* Model registry: keep related columns grouped and let long fit diagnostics
+   wrap instead of silently disappearing behind legacy ellipsis rules. */
+.eng-model-table-wrap {
+  max-width: 1200px;
+  margin-top: 12px;
+}
+.eng-validation-table-wrap {
+  max-width: 760px;
+  margin-top: 10px;
+}
+.eng-host .mpc-model-table {
+  min-width: 760px;
+  table-layout: fixed;
+}
+.eng-host .eng-validation-table {
+  min-width: 560px;
+  table-layout: fixed;
+}
+.eng-host .mpc-model-col-name { width: 34%; }
+.eng-host .mpc-model-col-basis { width: 26%; }
+.eng-host .mpc-model-col-fit { width: 40%; }
+.eng-host .mpc-validation-col-channel { width: 50%; }
+.eng-host .mpc-validation-col-mae { width: 30%; }
+.eng-host .mpc-validation-col-fit { width: 20%; }
+.eng-host .mpc-model-table th:first-child,
+.eng-host .mpc-model-table td.vsp-ct-param,
+.eng-host .eng-validation-table th:first-child,
+.eng-host .eng-validation-table td.vsp-ct-param { width: auto; }
+.eng-host .mpc-model-table td,
+.eng-host .mpc-model-table th {
+  overflow: visible;
+  text-align: left;
+  text-overflow: clip;
+}
+.eng-host .mpc-model-table td { white-space: normal; }
+.eng-host .mpc-model-table th { white-space: nowrap; }
+.eng-host .eng-validation-table th,
+.eng-host .eng-validation-table td {
+  overflow: visible;
+  text-overflow: clip;
+}
+.eng-host .eng-validation-table td { white-space: normal; }
+.eng-host .mpc-model-table thead th,
+.eng-host .eng-validation-table thead th { position: static; }
+.eng-host .mpc-model-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+.eng-host .mpc-model-metrics span {
+  overflow-wrap: anywhere;
+  text-align: left;
+  white-space: normal;
+}
+
+.eng-host .mpc-prov {
+  display: inline-flex;
+  margin-left: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--tw-surface-3);
+  color: var(--tw-ink-2);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+.eng-host .mpc-prov--optimized { background: var(--tw-primary-soft); color: var(--tw-primary-ink); }
+.eng-host .mpc-prov--derived { background: #e8f4fb; color: #1c7ba8; }
+.eng-host .mpc-prov--not-available { background: var(--tw-danger-soft); color: var(--tw-danger-ink); }
+
+.eng-host .mpc-subhead {
+  margin: 18px 0 9px;
+  color: var(--tw-ink-2);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.eng-host .mpc-caveats,
+.eng-host .mpc-reject-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--tw-ink-2);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+.eng-host .mpc-secondary-btn,
+.eng-host .mpc-disclose {
+  min-height: 34px;
+  margin-top: 14px;
+  padding: 0 13px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-surface);
+  color: var(--tw-ink);
+  font-size: 0.73rem;
+  font-weight: 650;
+}
+.eng-host .mpc-secondary-btn:hover { border-color: var(--tw-line-strong); background: var(--tw-surface-2); }
+.eng-host .mpc-model-trained,
+.eng-host .mpc-model-metrics span,
+.eng-host .mpc-model-missing,
+.eng-host .mpc-detail-was {
+  display: block;
+  color: var(--tw-ink-3);
+  font-size: 0.65rem;
+  font-style: normal;
+}
+.eng-host .mpc-note-mark { color: var(--tw-primary); }
+.eng-host .mpc-validation { margin-top: 16px; }
+
+/* ── SCADA manual control grid ───────────────────────────────────────────── */
+
+.eng-host .scada-calib {
+  margin-bottom: 14px;
+  padding: 11px 13px;
+  border-radius: var(--tw-r-sm);
+  background: var(--tw-success-soft);
+  color: var(--tw-success-ink);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+.eng-host .scada-calib.extrapolated { background: var(--tw-warning-soft); color: var(--tw-warning-ink); }
+.eng-host .scada-calib ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* ── BMS points table ────────────────────────────────────────────────────── */
+
+.bms-card { overflow: hidden; }
+.bms-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 0 13px;
+}
+.bms-title {
+  margin: 2px 0 0;
+  color: var(--tw-ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+.bms-toolbar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.bms-groupbar { padding: 0 0 14px; }
+.bms-compare-note { margin: 0 0 12px; }
+.bms-delta {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.63rem;
+  font-weight: 700;
+}
+.bms-delta.ok { background: var(--tw-success-soft); color: var(--tw-success-ink); }
+.bms-delta.warn { background: var(--tw-warning-soft); color: var(--tw-warning-ink); }
+.bms-delta.bad { background: var(--tw-danger-soft); color: var(--tw-danger-ink); }
+.bms-delta-cell.ok { color: var(--tw-success-ink); }
+.bms-delta-cell.warn { color: var(--tw-warning-ink); }
+.bms-delta-cell.bad { color: var(--tw-danger-ink); }
+
+.bms-table-wrap {
+  max-height: 62vh;
+  max-width: 1120px;
+  overflow: auto;
+  border-radius: var(--tw-r-md);
+  scrollbar-gutter: stable;
+}
+.bms-table-wrap--compare { max-width: 1280px; }
+/* The tag column carries the width; separate comparison proportions stop the
+   dataset and delta columns from being squeezed into the final few pixels. */
+.bms-table {
+  min-width: 720px;
+  table-layout: fixed;
+}
+.bms-table--compare { min-width: 900px; }
+.bms-table .bms-col-tag { width: 46%; }
+.bms-table .bms-col-equipment { width: 26%; }
+.bms-table .bms-col-value { width: 18%; }
+.bms-table .bms-col-unit { width: 10%; }
+.bms-table--compare .bms-col-tag { width: 34%; }
+.bms-table--compare .bms-col-equipment { width: 19%; }
+.bms-table--compare .bms-col-value { width: 13%; }
+.bms-table--compare .bms-col-unit { width: 8%; }
+.bms-table--compare .bms-col-dataset { width: 13%; }
+.bms-table--compare .bms-col-delta { width: 13%; }
+.bms-table thead th { z-index: 3; }
+.bms-group-row td {
+  position: sticky;
+  top: 35px;
+  z-index: 2;
+  padding: 7px 12px;
+  background: var(--tw-surface-3);
+  color: var(--tw-ink-2);
+  font-size: 0.64rem;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.bms-edit {
+  width: 96px;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--tw-line);
+  border-radius: var(--tw-r-xs);
+  background: var(--tw-surface);
+  color: var(--tw-ink);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.bms-edit:focus { border-color: var(--tw-primary); outline: none; }
+.bms-empty {
+  padding: 30px;
+  color: var(--tw-ink-3);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.bms-duty { display: flex; flex-direction: column; gap: 10px; }
+.bms-duty-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.bms-duty-label {
+  min-width: 52px;
+  color: var(--tw-ink-2);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.bms-duty-row .eng-chip[aria-pressed="true"] {
+  border-color: var(--tw-success);
+  background: var(--tw-success-soft);
+  color: var(--tw-success-ink);
+}
+
+/* ── Domain (ETS / AHU / district) panels ────────────────────────────────── */
+
+.domain-host .ets-control-panel,
+.domain-host .ahu-control-panel,
+.domain-host .dc-control-panel,
+.domain-host .virtual-simulator-panel {
+  padding: 0;
+  background: transparent;
+}
+.domain-host .vsp-header { display: none; }
+.domain-host .vsp-section {
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.domain-host .vsp-section h4 {
+  margin: 0 0 10px;
+  color: var(--tw-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.domain-host .vsp-cascade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.73rem;
+}
+.domain-host .vsp-cascade-table th,
+.domain-host .vsp-cascade-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--tw-line-soft);
+  text-align: left;
+}
+.domain-host .ets-kpi-panel,
+.domain-host .chiller-kpi-panel { padding: 0; }
+.domain-host .ets-kpi-group-toggle {
+  min-height: 38px;
+  border-radius: var(--tw-r-sm);
+  color: var(--tw-ink);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+.domain-host .alert-panel { padding: 0; }
+
+/* ── Chatbot inside the side panel ───────────────────────────────────────── */
+
+.tw-panel-body--flush > * { height: 100%; }
+
+/* ── Initial load screen ─────────────────────────────────────────────────── */
+
+.loading {
+  display: grid;
+  height: 100vh;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  background: var(--tw-bg);
+  color: var(--tw-ink-2);
+  text-align: center;
+}
+.loading h2 {
+  margin: 0;
+  color: var(--tw-ink);
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+.loading p { margin: 0; font-size: 0.8rem; }

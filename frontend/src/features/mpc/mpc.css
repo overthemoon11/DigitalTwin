@@ -141,6 +141,23 @@
 }
 
 /* --- Shared numeric field ------------------------------------------------ */
+.scada-number-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.scada-number-control .scada-input-wrap {
+  width: 3.5rem;
+}
+
+.scada-number-control .scada-row-unit {
+  min-width: 1.9rem;
+  white-space: nowrap;
+}
+
 .mpc-field--invalid {
   flex-wrap: wrap;
 }
@@ -429,6 +446,12 @@
   }
   .scada-input-wrap {
     width: 4.4rem;
+  }
+  .scada-number-control .scada-input-wrap {
+    width: 3.2rem;
+  }
+  .scada-number-control .scada-row-unit {
+    min-width: 1.6rem;
   }
   .panel-tabs button {
     padding: 0.6rem 0.25rem;

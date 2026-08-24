@@ -29,8 +29,13 @@ export default function ConstraintPanel({
   onSetFleet,
   onSetAvailable,
   onReset,
+  /** 'panel' = collapsible groups for a narrow container.
+   *  'workspace' = every group open, laid out as cards in a grid. */
+  variant = 'panel',
 }) {
   const cfg = constraints;
+  const workspace = variant === 'workspace';
+  const groupProps = workspace ? { alwaysOpen: true } : {};
 
   // Constraints are fetched from the backend rather than imported from the MPC
   // module, so there is a brief window before they arrive. Render a placeholder
@@ -57,23 +62,13 @@ export default function ConstraintPanel({
   const field = (props) => <NumberField disabled={disabled} {...props} />;
   const range = (props) => <RangeField disabled={disabled} {...props} />;
 
-  return (
-    <div className="mpc-constraint-panel">
-      <div className="mpc-constraint-head">
-        <h4>Constraint Input</h4>
-        <button type="button" className="mpc-reset-link" onClick={onReset} disabled={disabled}>
-          Reset to Design
-        </button>
-      </div>
-      <p className="mpc-constraint-hint">
-        Physical and operational limits the optimiser must respect. These bound the
-        search — they are not commands.
-      </p>
-
-      <ConstraintSection title="Chiller Constraints" defaultOpen invalidCount={countIn('chiller')}>
+  const groups = (
+    <>
+      <ConstraintSection title="Chiller" defaultOpen invalidCount={countIn('chiller')} {...groupProps}>
         {field({
           label: 'Available Chillers',
           value: availableCount,
+          unit: 'ch',
           step: 1,
           decimals: 0,
           onCommit: onSetAvailable,
@@ -134,7 +129,7 @@ export default function ConstraintPanel({
         </p>
       </ConstraintSection>
 
-      <ConstraintSection title="CHWP Constraints" invalidCount={countIn('chwp')}>
+      <ConstraintSection title="Chilled water pumps" invalidCount={countIn('chwp')} {...groupProps}>
         {range({
           label: 'Speed',
           unit: '%',
@@ -171,7 +166,7 @@ export default function ConstraintPanel({
         {field({ label: 'Rated Head', value: cfg.chwp.ratedHeadM, unit: 'm', step: 1, onCommit: (v) => onSet('chwp.ratedHeadM', v) })}
       </ConstraintSection>
 
-      <ConstraintSection title="CWP Constraints" invalidCount={countIn('cwp')}>
+      <ConstraintSection title="Condenser water pumps" invalidCount={countIn('cwp')} {...groupProps}>
         {range({
           label: 'Speed',
           unit: '%',
@@ -198,7 +193,7 @@ export default function ConstraintPanel({
         {field({ label: 'Rated Head', value: cfg.cwp.ratedHeadM, unit: 'm', step: 1, onCommit: (v) => onSet('cwp.ratedHeadM', v) })}
       </ConstraintSection>
 
-      <ConstraintSection title="Cooling Tower Constraints" invalidCount={countIn('tower')}>
+      <ConstraintSection title="Cooling towers" invalidCount={countIn('tower')} {...groupProps}>
         {range({
           label: 'Fan Speed',
           unit: '%',
@@ -219,7 +214,7 @@ export default function ConstraintPanel({
         <p className="mpc-note">CWST ≥ wet bulb + min approach is enforced on every candidate.</p>
       </ConstraintSection>
 
-      <ConstraintSection title="System Constraints" invalidCount={countIn('system')}>
+      <ConstraintSection title="System" invalidCount={countIn('system')} {...groupProps}>
         {range({
           label: 'CHW DP',
           unit: 'psi',
@@ -234,6 +229,7 @@ export default function ConstraintPanel({
         {field({ label: 'Max CW Header Flow', value: cfg.system.maxCwHeaderFlowLs, unit: 'L/s', step: 50, decimals: 0, onCommit: (v) => onSet('system.maxCwHeaderFlowLs', v) })}
         {range({
           label: 'Running Chillers',
+          unit: 'ch',
           step: 1,
           decimals: 0,
           minValue: cfg.system.minRunningChillers,
@@ -242,16 +238,17 @@ export default function ConstraintPanel({
           onCommitMax: (v) => onSet('system.maxRunningChillers', v),
           error: errFor('system', 'minRunningChillers'),
         })}
-        {field({ label: 'Required Standby', value: cfg.system.requiredStandbyChillers, step: 1, decimals: 0, error: errFor('system', 'requiredStandbyChillers'), onCommit: (v) => onSet('system.requiredStandbyChillers', v) })}
+        {field({ label: 'Required Standby', value: cfg.system.requiredStandbyChillers, unit: 'ch', step: 1, decimals: 0, error: errFor('system', 'requiredStandbyChillers'), onCommit: (v) => onSet('system.requiredStandbyChillers', v) })}
         {/* The single most consequential limit in this panel. Raising CHWST and
             slowing the CHW pumps both save power by letting the loop run
             warmer; this is what says how much warmer is acceptable, and
             without it both would look like free money. */}
         {field({ label: 'Max CHWR (return limit)', value: cfg.system.maxChwrC, unit: '°C', step: 0.1, error: errFor('system', 'maxChwrC'), onCommit: (v) => onSet('system.maxChwrC', v) })}
         {field({ label: 'Max Plant Demand', value: cfg.system.maxPlantKw, unit: 'kW', step: 100, decimals: 0, error: errFor('system', 'maxPlantKw'), onCommit: (v) => onSet('system.maxPlantKw', v) })}
-        {field({ label: 'Max Chiller Starts / Run', value: cfg.system.maxChillerStartsPerRun, step: 1, decimals: 0, error: errFor('system', 'maxChillerStartsPerRun'), onCommit: (v) => onSet('system.maxChillerStartsPerRun', v) })}
+        {field({ label: 'Max Chiller Starts / Run', value: cfg.system.maxChillerStartsPerRun, unit: 'starts', step: 1, decimals: 0, error: errFor('system', 'maxChillerStartsPerRun'), onCommit: (v) => onSet('system.maxChillerStartsPerRun', v) })}
         {range({
           label: 'Operating Hours',
+          unit: 'h',
           step: 1,
           decimals: 0,
           minValue: cfg.system.operatingHours?.startHour ?? 0,
@@ -274,6 +271,24 @@ export default function ConstraintPanel({
           the operating-hours window (T1 ran 24/7 all December).
         </p>
       </ConstraintSection>
+    </>
+  );
+
+  if (workspace) return <div className="eng-constraints">{groups}</div>;
+
+  return (
+    <div className="mpc-constraint-panel">
+      <div className="mpc-constraint-head">
+        <h4>Constraint Input</h4>
+        <button type="button" className="mpc-reset-link" onClick={onReset} disabled={disabled}>
+          Reset to Design
+        </button>
+      </div>
+      <p className="mpc-constraint-hint">
+        Physical and operational limits the optimiser must respect. These bound the
+        search — they are not commands.
+      </p>
+      {groups}
     </div>
   );
 }

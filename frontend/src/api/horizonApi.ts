@@ -17,7 +17,7 @@
  *   Render all of them, never truncated and never behind a disclosure.
  */
 import { get, post } from './client';
-import type { ModelStatus } from '@shared/types/bms';
+import type { ModelStatus, PlantRecord } from '@shared/types/bms';
 import type {
   ControlProvenance,
   HorizonSavings,
@@ -217,3 +217,13 @@ export const fetchDatasetSummary = () => get<Record<string, unknown>>('/bms/data
 
 /** Recorded days with per-day load range and quality flags. */
 export const fetchBmsDays = () => get<{ stepMinutes: number; days: BmsDay[] }>('/bms/days');
+
+/**
+ * Every measured bucket of one recorded day.
+ *
+ * The Simulation workspace previews the conditions a run will replay. Those
+ * have to be the plant's OWN measurements — a preview drawn from anything else
+ * would be a picture of a day that never happened.
+ */
+export const fetchBmsDayRecords = (day: string) =>
+  get<{ day: string; stepMinutes: number; records: PlantRecord[] }>(`/bms/day/${day}`);
